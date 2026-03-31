@@ -22,6 +22,7 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity login(@Valid @RequestBody LoginRequest request) {
+		System.out.println("Login request received for email: " );
 		return authService.login(request);
 	}
 
