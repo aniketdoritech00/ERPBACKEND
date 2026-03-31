@@ -22,6 +22,7 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity login(@Valid @RequestBody LoginRequest request) {
+		System.out.print("Hellow java");
 		return authService.login(request);
 	}
 
