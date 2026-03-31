@@ -49,7 +49,6 @@ public class CompanyController {
 		response.setData(service.saveCompany(dto));
 		response.setStatusCode(200);
 		response.setPath(request.getRequestURI());
-
 		return new ResponseEntity("Company saved successfully",
 				HttpStatus.OK.value(), response);
 	}
