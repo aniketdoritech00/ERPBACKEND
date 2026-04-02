@@ -1,10 +1,8 @@
 package com.doritech.ItemService.Request;
 
 import com.doritech.ItemService.Service.OnCreate;
-import com.doritech.ItemService.Service.OnUpdate;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class GodownRequestDTO {
@@ -43,7 +41,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param godownName
-	 *            the godownName to set
+	 *                   the godownName to set
 	 */
 	public void setGodownName(String godownName) {
 		this.godownName = godownName;
@@ -58,7 +56,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param godownType
-	 *            the godownType to set
+	 *                   the godownType to set
 	 */
 	public void setGodownType(String godownType) {
 		this.godownType = godownType;
@@ -73,7 +71,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param godownCode
-	 *            the godownCode to set
+	 *                   the godownCode to set
 	 */
 	public void setGodownCode(String godownCode) {
 		this.godownCode = godownCode;
@@ -88,7 +86,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param address
-	 *            the address to set
+	 *                the address to set
 	 */
 	public void setAddress(String address) {
 		this.address = address;
@@ -103,7 +101,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param city
-	 *            the city to set
+	 *             the city to set
 	 */
 	public void setCity(String city) {
 		this.city = city;
@@ -118,7 +116,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param state
-	 *            the state to set
+	 *              the state to set
 	 */
 	public void setState(String state) {
 		this.state = state;
@@ -133,7 +131,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param country
-	 *            the country to set
+	 *                the country to set
 	 */
 	public void setCountry(String country) {
 		this.country = country;
@@ -148,7 +146,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param postalCode
-	 *            the postalCode to set
+	 *                   the postalCode to set
 	 */
 	public void setPostalCode(String postalCode) {
 		this.postalCode = postalCode;
@@ -163,7 +161,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param inchargeEmployeeId
-	 *            the inchargeEmployeeId to set
+	 *                           the inchargeEmployeeId to set
 	 */
 	public void setInchargeEmployeeId(Integer inchargeEmployeeId) {
 		this.inchargeEmployeeId = inchargeEmployeeId;
@@ -178,7 +176,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param isActive
-	 *            the isActive to set
+	 *                 the isActive to set
 	 */
 	public void setIsActive(String isActive) {
 		this.isActive = isActive;
@@ -193,7 +191,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param createdBy
-	 *            the createdBy to set
+	 *                  the createdBy to set
 	 */
 	public void setCreatedBy(Integer createdBy) {
 		this.createdBy = createdBy;
@@ -208,7 +206,7 @@ public class GodownRequestDTO {
 
 	/**
 	 * @param modifiedBy
-	 *            the modifiedBy to set
+	 *                   the modifiedBy to set
 	 */
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;

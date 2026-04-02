@@ -1,33 +1,31 @@
 package com.doritech.EmployeeService.request;
 
-
 import com.doritech.EmployeeService.service.OnCreate;
 import com.doritech.EmployeeService.service.OnUpdate;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class CompanyRequestDTO {
 
 	@NotBlank(message = "{company.name.required}", groups = OnCreate.class)
 	@Size(min = 2, max = 100, message = "{company.name.size}", groups = {
-			OnCreate.class})
+			OnCreate.class })
 	private String companyName;
 
 	@NotBlank(message = "{company.code.required}", groups = OnCreate.class)
-	@Size(max = 50, message = "{company.code.size}", groups = {OnCreate.class})
+	@Size(max = 50, message = "{company.code.size}", groups = { OnCreate.class })
 	private String companyCode;
 
 	@Size(max = 255, message = "{company.contactperson.size}")
 	private String contactPerson;
 
-	@Email(message = "{company.email.invalid}", groups = {OnUpdate.class})
+	@Email(message = "{company.email.invalid}", groups = { OnUpdate.class })
 	private String email;
 
 	@Size(min = 0, max = 15, message = "{company.phone.size}", groups = {
-			OnUpdate.class})
+			OnUpdate.class })
 	private String phone;
 
 	private String address;
@@ -55,7 +53,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param companyName
-	 *            the companyName to set
+	 *                    the companyName to set
 	 */
 	public void setCompanyName(String companyName) {
 		this.companyName = companyName;
@@ -70,7 +68,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param companyCode
-	 *            the companyCode to set
+	 *                    the companyCode to set
 	 */
 	public void setCompanyCode(String companyCode) {
 		this.companyCode = companyCode;
@@ -85,7 +83,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param contactPerson
-	 *            the contactPerson to set
+	 *                      the contactPerson to set
 	 */
 	public void setContactPerson(String contactPerson) {
 		this.contactPerson = contactPerson;
@@ -100,7 +98,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param email
-	 *            the email to set
+	 *              the email to set
 	 */
 	public void setEmail(String email) {
 		this.email = email;
@@ -115,7 +113,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param phone
-	 *            the phone to set
+	 *              the phone to set
 	 */
 	public void setPhone(String phone) {
 		this.phone = phone;
@@ -130,7 +128,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param address
-	 *            the address to set
+	 *                the address to set
 	 */
 	public void setAddress(String address) {
 		this.address = address;
@@ -145,7 +143,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param city
-	 *            the city to set
+	 *             the city to set
 	 */
 	public void setCity(String city) {
 		this.city = city;
@@ -160,7 +158,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param state
-	 *            the state to set
+	 *              the state to set
 	 */
 	public void setState(String state) {
 		this.state = state;
@@ -175,7 +173,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param country
-	 *            the country to set
+	 *                the country to set
 	 */
 	public void setCountry(String country) {
 		this.country = country;
@@ -190,7 +188,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param postalCode
-	 *            the postalCode to set
+	 *                   the postalCode to set
 	 */
 	public void setPostalCode(String postalCode) {
 		this.postalCode = postalCode;
@@ -205,7 +203,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param active
-	 *            the active to set
+	 *               the active to set
 	 */
 	public void setActive(String active) {
 		this.active = active;
@@ -220,7 +218,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param createdBy
-	 *            the createdBy to set
+	 *                  the createdBy to set
 	 */
 	public void setCreatedBy(Integer createdBy) {
 		this.createdBy = createdBy;
@@ -235,7 +233,7 @@ public class CompanyRequestDTO {
 
 	/**
 	 * @param modifiedBy
-	 *            the modifiedBy to set
+	 *                   the modifiedBy to set
 	 */
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;

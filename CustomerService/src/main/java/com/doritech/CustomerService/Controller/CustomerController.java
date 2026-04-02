@@ -79,6 +79,7 @@ public class CustomerController {
 		logger.info("Get All Customers API hit. Page {}, Size {}", page, size);
 		return customerService.getAllCustomers(page, size);
 	}
+
 	@GetMapping("/getParentCustomerNames")
 	public ResponseEntity getParentCustomerNames() {
 		logger.info("Get Parent Customer Names API hit");
@@ -97,6 +98,7 @@ public class CustomerController {
 	public ResponseEntity getAllCustomerNames() {
 		return customerService.getAllCustomerNames();
 	}
+
 	@GetMapping("getDistrict/{customerId}")
 	public ResponseEntity getDistrict(@PathVariable Integer customerId) {
 		return customerService.getCustomerDistrict(customerId);
