@@ -1,0 +1,48 @@
+package com.doritech.CustomerService.Projection;
+
+import java.time.LocalDateTime;
+
+public interface CustomerWithContactProjection {
+
+	Integer getCustomerId();
+	String getCustomerName();
+	String getCustomerCode();
+	Integer getOrgId();
+	Integer getCompId();
+	String getAddress();
+	String getCity();
+	String getDistrict();
+	String getState();
+	String getCountry();
+	String getPostalCode();
+	String getGstin();
+	Integer getParentId();
+	Integer getHierarchyLevelId();
+	String getIsActive();
+	Integer getCreatedBy();
+	LocalDateTime getCreatedOn();
+	Integer getModifiedBy();
+	LocalDateTime getModifiedOn();
+
+	String getOrgName();
+	String getCompanyName();
+	String getCompanyCode();
+	String getHierarchyName();
+
+	Integer getCustContId();
+	String getContactPerson();
+	String getEmail();
+	String getPhone();
+	String getDesignation();
+	String getRole();
+	String getDepartment();
+	String getContactIsActive();
+	LocalDateTime getContactCreatedOn();
+	LocalDateTime getContactModifiedOn();
+	Integer getContactCreatedBy();
+	Integer getContactModifiedBy();
+
+	Integer getCustEntityId();
+	String getEntityType();
+	String getEntityTypeIsActive();
+}
