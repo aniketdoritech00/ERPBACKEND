@@ -14,4 +14,7 @@ public interface EmployeeFeignClient {
 	@GetMapping("/employee/api/getAllEmployees")
 	ResponseEntity getAllEmployees();
 
+	@GetMapping("/employee/api/count")
+	ResponseEntity getEmployeeCount();
+
 }

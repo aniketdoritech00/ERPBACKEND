@@ -619,4 +619,53 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 	        logger.error("Unexpected error while fetching package items for contractId {} itemId {}", contractId, itemId, ex);
 	        throw new DatabaseOperationException("Failed to fetch package items");
 	    }
+	}
+
+
+@Override
+	@Transactional
+	public ResponseEntity deactivateContractItemMappings(List<Integer> mappingIds, String userId) {
+
+		logger.info("Deactivating ContractItemMappings for ids {} by user {}", mappingIds, userId);
+
+		if (mappingIds == null || mappingIds.isEmpty()) {
+			logger.error("Mapping id list cannot be null or empty");
+			throw new BadRequestException("Mapping id list cannot be null or empty");
+		}
+
+		try {
+
+			List<ContractItemMapping> mappings = repository.findAllById(mappingIds);
+
+			if (mappings == null || mappings.isEmpty()) {
+				logger.error("No ContractItemMappings found for ids {}", mappingIds);
+				throw new ResourceNotFoundException("No ContractItemMappings found for given ids");
+			}
+
+			if (mappings.size() != mappingIds.size()) {
+				logger.error("One or more mapping ids not found");
+				throw new ResourceNotFoundException("Some mapping ids not found");
+			}
+
+			for (ContractItemMapping mapping : mappings) {
+				mapping.setIsActive("N");
+				mapping.setModifiedOn(LocalDateTime.now());
+			}
+
+			repository.saveAll(mappings);
+
+			logger.info("Successfully deactivated {} ContractItemMappings", mappings.size());
+
+			return new ResponseEntity("Contract Item Mappings deactivated successfully", 200, null);
+
+		} catch (BadRequestException | ResourceNotFoundException ex) {
+
+			logger.warn("Validation failure during bulk deactivation: {}", ex.getMessage());
+			throw ex;
+
+		} catch (Exception ex) {
+
+			logger.error("Error occurred while deactivating ContractItemMappings for ids {}", mappingIds, ex);
+			throw new DatabaseOperationException("Failed to deactivate ContractItemMappings");
+		}
 	}}

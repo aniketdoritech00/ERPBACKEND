@@ -1,5 +1,6 @@
 package com.doritech.CustomerService.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -193,4 +194,6 @@ public interface CustomerMasterRepository
 			""")
 	List<CustomerSummaryProjection> findByOrgAndHierarchy(
 			@Param("orgId") Integer orgId, @Param("levelId") Integer levelId);
+
+		long countByIsActive(String string);
 }

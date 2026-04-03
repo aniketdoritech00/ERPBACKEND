@@ -676,13 +676,14 @@ public class CustomerServiceImpl implements CustomerService {
 				throw new ResourceNotFoundException("No Customers Found");
 			}
 
-			List<CustomerResponse> responseList = customers.stream().map(c -> {
-				CustomerResponse res = new CustomerResponse();
-				res.setCustomerId(c.getCustomerId());
-				res.setCustomerName(c.getCustomerName());
-				res.setCustomerCode(c.getCustomerCode());
-				return res;
-			}).toList();
+			List<CustomerResponse> responseList = customers.stream().filter(c -> "Y".equalsIgnoreCase(c.getIsActive()))
+					.map(c -> {
+						CustomerResponse res = new CustomerResponse();
+						res.setCustomerId(c.getCustomerId());
+						res.setCustomerName(c.getCustomerName());
+						res.setCustomerCode(c.getCustomerCode());
+						return res;
+					}).toList();
 
 			logger.info("Total customers fetched: {}", responseList.size());
 
