@@ -146,9 +146,9 @@ public class GlobalExceptionHandler {
 			}
 
 			// DUPLICATE ENTRY
-			if (message.contains("duplicate") || message.contains("unique")) {
-				userMessage = "Duplicate entry. This record already exists.";
-			}
+			// if (message.contains("duplicate") || message.contains("unique")) {
+			// 	userMessage = "Duplicate entry. This record already exists.";
+			// }
 		}
 
 		ApiResponse<Object> response = new ApiResponse<>();

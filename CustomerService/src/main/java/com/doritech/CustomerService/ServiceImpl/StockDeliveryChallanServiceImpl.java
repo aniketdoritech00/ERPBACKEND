@@ -41,9 +41,15 @@ public class StockDeliveryChallanServiceImpl implements StockDeliveryChallanServ
 		logger.info("saveStockDelivery called with request: {}", request);
 
 		try {
-			if (request == null || request.getStockRequestIds() == null || request.getStockRequestIds().isEmpty()) {
+			if (request == null) {
 				logger.warn("Request body or stockRequestIds cannot be null");
 				response.setMessage("Request body cannot be null");
+				response.setStatusCode(400);
+				return response;
+			}
+			if (request.getStockRequestIds() == null || request.getStockRequestIds().isEmpty()) {
+				logger.warn("StockRequestIds cannot be null");
+				response.setMessage("Stock Request IDs cannot be null");
 				response.setStatusCode(400);
 				return response;
 			}
@@ -107,7 +113,6 @@ public class StockDeliveryChallanServiceImpl implements StockDeliveryChallanServ
 
 		return response;
 	}
-
 	@Override
 	public ResponseEntity getAllStockDelivery(int page, int size) {
 		ResponseEntity response = new ResponseEntity();
