@@ -8,6 +8,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -15,7 +16,6 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
 
-import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -49,56 +49,19 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity(ex.getMessage(), 400, null);
 	}
 
-	@ExceptionHandler(DatabaseOperationException.class)
-	public ResponseEntity handleDatabase(DatabaseOperationException ex) {
-		logger.error("Database Error: ", ex);
-		return new ResponseEntity("Database Operation Failed", 500, null);
+
+
+		@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+
+	    String message = "Database error occurred";
+
+	    if (ex.getRootCause() != null) {
+	        message = ex.getRootCause().getMessage();
+	    }
+
+	    return new ResponseEntity(message, 400, null);
 	}
-
-	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity handleDataIntegrityViolation(
-			DataIntegrityViolationException ex, HttpServletRequest request) {
-
-		String userMessage = "Cannot delete this record because it is linked with other records.";
-
-		Throwable rootCause = ex.getRootCause();
-		String httpMethod = request.getMethod();
-
-		if (rootCause != null && rootCause.getMessage() != null) {
-
-			String message = rootCause.getMessage().toLowerCase();
-
-			// FOREIGN KEY ERROR
-			if (message.contains("foreign key")
-					|| message.contains("constraint")) {
-
-				if ("DELETE".equalsIgnoreCase(httpMethod)) {
-					userMessage = "Cannot delete this record because it is linked with other records.";
-				} else if ("PUT".equalsIgnoreCase(httpMethod)
-						|| "PATCH".equalsIgnoreCase(httpMethod)
-						|| "POST".equalsIgnoreCase(httpMethod)) {
-					userMessage = "Cannot update this record because it is linked with other records.";
-				}
-			}
-
-			// DUPLICATE ENTRY
-			if (message.contains("duplicate") || message.contains("unique")) {
-				userMessage = "Duplicate entry. This record already exists.";
-			}
-		}
-
-		// ApiResponse<Object> response = new ApiResponse<>();
-		// response.setSuccess(false);
-		// response.setMessage(userMessage);
-		// response.setData(null);
-		// response.setErrors(null);
-		// response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-		// response.setPath(request.getRequestURI());
-
-		return new ResponseEntity(userMessage, HttpStatus.BAD_REQUEST.value(),
-				null);
-	}
-
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity handleValidation(MethodArgumentNotValidException ex) {
 
@@ -160,6 +123,25 @@ public class GlobalExceptionHandler {
 				HttpStatus.BAD_REQUEST);
 	}
 
+		@ExceptionHandler(DatabaseOperationException.class)
+	public ResponseEntity handleDatabase(DatabaseOperationException ex) {
+		logger.error("Database Error: ", ex);
+		return new ResponseEntity("Database Operation Failed", 500, null);
+	}
+
+	  @ExceptionHandler(MissingRequestHeaderException.class)
+	    public ResponseEntity handleMissingHeader(MissingRequestHeaderException ex) {
+
+	        String message = "Required header missing: " + ex.getHeaderName();
+
+	        return new ResponseEntity(
+	                message,
+	                400,
+	                null
+	        );
+	    }
+
+	
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity handleAll(Exception ex) {
 		logger.error("Unhandled Exception: ", ex);

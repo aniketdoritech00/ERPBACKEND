@@ -1,5 +1,6 @@
 package com.doritech.CustomerService.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,4 +38,10 @@ public interface ContractMasterRepository
 			""")
 	List<ContractMaster> findAvailableContracts(@Param("type") String type,
 			@Param("status") String status);
+
+				long countByIsActive(String string);
+
+	long countByContractStartDateBetween(LocalDate start, LocalDate end);
+
+	long countByContractEndDateBetween(LocalDate start, LocalDate end);
 }

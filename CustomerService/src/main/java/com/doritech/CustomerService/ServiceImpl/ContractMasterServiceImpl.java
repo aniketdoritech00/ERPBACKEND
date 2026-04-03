@@ -64,8 +64,7 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 	@Override
 	@Transactional
-	public ResponseEntity saveOrUpdateContract(Integer id,
-			ContractMasterRequest request) {
+	public ResponseEntity saveOrUpdateContract(Integer id, ContractMasterRequest request) {
 
 		logger.info("SaveOrUpdate Contract API called with id {}", id);
 
@@ -81,27 +80,18 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		try {
 
-			boolean customerExists = customerRepository
-					.existsById(request.getCustomerId());
+			boolean customerExists = customerRepository.existsById(request.getCustomerId());
 
 			if (!customerExists) {
-				logger.error("Customer not found with id {}",
-						request.getCustomerId());
-				throw new ResourceNotFoundException(
-						"Customer not found with id : "
-								+ request.getCustomerId());
+				logger.error("Customer not found with id {}", request.getCustomerId());
+				throw new ResourceNotFoundException("Customer not found with id : " + request.getCustomerId());
 			}
 
-			if (request.getContractStartDate() != null
-					&& request.getContractEndDate() != null) {
-				if (request.getContractEndDate()
-						.isBefore(request.getContractStartDate())) {
-					logger.error(
-							"Contract end date {} cannot be before start date {}",
-							request.getContractEndDate(),
+			if (request.getContractStartDate() != null && request.getContractEndDate() != null) {
+				if (request.getContractEndDate().isBefore(request.getContractStartDate())) {
+					logger.error("Contract end date {} cannot be before start date {}", request.getContractEndDate(),
 							request.getContractStartDate());
-					throw new BadRequestException(
-							"Contract end date cannot be before start date");
+					throw new BadRequestException("Contract end date cannot be before start date");
 				}
 			}
 
@@ -111,22 +101,15 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 				logger.info("Updating contract with id {}", id);
 
-				ContractMaster existingContract = contractRepository
-						.findById(id).orElseThrow(() -> {
-							logger.error("Contract not found for id {}", id);
-							return new ResourceNotFoundException(
-									"Contract not found");
-						});
+				ContractMaster existingContract = contractRepository.findById(id).orElseThrow(() -> {
+					logger.error("Contract not found for id {}", id);
+					return new ResourceNotFoundException("Contract not found");
+				});
 
-				if (!existingContract.getContractNo()
-						.equals(request.getContractNo())
-						&& contractRepository
-								.existsByContractNo(request.getContractNo())) {
-
-					logger.error("Duplicate contract number {}",
-							request.getContractNo());
-					throw new DuplicateResourceException(
-							"Contract number already exists");
+				if (!existingContract.getContractNo().equals(request.getContractNo())
+						&& contractRepository.existsByContractNo(request.getContractNo())) {
+					logger.error("Duplicate contract number {}", request.getContractNo());
+					throw new DuplicateResourceException("Contract number already exists");
 				}
 
 				contract = ContractMapper.toEntity(request);
@@ -134,7 +117,6 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 				contract.setContractId(existingContract.getContractId());
 				contract.setCreatedBy(existingContract.getCreatedBy());
 				contract.setCreatedOn(existingContract.getCreatedOn());
-
 				contract.setModifiedBy(request.getModifiedBy());
 				contract.setModifiedOn(LocalDateTime.now());
 
@@ -142,45 +124,38 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 				logger.info("Contract updated successfully with id {}", id);
 
-				return new ResponseEntity("Contract updated successfully", 200,
-						ContractMapper.toResponse(contract));
+				return new ResponseEntity("Contract updated successfully", 200, ContractMapper.toResponse(contract));
 			}
 
 			logger.info("Creating new contract");
 
-			if (contractRepository
-					.existsByContractNo(request.getContractNo())) {
-				logger.error("Duplicate contract number {}",
-						request.getContractNo());
-				throw new DuplicateResourceException(
-						"Contract number already exists");
+			if (contractRepository.existsByContractNo(request.getContractNo())) {
+				logger.error("Duplicate contract number {}", request.getContractNo());
+				throw new DuplicateResourceException("Contract number already exists");
 			}
 
 			contract = ContractMapper.toEntity(request);
 
 			contract.setCreatedBy(request.getCreatedBy());
 			contract.setCreatedOn(LocalDateTime.now());
+			contract.setModifiedBy(null);
+			contract.setModifiedOn(null);
 
 			contractRepository.save(contract);
 
-			logger.info("Contract created successfully with id {}",
-					contract.getContractId());
+			logger.info("Contract created successfully with id {}", contract.getContractId());
 
-			return new ResponseEntity("Contract created successfully", 200,
-					ContractMapper.toResponse(contract));
+			return new ResponseEntity("Contract created successfully", 200, ContractMapper.toResponse(contract));
 
-		} catch (BadRequestException | DuplicateResourceException
-				| ResourceNotFoundException ex) {
+		} catch (BadRequestException | DuplicateResourceException | ResourceNotFoundException ex) {
 
-			logger.error("Validation error in saveOrUpdate contract: {}",
-					ex.getMessage());
+			logger.error("Validation error in saveOrUpdate contract: {}", ex.getMessage());
 			throw ex;
 
 		} catch (Exception ex) {
 
 			logger.error("Unexpected error in saveOrUpdate contract", ex);
-			throw new DatabaseOperationException(
-					"Failed to save or update contract");
+			throw new DatabaseOperationException("Failed to save or update contract");
 		}
 	}
 
@@ -358,8 +333,7 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 		ResponseEntity response = new ResponseEntity();
 
 		try {
-			List<ContractMaster> contracts = contractRepository
-					.getActiveContracts();
+			List<ContractMaster> contracts = contractRepository.getActiveContracts();
 
 			if (contracts == null || contracts.isEmpty()) {
 				logger.warn("No active contracts found");
@@ -370,7 +344,7 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 			}
 
 			List<ContractMasterResponse> simplified = contracts.stream()
-					.map(c -> {
+					.filter(c -> "Y".equalsIgnoreCase(c.getIsActive())).map(c -> {
 						ContractMasterResponse temp = new ContractMasterResponse();
 						temp.setContractId(c.getContractId());
 						temp.setContractName(c.getContractName());
@@ -392,7 +366,6 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		return response;
 	}
-
 	// @Override
 	// @Transactional(readOnly = true)
 	// public ResponseEntity getContractDetailsByType(String type) {
