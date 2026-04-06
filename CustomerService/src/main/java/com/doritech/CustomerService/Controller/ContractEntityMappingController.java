@@ -85,4 +85,11 @@ public class ContractEntityMappingController {
 		return service.getMappingByContractId(id);
 	}
 
+	@GetMapping("/deactivateBulkContractEntity/{id}")
+	public ResponseEntity deactivateBulkContractEntity(@PathVariable List<Integer> ids,
+			@RequestHeader("X-User-Id") String userId) {
+		logger.info("deactivateBulkContractEntity API hit by user: {}", userId);
+		return service.deactivateBulkContractEntity(ids);
+	}
+
 }

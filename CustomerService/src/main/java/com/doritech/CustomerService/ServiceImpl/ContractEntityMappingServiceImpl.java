@@ -42,7 +42,7 @@ import com.doritech.CustomerService.ValidationService.ValidationService;
 @Service
 public class ContractEntityMappingServiceImpl
 		implements
-			ContractEntityMappingService {
+		ContractEntityMappingService {
 
 	private static final Logger logger = LoggerFactory
 			.getLogger(ContractEntityMappingServiceImpl.class);
@@ -680,6 +680,47 @@ public class ContractEntityMappingServiceImpl
 			logger.error("Error while fetching mapping for contract id {}", id,
 					ex);
 			throw new DatabaseOperationException("Failed to fetch mapping");
+		}
+	}
+
+	@Override
+	@Transactional
+	public ResponseEntity deactivateBulkContractEntity(List<Integer> ids) {
+
+		logger.info("Bulk deactivate ContractEntityMapping API called with ids {}", ids);
+
+		if (ids == null || ids.isEmpty()) {
+			throw new BadRequestException("Mapping ids cannot be null or empty");
+		}
+
+		try {
+
+			List<ContractEntityMapping> mappings = repository.findAllById(ids);
+
+			if (mappings.isEmpty()) {
+				logger.error("No mappings found for ids {}", ids);
+				throw new ResourceNotFoundException("No mappings found for given ids");
+			}
+
+			LocalDateTime now = LocalDateTime.now();
+
+			mappings.forEach(mapping -> {
+				mapping.setIsActive("N");
+				mapping.setModifiedOn(now);
+			});
+
+			repository.saveAll(mappings);
+
+			logger.info("Bulk mappings deactivated successfully for ids {}", ids);
+
+			return new ResponseEntity("Mappings deactivated successfully", 200, null);
+
+		} catch (ResourceNotFoundException ex) {
+			throw ex;
+
+		} catch (Exception ex) {
+			logger.error("Error while bulk deactivating mappings for ids {}", ids, ex);
+			throw new DatabaseOperationException("Failed to deactivate mappings");
 		}
 	}
 }

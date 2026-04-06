@@ -1,5 +1,7 @@
 package com.doritech.CustomerService.Controller;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -68,6 +71,7 @@ public class ContractDocumentController {
 
 		return service.getDocument(documentId);
 	}
+
 	@GetMapping("/getDocumentByContractId")
 	public ResponseEntity getDocumentByContractId(
 			@RequestParam Integer contractId) {
@@ -96,5 +100,17 @@ public class ContractDocumentController {
 	public ResponseEntity getAllDocuments() {
 		logger.info("Get all documents API called");
 		return service.getAllDocuments();
+	}
+
+	@DeleteMapping("/deleteBulkDocument")
+	public ResponseEntity deleteBulkDocument(
+			@RequestBody List<Integer> documentIds,
+			@RequestHeader("X-User-Id") String userId) {
+		logger.info("Bulk delete document API called for ids: {} by user: {}", documentIds, userId);
+		if (documentIds == null || documentIds.isEmpty()) {
+			logger.error("Invalid document ids: {}", documentIds);
+			return new ResponseEntity("Document IDs cannot be null or empty", 400, null);
+		}
+		return service.deleteBulkDocument(documentIds);
 	}
 }

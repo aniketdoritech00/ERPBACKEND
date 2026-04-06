@@ -86,4 +86,13 @@ public class ContractItemPackageController {
 		return service.getPackageByContractId(contractId);
 	}
 
+	@DeleteMapping("/deleteBulkPackage/{id}")
+	public ResponseEntity deleteBulkPackage(@PathVariable List<Integer> ids,
+			@RequestHeader("X-User-Id") String userId) {
+		logger.info(
+				"Delete Bulk ContractItemPackage API called for id {} by user {}",
+				ids, userId);
+		return service.deleteBulkPackage(ids);
+	}
+
 }

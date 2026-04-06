@@ -1,5 +1,7 @@
 package com.doritech.CustomerService.Service;
 
+import java.util.List;
+
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Request.ContractDocumentRequest;
 
@@ -20,5 +22,7 @@ public interface ContractDocumentService {
 	ResponseEntity saveOrUpdateDocument(@Valid ContractDocumentRequest request);
 
 	ResponseEntity getDocumentByContractId(Integer contractId);
+
+    ResponseEntity deleteBulkDocument(List<Integer> documentIds);
 
 }

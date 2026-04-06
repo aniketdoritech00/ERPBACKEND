@@ -336,4 +336,41 @@ public class ContractItemPackageServiceImpl implements ContractItemPackageServic
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
+
+	@Override
+	public ResponseEntity deleteBulkPackage(List<Integer> ids) {
+
+		logger.info("Bulk delete ContractItemPackage API called with ids {}", ids);
+
+		try {
+
+			if (ids == null || ids.isEmpty()) {
+				logger.error("Delete failed: ids are null or empty");
+				return new ResponseEntity("IDs cannot be null or empty", 400, null);
+			}
+
+			List<ContractItemPackage> entities = repository.findAllById(ids);
+
+			if (entities.isEmpty()) {
+				logger.error("No ContractItemPackage found for ids {}", ids);
+				throw new ResourceNotFoundException("No ContractItemPackage found for given ids");
+			}
+
+			repository.deleteAll(entities);
+
+			logger.info("Bulk ContractItemPackage deleted successfully for ids {}", ids);
+
+			return new ResponseEntity("ContractItemPackage deleted successfully", 200, null);
+
+		} catch (ResourceNotFoundException e) {
+
+			logger.error("Delete failed for ids {}: {}", ids, e.getMessage());
+			return new ResponseEntity(e.getMessage(), 404, null);
+
+		} catch (Exception e) {
+
+			logger.error("Unexpected error while deleting for ids {}: {}", ids, e.getMessage(), e);
+			return new ResponseEntity("Internal server error: " + e.getMessage(), 500, null);
+		}
+	}
 }
