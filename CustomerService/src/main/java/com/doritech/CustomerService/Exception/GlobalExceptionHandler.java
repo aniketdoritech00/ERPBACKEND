@@ -124,14 +124,34 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ResponseEntity(ex.getMessage(), 400, null));
     }
+    
+    @ExceptionHandler(org.springframework.web.bind.MissingRequestHeaderException.class)
+    public org.springframework.http.ResponseEntity<ResponseEntity> handleMissingHeader(
+            org.springframework.web.bind.MissingRequestHeaderException ex) {
 
+        logger.error("Missing Header: {}", ex.getHeaderName(), ex);
+
+        String message = "Required header '" + ex.getHeaderName() + "' is missing";
+
+        return org.springframework.http.ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ResponseEntity(message, 400, null));
+    }
     @ExceptionHandler(DatabaseOperationException.class)
     public org.springframework.http.ResponseEntity<ResponseEntity> handleDatabase(
             DatabaseOperationException ex) {
+
         logger.error("Database Error: ", ex);
+
+        String message = ex.getMessage();
+
+        if (ex.getCause() != null) {
+            message = ex.getCause().getMessage();
+        }
+
         return org.springframework.http.ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ResponseEntity("Database Operation Failed", 500, null));
+                .body(new ResponseEntity(message, 500, null));
     }
 
     @ExceptionHandler(Exception.class)

@@ -22,4 +22,7 @@ public interface CustomerBranchAllocationRepository
 	Optional<CustomerBranchAllocation> findByCustomerCustomerIdAndIsActive(Integer customerId, String isActive);
 
 	boolean existsByCustomer_CustomerIdAndSiteIdAndIsActive(Integer customerId, Integer siteId, String string);
+
+    CustomerBranchAllocation findByCustomer_CustomerIdAndSiteIdAndIsActive(Integer customerId, Integer siteId,
+            String string);
 }

@@ -616,4 +616,44 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 					"Something went wrong while fetching contracts");
 		}
 	}
+
+	@Override
+	public ResponseEntity getContractNamesAndIdsForFillter() {
+		logger.info("Fetching active contract IDs and names");
+
+		ResponseEntity response = new ResponseEntity();
+
+		try {
+			List<ContractMaster> contracts = contractRepository.getActiveContracts();
+
+			if (contracts == null || contracts.isEmpty()) {
+				logger.warn("No active contracts found");
+				response.setStatusCode(404);
+				response.setMessage("No active contracts found");
+				response.setPayload(null);
+				return response;
+			}
+
+			List<ContractMasterResponse> simplified = contracts.stream().map(c -> {
+				ContractMasterResponse temp = new ContractMasterResponse();
+				temp.setContractId(c.getContractId());
+				temp.setContractName(c.getContractName());
+				temp.setContractNo(c.getContractNo());
+				return temp;
+			}).toList();
+
+			logger.info("Fetched {} active contracts", simplified.size());
+			response.setStatusCode(200);
+			response.setMessage("Contracts fetched successfully");
+			response.setPayload(simplified);
+
+		} catch (Exception e) {
+			logger.error("Error fetching contracts", e);
+			response.setStatusCode(500);
+			response.setMessage("Internal server error");
+			response.setPayload(null);
+		}
+
+		return response;
+	}
 }
