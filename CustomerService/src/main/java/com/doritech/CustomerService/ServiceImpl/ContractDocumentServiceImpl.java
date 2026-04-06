@@ -368,4 +368,57 @@ public class ContractDocumentServiceImpl implements ContractDocumentService {
 
 		return response;
 	}
+
+	@Override
+	public ResponseEntity deleteBulkDocument(List<Integer> documentIds) {
+
+		logger.info("Delete Bulk Document API called for ids: {}", documentIds);
+
+		ResponseEntity response = new ResponseEntity();
+
+		try {
+
+			if (documentIds == null || documentIds.isEmpty()) {
+				logger.error("Invalid document ids: {}", documentIds);
+				response.setMessage("Document IDs cannot be null or empty");
+				response.setStatusCode(400);
+				response.setPayload(null);
+				return response;
+			}
+
+			List<ContractDocuments> documents = repository.findAllById(documentIds);
+
+			if (documents.isEmpty()) {
+				logger.error("No documents found for ids: {}", documentIds);
+				response.setMessage("Document not found");
+				response.setStatusCode(404);
+				response.setPayload(null);
+				return response;
+			}
+
+			repository.deleteAll(documents);
+
+			logger.info("Documents deleted successfully for ids: {}", documentIds);
+
+			response.setMessage("Document deleted successfully");
+			response.setStatusCode(200);
+			response.setPayload(null);
+
+		} catch (DataAccessException e) {
+
+			logger.error("Database error while deleting documents for ids {}", documentIds, e);
+			response.setMessage("Database error while deleting document");
+			response.setStatusCode(500);
+			response.setPayload(null);
+
+		} catch (Exception e) {
+
+			logger.error("Unexpected error while deleting documents for ids {}", documentIds, e);
+			response.setMessage("Unable to delete document");
+			response.setStatusCode(500);
+			response.setPayload(null);
+		}
+
+		return response;
+	}
 }

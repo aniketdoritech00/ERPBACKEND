@@ -24,4 +24,6 @@ public interface ContractItemPackageService {
 
 	ResponseEntity getPackageByContractId(Integer contractId);
 
+    ResponseEntity deleteBulkPackage(List<Integer> ids);
+
 }
