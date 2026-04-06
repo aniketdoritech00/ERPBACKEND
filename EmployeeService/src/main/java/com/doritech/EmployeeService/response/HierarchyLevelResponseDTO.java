@@ -11,18 +11,33 @@ public class HierarchyLevelResponseDTO {
 	private String levelName;
 	private Boolean endNode;
 	private LocalDateTime createdOn;
+	private String hierarchyName;
 
-	public HierarchyLevelResponseDTO(Integer id, Integer hierarchyId,
+	public HierarchyLevelResponseDTO(Integer id, Integer hierarchyId,String hierarchyName,
 			String entityType, Integer levelNumber, String levelName,
 			Boolean endNode, LocalDateTime createdOn) {
 
 		this.id = id;
 		this.hierarchyId = hierarchyId;
+		this.hierarchyName = hierarchyName;
 		this.entityType = entityType;
 		this.levelNumber = levelNumber;
 		this.levelName = levelName;
 		this.endNode = endNode;
 		this.createdOn = createdOn;
+	}
+	/**
+	 * @return the hierarchyName
+	 */
+	public String getHierarchyName() {
+		return hierarchyName;
+	}
+
+	/**
+	 * @param hierarchyName the hierarchyName to set
+	 */
+	public void setHierarchyName(String hierarchyName) {
+		this.hierarchyName = hierarchyName;	
 	}
 
 	/**

@@ -15,6 +15,7 @@ public class HierarchyMapper {
 
 		return new HierarchyLevelResponseDTO(entity.getId(),
 				entity.getHierarchy().getId(),
+				entity.getHierarchy().getHierarchyName(), // 👈 ADD THIS
 				entity.getHierarchy().getEntityType(), // 👈 ADD THIS
 				entity.getLevelNumber(), entity.getLevelName(),
 				entity.getEndNode(), entity.getCreatedOn());
