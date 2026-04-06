@@ -30,4 +30,7 @@ public interface CustomerEmployeeAllocationRepository
 
 	Page<CustomerEmployeeAllocation> findByIsActive(String string,
 			Pageable pageable);
+
+    CustomerEmployeeAllocation findByCustomer_CustomerIdAndEmployeeIdAndIsActive(Integer customerId, Integer employeeId,
+            String string);
 }

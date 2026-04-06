@@ -883,4 +883,43 @@ public class CustomerServiceImpl implements CustomerService {
 		}
 	}
 
+	
+	@Override
+	@Transactional(readOnly = true)
+	public ResponseEntity getCustomerNamesForFillter() {
+		logger.info("Get All Customer Names API called");
+
+		try {
+
+			List<CustomerMasterEntity> customers = customerRepo.findAll();
+
+			if (customers.isEmpty()) {
+				logger.warn("No customers found in getAllCustomerNames");
+				throw new ResourceNotFoundException("No Customers Found");
+			}
+
+			List<CustomerResponse> responseList = customers.stream().map(c -> {
+				CustomerResponse res = new CustomerResponse();
+				res.setCustomerId(c.getCustomerId());
+				res.setCustomerName(c.getCustomerName());
+				res.setCustomerCode(c.getCustomerCode());
+				return res;
+			}).toList();
+
+			logger.info("Total customers fetched: {}", responseList.size());
+
+			return new ResponseEntity("Success", 200, responseList);
+
+		} catch (ResourceNotFoundException ex) {
+			logger.warn("No customers found: {}", ex.getMessage());
+			throw ex;
+		} catch (DataAccessException ex) {
+			logger.error("Database access error in getAllCustomerNames: {}", ex.getMessage(), ex);
+			throw new DatabaseOperationException("Failed to fetch customer names");
+		} catch (Exception ex) {
+			logger.error("Unexpected error in getAllCustomerNames: {}", ex.getMessage(), ex);
+			throw new DatabaseOperationException("Failed to fetch customer names");
+		}
+	}
+
 }
