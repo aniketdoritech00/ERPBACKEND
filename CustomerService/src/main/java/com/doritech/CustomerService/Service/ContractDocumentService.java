@@ -9,20 +9,18 @@ import jakarta.validation.Valid;
 
 public interface ContractDocumentService {
 
-   // ResponseEntity saveDocument(ContractDocumentRequest request);
+	ResponseEntity updateDocument(ContractDocumentRequest request);
 
-    ResponseEntity updateDocument(ContractDocumentRequest request);
-
-    ResponseEntity deleteDocument(Integer documentId);
-
-    ResponseEntity getDocument(Integer documentId);
-
-    ResponseEntity getAllDocuments();
+	ResponseEntity deleteDocument(Integer documentId);
 
 	ResponseEntity saveOrUpdateDocument(@Valid ContractDocumentRequest request);
 
 	ResponseEntity getDocumentByContractId(Integer contractId);
 
-    ResponseEntity deleteBulkDocument(List<Integer> documentIds);
+	ResponseEntity deleteBulkDocument(List<Integer> documentIds);
+
+	ResponseEntity getAllDocuments(int page, int size);
+
+	ResponseEntity getDocumentById(Integer documentId);
 
 }

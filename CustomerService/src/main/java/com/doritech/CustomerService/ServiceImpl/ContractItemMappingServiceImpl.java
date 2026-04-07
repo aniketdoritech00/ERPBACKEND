@@ -117,6 +117,10 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 					entity.setContract(contract);
 					entity.setItemId(request.getItemId());
 					entity.setUnitPrice(request.getUnitPrice());
+					if(request.getBuyBackUnitPrice() != null) {
+						entity.setBuyBackItemId(request.getItemId());
+						entity.setBuyBackUnitPrice(request.getBuyBackUnitPrice());
+					}
 					entity.setQuantity(request.getQuantity());
 					entity.setWarrantyPeriod(request.getWarrantyPeriod());
 					entity.setAmcRate(request.getAmcRate());

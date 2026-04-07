@@ -22,6 +22,7 @@ public class ContractEntityMappingRequest {
 
 	private LocalDate employeeFromDate;
 
+	@NotNull(message = "{employeeId.id.required}")
 	private Integer employeeId;
 
 	private Integer minNoVisits;
