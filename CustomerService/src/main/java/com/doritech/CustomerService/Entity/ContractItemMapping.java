@@ -14,6 +14,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "contract_item_mapping")
@@ -46,6 +48,14 @@ public class ContractItemMapping {
 
 	@Column(name = "amc_rate", precision = 10, scale = 2)
 	private BigDecimal amcRate;
+
+	//@NotNull(message = "{buy.back.item.id.required}")
+	@Column(name = "buy_back_item_id")
+	private Integer buyBackItemId;
+
+	@Digits(integer = 8, fraction = 2, message = "{buy.back.unit.price.digits}")
+	@Column(name = "buy_back_unit_price", precision = 10, scale = 2)
+	private BigDecimal buyBackUnitPrice;
 
 	@Column(name = "approval_required", length = 1)
 	private String approvalRequired;
@@ -176,4 +186,21 @@ public class ContractItemMapping {
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;
 	}
+
+	public Integer getBuyBackItemId() {
+		return buyBackItemId;
+	}
+
+	public void setBuyBackItemId(Integer buyBackItemId) {
+		this.buyBackItemId = buyBackItemId;
+	}
+
+	public BigDecimal getBuyBackUnitPrice() {
+		return buyBackUnitPrice;
+	}
+
+	public void setBuyBackUnitPrice(BigDecimal buyBackUnitPrice) {
+		this.buyBackUnitPrice = buyBackUnitPrice;
+	}
+
 }

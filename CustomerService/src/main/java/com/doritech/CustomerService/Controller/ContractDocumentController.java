@@ -26,15 +26,13 @@ import jakarta.validation.Valid;
 @RequestMapping("/customer/api/contract-document")
 public class ContractDocumentController {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(ContractDocumentController.class);
+	private static final Logger logger = LoggerFactory.getLogger(ContractDocumentController.class);
 
 	@Autowired
 	private ContractDocumentService service;
 
 	@PostMapping("/saveOrUpdateDocument")
-	public ResponseEntity saveOrUpdateDocument(
-			@ModelAttribute @Valid ContractDocumentRequest request,
+	public ResponseEntity saveOrUpdateDocument(@ModelAttribute @Valid ContractDocumentRequest request,
 			@RequestHeader("X-User-Id") String userId) {
 
 		logger.info("SaveOrUpdate Document Controller called");
@@ -47,46 +45,29 @@ public class ContractDocumentController {
 		return service.saveOrUpdateDocument(request);
 	}
 
-	/*
-	 * @PutMapping("/updateDocument") public ResponseEntity
-	 * updateDocument(@ModelAttribute @Valid ContractDocumentRequest request,
-	 * 
-	 * @RequestHeader("X-User-Id") String userId) {
-	 * logger.info("Update Document Controller called"); Integer user =
-	 * Integer.parseInt(userId); request.setModifiedBy(user); return
-	 * service.updateDocument(request); }
-	 */
-
 	@GetMapping("/getDocument/{documentId}")
-	public ResponseEntity getDocument(@PathVariable Integer documentId,
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity getDocument(@PathVariable Integer documentId, @RequestHeader("X-User-Id") String userId) {
 
-		logger.info("Get document API called for id: {} by user: {}",
-				documentId, userId);
+		logger.info("Get document API called for id: {} by user: {}", documentId, userId);
 
 		if (documentId <= 0) {
 			logger.error("Invalid document id: {}", documentId);
 			return new ResponseEntity("Invalid Document Id", 400, null);
 		}
 
-		return service.getDocument(documentId);
+		return service.getDocumentById(documentId);
 	}
 
 	@GetMapping("/getDocumentByContractId")
-	public ResponseEntity getDocumentByContractId(
-			@RequestParam Integer contractId) {
-		logger.info(
-				"Get Document By ContractId Controller called for contractId: {}",
-				contractId);
+	public ResponseEntity getDocumentByContractId(@RequestParam Integer contractId) {
+		logger.info("Get Document By ContractId Controller called for contractId: {}", contractId);
 		return service.getDocumentByContractId(contractId);
 	}
 
 	@DeleteMapping("/deleteDocument/{documentId}")
-	public ResponseEntity deleteDocument(@PathVariable Integer documentId,
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity deleteDocument(@PathVariable Integer documentId, @RequestHeader("X-User-Id") String userId) {
 
-		logger.info("Delete document API called for id: {} by user: {}",
-				documentId, userId);
+		logger.info("Delete document API called for id: {} by user: {}", documentId, userId);
 
 		if (documentId <= 0) {
 			logger.error("Invalid document id: {}", documentId);
@@ -97,20 +78,24 @@ public class ContractDocumentController {
 	}
 
 	@GetMapping("/getAllDocuments")
-	public ResponseEntity getAllDocuments() {
-		logger.info("Get all documents API called");
-		return service.getAllDocuments();
+	public ResponseEntity getAllDocuments(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size) {
+
+		logger.info("Get all documents API called with page: {} and size: {}", page, size);
+		return service.getAllDocuments(page, size);
 	}
 
 	@DeleteMapping("/deleteBulkDocument")
-	public ResponseEntity deleteBulkDocument(
-			@RequestBody List<Integer> documentIds,
+	public ResponseEntity deleteBulkDocument(@RequestBody List<Integer> documentIds,
 			@RequestHeader("X-User-Id") String userId) {
+
 		logger.info("Bulk delete document API called for ids: {} by user: {}", documentIds, userId);
+
 		if (documentIds == null || documentIds.isEmpty()) {
 			logger.error("Invalid document ids: {}", documentIds);
 			return new ResponseEntity("Document IDs cannot be null or empty", 400, null);
 		}
+
 		return service.deleteBulkDocument(documentIds);
 	}
 }
