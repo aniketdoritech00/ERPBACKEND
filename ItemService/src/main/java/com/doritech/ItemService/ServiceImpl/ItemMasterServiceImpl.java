@@ -2,7 +2,9 @@ package com.doritech.ItemService.ServiceImpl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,8 +19,10 @@ import com.doritech.ItemService.Repository.ItemMasterRepository;
 import com.doritech.ItemService.Request.ItemMasterRequestDTO;
 import com.doritech.ItemService.Response.ItemMasterResponseDTO;
 import com.doritech.ItemService.Response.PageResponseDTO;
+import com.doritech.ItemService.Response.ParamResponseDTO;
 import com.doritech.ItemService.Service.ItemMasterService;
 import com.doritech.ItemService.Specification.ItemMasterSpecification;
+import com.doritech.ItemService.Validation.ValidationService;
 
 @Service
 public class ItemMasterServiceImpl implements ItemMasterService {
@@ -28,6 +32,9 @@ public class ItemMasterServiceImpl implements ItemMasterService {
 
 	@Autowired
 	private ItemMapper mapper;
+
+	@Autowired
+	private ValidationService validationService;
 
 	@Override
 	public ItemMasterResponseDTO saveItem(ItemMasterRequestDTO dto) {
@@ -64,11 +71,50 @@ public class ItemMasterServiceImpl implements ItemMasterService {
 	}
 
 	@Override
-	public PageResponseDTO<ItemMasterResponseDTO> getAllItems(int page,
-			int size) {
+	public PageResponseDTO<ItemMasterResponseDTO> getAllItems(int page, int size) {
 
 		Page<ItemMasterResponseDTO> result = repo
-				.findAll(PageRequest.of(page, size)).map(mapper::toDTO);
+				.findAll(PageRequest.of(page, size))
+				.map(mapper::toDTO);
+
+		List<ParamResponseDTO> categoryParams = validationService.validateParamList("item", "category");
+
+		List<ParamResponseDTO> typeParams = validationService.validateParamList("item", "type");
+
+		List<ParamResponseDTO> uomParams = validationService.validateParamList("item", "UOM");
+
+		Map<String, String> categoryMap = categoryParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+		Map<String, String> uomMap = uomParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+		Map<String, String> typeMap = typeParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+		result.getContent().forEach(item -> {
+
+			if (item.getItemType() != null) {
+				item.setItemType(
+						typeMap.getOrDefault(item.getItemType(), item.getItemType()));
+			}
+
+			if (item.getCategory() != null) {
+				item.setCategory(
+						categoryMap.getOrDefault(item.getCategory(), item.getCategory()));
+			}
+
+			if (item.getUnitOfMeasure() != null) {
+				item.setUnitOfMeasure(
+						uomMap.getOrDefault(item.getUnitOfMeasure(), item.getUnitOfMeasure()));
+			}
+		});
 
 		return new PageResponseDTO<>(result);
 	}
@@ -77,6 +123,47 @@ public class ItemMasterServiceImpl implements ItemMasterService {
 	public List<ItemMasterResponseDTO> getAllItems() {
 
 		List<ItemMasterEntity> entityEntities = repo.findByIsActive("Y");
+
+		List<ParamResponseDTO> categoryParams = validationService.validateParamList("item", "category");
+
+		List<ParamResponseDTO> typeParams = validationService.validateParamList("item", "type");
+
+		List<ParamResponseDTO> uomParams = validationService.validateParamList("item", "UOM");
+
+		Map<String, String> categoryMap = categoryParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+		Map<String, String> uomMap = uomParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+		Map<String, String> typeMap = typeParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+
+
+		entityEntities.forEach(item -> {
+
+			if (item.getItemType() != null) {
+				item.setItemType(
+						typeMap.getOrDefault(item.getItemType(), item.getItemType()));
+			}
+
+			if (item.getCategory() != null) {
+				item.setCategory(
+						categoryMap.getOrDefault(item.getCategory(), item.getCategory()));
+			}
+
+			if (item.getUnitOfMeasure() != null) {
+				item.setUnitOfMeasure(
+						uomMap.getOrDefault(item.getUnitOfMeasure(), item.getUnitOfMeasure()));
+			}
+		});
 
 		return mapper.toDTOList(entityEntities);
 	}
@@ -92,12 +179,51 @@ public class ItemMasterServiceImpl implements ItemMasterService {
 		if (size <= 0 || size > 100)
 			throw new BusinessException("Page size must be between 1 and 100");
 
+		List<ParamResponseDTO> categoryParams = validationService.validateParamList("item", "category");
+
+		List<ParamResponseDTO> typeParams = validationService.validateParamList("item", "type");
+
+		List<ParamResponseDTO> uomParams = validationService.validateParamList("item", "UOM");
+
+		Map<String, String> categoryMap = categoryParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+		Map<String, String> uomMap = uomParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+						Map<String, String> typeMap = typeParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
 		Page<ItemMasterResponseDTO> resultPage = repo
 				.findAll(
 						ItemMasterSpecification.filter(itemName, itemCode,
 								active, itemType, category),
 						PageRequest.of(page, size))
 				.map(mapper::toDTO);
+
+		resultPage.getContent().forEach(item -> {
+
+			if (item.getItemType() != null) {
+				item.setItemType(
+						typeMap.getOrDefault(item.getItemType(), item.getItemType()));
+			}
+
+			if (item.getCategory() != null) {
+				item.setCategory(
+						categoryMap.getOrDefault(item.getCategory(), item.getCategory()));
+			}
+
+			if (item.getUnitOfMeasure() != null) {
+				item.setUnitOfMeasure(
+						uomMap.getOrDefault(item.getUnitOfMeasure(), item.getUnitOfMeasure()));
+			}
+		});
 
 		return new PageResponseDTO<>(resultPage);
 	}
@@ -118,6 +244,45 @@ public class ItemMasterServiceImpl implements ItemMasterService {
 		if (entities.isEmpty())
 			throw new ResourceNotFoundException(
 					"No items found for type : " + type);
+
+		List<ParamResponseDTO> categoryParams = validationService.validateParamList("item", "category");
+
+		List<ParamResponseDTO> typeParams = validationService.validateParamList("item", "type");
+
+		List<ParamResponseDTO> uomParams = validationService.validateParamList("item", "UOM");
+
+		Map<String, String> categoryMap = categoryParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+		Map<String, String> uomMap = uomParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+		Map<String, String> typeMap = typeParams.stream()
+				.collect(Collectors.toMap(
+						ParamResponseDTO::getDesp1,
+						ParamResponseDTO::getDesp2));
+
+		entities.forEach(item -> {
+
+			if (item.getItemType() != null) {
+				item.setItemType(
+						typeMap.getOrDefault(item.getItemType(), item.getItemType()));
+			}
+
+			if (item.getCategory() != null) {
+				item.setCategory(
+						categoryMap.getOrDefault(item.getCategory(), item.getCategory()));
+			}
+
+			if (item.getUnitOfMeasure() != null) {
+				item.setUnitOfMeasure(
+						uomMap.getOrDefault(item.getUnitOfMeasure(), item.getUnitOfMeasure()));
+			}
+		});
 
 		return mapper.toDTOList(entities);
 	}
