@@ -132,7 +132,7 @@ public class ContractEntityMappingServiceImpl
 					if (!newDate.isAfter(existingDate)) {
 						logger.error("Branch already assigned till {}", existingDate);
 						throw new BadRequestException(
-								"Already assigned till " + existingDate + ". Please assign after this date");
+								"Site Already assigned till " + existingDate + ". Please assign after this date");
 					}
 
 					existingBranch.setIsActive("N");
