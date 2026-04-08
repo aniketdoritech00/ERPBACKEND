@@ -10,7 +10,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,12 +40,9 @@ import com.doritech.CustomerService.Service.ContractEntityMappingService;
 import com.doritech.CustomerService.ValidationService.ValidationService;
 
 @Service
-public class ContractEntityMappingServiceImpl
-		implements
-		ContractEntityMappingService {
+public class ContractEntityMappingServiceImpl implements ContractEntityMappingService {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(ContractEntityMappingServiceImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(ContractEntityMappingServiceImpl.class);
 
 	@Autowired
 	private ContractEntityMappingRepository repository;
@@ -259,11 +255,10 @@ public class ContractEntityMappingServiceImpl
 			throw new DatabaseOperationException("Failed to save or update mappings");
 		}
 	}
-	
+
 	@Override
 	@Transactional
-	public ResponseEntity updateMapping(Integer id,
-			ContractEntityMappingRequest request) {
+	public ResponseEntity updateMapping(Integer id, ContractEntityMappingRequest request) {
 
 		logger.info("Update Mapping API called for id {}", id);
 
@@ -279,30 +274,20 @@ public class ContractEntityMappingServiceImpl
 
 		try {
 
-			ContractEntityMapping mapping = repository.findById(id)
-					.orElseThrow(() -> {
-						logger.error("Mapping not found with id {}", id);
-						return new ResourceNotFoundException(
-								"Mapping not found with id " + id);
-					});
+			ContractEntityMapping mapping = repository.findById(id).orElseThrow(() -> {
+				logger.error("Mapping not found with id {}", id);
+				return new ResourceNotFoundException("Mapping not found with id " + id);
+			});
 
-			ContractMaster contract = contractRepository
-					.findById(request.getContractId()).orElseThrow(() -> {
-						logger.error("Contract not found with id {}",
-								request.getContractId());
-						return new ResourceNotFoundException(
-								"Contract not found with id "
-										+ request.getContractId());
-					});
+			ContractMaster contract = contractRepository.findById(request.getContractId()).orElseThrow(() -> {
+				logger.error("Contract not found with id {}", request.getContractId());
+				return new ResourceNotFoundException("Contract not found with id " + request.getContractId());
+			});
 
-			CustomerMasterEntity customer = customerRepository
-					.findById(request.getCustomerId()).orElseThrow(() -> {
-						logger.error("Customer not found with id {}",
-								request.getCustomerId());
-						return new ResourceNotFoundException(
-								"Customer not found with id "
-										+ request.getCustomerId());
-					});
+			CustomerMasterEntity customer = customerRepository.findById(request.getCustomerId()).orElseThrow(() -> {
+				logger.error("Customer not found with id {}", request.getCustomerId());
+				return new ResourceNotFoundException("Customer not found with id " + request.getCustomerId());
+			});
 
 			logger.info("Validating site with id {}", request.getSiteId());
 			validationService.validateSiteExists(request.getSiteId());
@@ -321,33 +306,25 @@ public class ContractEntityMappingServiceImpl
 
 			logger.info("Mapping updated successfully with id {}", id);
 
-			return new ResponseEntity("Mapping updated successfully", 200,
-					mapper.toResponse(mapping));
+			return new ResponseEntity("Mapping updated successfully", 200, mapper.toResponse(mapping));
 
 		} catch (BadRequestException ex) {
-			logger.warn(
-					"BadRequestException while updating mapping with id {}: {}",
-					id, ex.getMessage());
+			logger.warn("BadRequestException while updating mapping with id {}: {}", id, ex.getMessage());
 			throw ex;
 		} catch (ResourceNotFoundException ex) {
-			logger.warn(
-					"ResourceNotFoundException while updating mapping with id {}: {}",
-					id, ex.getMessage());
+			logger.warn("ResourceNotFoundException while updating mapping with id {}: {}", id, ex.getMessage());
 			throw ex;
 		} catch (ExternalServiceException ex) {
-			logger.error(
-					"ExternalServiceException while updating mapping with id {}: {}",
-					id, ex.getMessage());
+			logger.error("ExternalServiceException while updating mapping with id {}: {}", id, ex.getMessage());
 			throw ex;
 		} catch (Exception ex) {
-			logger.error(
-					"Unexpected error while updating mapping with id {}: {}",
-					id, ex.getMessage(), ex);
+			logger.error("Unexpected error while updating mapping with id {}: {}", id, ex.getMessage(), ex);
 			throw new DatabaseOperationException("Failed to update mapping");
 		}
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public ResponseEntity getMappingById(Integer id) {
 
 		logger.info("Get Mapping By ID API called {}", id);
@@ -359,28 +336,23 @@ public class ContractEntityMappingServiceImpl
 
 		try {
 
-			ContractEntityMapping mapping = repository.findById(id)
-					.orElseThrow(() -> {
-						logger.error("Mapping not found with id {}", id);
-						return new ResourceNotFoundException(
-								"Mapping not found with id " + id);
-					});
+			ContractEntityMapping mapping = repository.findById(id).orElseThrow(() -> {
+				logger.error("Mapping not found with id {}", id);
+				return new ResourceNotFoundException("Mapping not found with id " + id);
+			});
 
 			ContractEntityMappingResponse response = mapper.toResponse(mapping);
 
 			try {
-				logger.info("Fetching site details for siteId {}",
-						mapping.getSiteId());
+				logger.info("Fetching site details for siteId {}", mapping.getSiteId());
 
-				CompSiteResponse site = validationService
-						.validateAndGetSite(mapping.getSiteId(), "Source");
+				CompSiteResponse site = validationService.validateAndGetSite(mapping.getSiteId(), "Source");
 
 				response.setSiteId(site.getSiteId());
 				response.setSiteName(site.getSiteName());
 
 			} catch (Exception ex) {
-				logger.warn("Unable to fetch site details for siteId {}: {}",
-						mapping.getSiteId(), ex.getMessage());
+				logger.warn("Unable to fetch site details for siteId {}: {}", mapping.getSiteId(), ex.getMessage());
 				response.setSiteName("Unknown Site");
 			}
 
@@ -390,14 +362,10 @@ public class ContractEntityMappingServiceImpl
 
 					Integer customerId = mapping.getCustomer().getCustomerId();
 
-					logger.info("Fetching customer details for customerId {}",
-							customerId);
+					logger.info("Fetching customer details for customerId {}", customerId);
 
-					CustomerMasterEntity customer = customerRepository
-							.findById(customerId)
-							.orElseThrow(() -> new ResourceNotFoundException(
-									"Customer not found with id "
-											+ customerId));
+					CustomerMasterEntity customer = customerRepository.findById(customerId).orElseThrow(
+							() -> new ResourceNotFoundException("Customer not found with id " + customerId));
 
 					response.setCustomerId(customer.getCustomerId());
 					response.setCustomerName(customer.getCustomerName());
@@ -425,28 +393,30 @@ public class ContractEntityMappingServiceImpl
 			throw ex;
 
 		} catch (Exception ex) {
-			logger.error("Unexpected error in getMappingById for id {}", id,
-					ex);
+			logger.error("Unexpected error in getMappingById for id {}", id, ex);
 			throw new DatabaseOperationException("Failed to fetch mapping");
 		}
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public ResponseEntity getAllMappings(int page, int size) {
 
-		try {
-			logger.info("getAllMappings API hit with page {} and size {}", page,
-					size);
+		logger.info("getAllMappings API hit with page {} and size {}", page, size);
 
-			Pageable pageable = PageRequest.of(page, size,
-					Sort.by("mappingId").descending());
-			Page<ContractEntityMapping> pageResult = repository
-					.findAll(pageable);
+		if (page < 0 || size <= 0) {
+			logger.error("Invalid pagination parameters page {} size {}", page, size);
+			throw new BadRequestException("Invalid page or size value");
+		}
+
+		try {
+			Pageable pageable = PageRequest.of(page, size, Sort.by("mappingId").descending());
+			Page<ContractEntityMapping> pageResult = repository.findAll(pageable);
 
 			List<ContractEntityMapping> mappings = pageResult.getContent();
 
-			Map<Integer, String> siteCache = new HashMap<>();
-			Map<Integer, String> customerCache = new HashMap<>();
+			Map<Integer, CompSiteResponse> siteCache = new HashMap<>();
+			Map<Integer, CustomerMasterEntity> customerCache = new HashMap<>();
 
 			List<ContractEntityMappingResponse> response = new ArrayList<>();
 
@@ -454,76 +424,94 @@ public class ContractEntityMappingServiceImpl
 
 				ContractEntityMappingResponse res = mapper.toResponse(mapping);
 
+				if (mapping.getContract() != null) {
+					String contractName = mapping.getContract().getContractName();
+					if (contractName != null && !contractName.trim().isEmpty()) {
+						res.setContractId(mapping.getContract().getContractId());
+						res.setContractName(contractName);
+						res.setContractNo(mapping.getContract().getContractNo());
+					} else {
+						logger.warn("Contract name is null/empty for contractId {}",
+								mapping.getContract().getContractId());
+					}
+				} else {
+					logger.warn("Contract is null for mappingId {}", mapping.getMappingId());
+				}
+
 				try {
 					Integer siteId = mapping.getSiteId();
-
-					if (siteCache.containsKey(siteId)) {
-						res.setSiteName(siteCache.get(siteId));
+					if (siteId != null) {
+						if (siteCache.containsKey(siteId)) {
+							CompSiteResponse site = siteCache.get(siteId);
+							res.setSiteName(site.getSiteName());
+							res.setSiteCode(site.getSiteCode());
+						} else {
+							CompSiteResponse site = validationService.validateAndGetSite(siteId, "Source");
+							siteCache.put(siteId, site);
+							res.setSiteName(site.getSiteName());
+							res.setSiteCode(site.getSiteCode());
+						}
 					} else {
-						CompSiteResponse site = validationService
-								.validateAndGetSite(siteId, "Source");
-						siteCache.put(siteId, site.getSiteName());
-						res.setSiteName(site.getSiteName());
+						res.setSiteName("Unknown Site");
 					}
-
 				} catch (Exception ex) {
-					logger.warn("Site fetch failed for siteId {}",
-							mapping.getSiteId());
+					logger.warn("Site fetch failed for siteId {}", mapping.getSiteId());
 					res.setSiteName("Unknown Site");
 				}
 
 				try {
 					if (mapping.getCustomer() != null) {
-
-						Integer customerId = mapping.getCustomer()
-								.getCustomerId();
-
-						if (customerCache.containsKey(customerId)) {
-							res.setCustomerName(customerCache.get(customerId));
-						} else {
-							CustomerMasterEntity customer = customerRepository
-									.findById(customerId).orElse(null);
-
-							if (customer != null) {
-								customerCache.put(customerId,
-										customer.getCustomerName());
+						Integer customerId = mapping.getCustomer().getCustomerId();
+						if (customerId != null) {
+							if (customerCache.containsKey(customerId)) {
+								CustomerMasterEntity customer = customerCache.get(customerId);
 								res.setCustomerName(customer.getCustomerName());
+								res.setCustomerCode(customer.getCustomerCode());
 							} else {
-								res.setCustomerName("Unknown Customer");
+								CustomerMasterEntity customer = customerRepository.findById(customerId).orElse(null);
+								if (customer != null) {
+									customerCache.put(customerId, customer);
+									res.setCustomerName(customer.getCustomerName());
+									res.setCustomerCode(customer.getCustomerCode());
+								} else {
+									res.setCustomerName("Unknown Customer");
+								}
 							}
+						} else {
+							res.setCustomerName("Unknown Customer");
 						}
-
 					} else {
 						res.setCustomerName("Unknown Customer");
 					}
-
 				} catch (Exception ex) {
-					logger.error("Customer fetch failed for mappingId {}",
-							mapping.getMappingId(), ex);
+					logger.error("Customer fetch failed for mappingId {}", mapping.getMappingId(), ex);
 					res.setCustomerName("Unknown Customer");
 				}
 
 				response.add(res);
 			}
 
-			logger.info("Total mappings fetched in this page {}: {}",
-					pageResult.getNumber(), response.size());
+			logger.info("Total mappings fetched in this page {}: {}", pageResult.getNumber(), response.size());
 
 			Map<String, Object> payload = new HashMap<>();
 			payload.put("data", response);
 			payload.put("currentPage", pageResult.getNumber());
+			payload.put("pageSize", pageResult.getSize());
 			payload.put("totalItems", pageResult.getTotalElements());
 			payload.put("totalPages", pageResult.getTotalPages());
+			payload.put("isLast", pageResult.isLast());
 
 			return new ResponseEntity("Success", 200, payload);
 
-		} catch (DataAccessException dae) {
-			logger.error("Database error while fetching mappings", dae);
-			return new ResponseEntity("Database error", 500, null);
-
+		} catch (BadRequestException ex) {
+			logger.warn("Validation error while fetching mappings {}", ex.getMessage());
+			throw ex;
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException while fetching mappings {}", ex.getMessage());
+			throw ex;
 		} catch (Exception ex) {
 			logger.error("Unexpected error while fetching mappings", ex);
-			return new ResponseEntity("Failed to fetch mappings", 500, null);
+			throw new DatabaseOperationException("Failed to fetch mappings");
 		}
 	}
 
@@ -539,12 +527,10 @@ public class ContractEntityMappingServiceImpl
 
 		try {
 
-			ContractEntityMapping mapping = repository.findById(id)
-					.orElseThrow(() -> {
-						logger.error("Mapping not found with id {}", id);
-						return new ResourceNotFoundException(
-								"Mapping not found with id " + id);
-					});
+			ContractEntityMapping mapping = repository.findById(id).orElseThrow(() -> {
+				logger.error("Mapping not found with id {}", id);
+				return new ResourceNotFoundException("Mapping not found with id " + id);
+			});
 
 			mapping.setIsActive("N");
 			mapping.setModifiedOn(LocalDateTime.now());
@@ -553,8 +539,7 @@ public class ContractEntityMappingServiceImpl
 
 			logger.info("Mapping deactivated successfully {}", id);
 
-			return new ResponseEntity("Mapping deactivated successfully", 200,
-					null);
+			return new ResponseEntity("Mapping deactivated successfully", 200, null);
 
 		} catch (ResourceNotFoundException ex) {
 
@@ -563,12 +548,12 @@ public class ContractEntityMappingServiceImpl
 		} catch (Exception ex) {
 
 			logger.error("Error while deactivating mapping", ex);
-			throw new DatabaseOperationException(
-					"Failed to deactivate mapping");
+			throw new DatabaseOperationException("Failed to deactivate mapping");
 		}
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public ResponseEntity getMappingByContractId(Integer id) {
 
 		logger.info("Get Mapping By ContractId API called {}", id);
@@ -580,13 +565,11 @@ public class ContractEntityMappingServiceImpl
 
 		try {
 
-			List<ContractEntityMapping> mappings = repository
-					.findByContractContractId(id);
+			List<ContractEntityMapping> mappings = repository.findByContractContractId(id);
 
 			if (mappings == null || mappings.isEmpty()) {
 				logger.error("No mapping found with Contract id {}", id);
-				throw new ResourceNotFoundException(
-						"Mapping not found with Contract id " + id);
+				throw new ResourceNotFoundException("Mapping not found with Contract id " + id);
 			}
 
 			Map<Integer, String> siteCache = new HashMap<>();
@@ -604,33 +587,28 @@ public class ContractEntityMappingServiceImpl
 					if (siteCache.containsKey(siteId)) {
 						res.setSiteName(siteCache.get(siteId));
 					} else {
-						CompSiteResponse site = validationService
-								.validateAndGetSite(siteId, "Source");
+						CompSiteResponse site = validationService.validateAndGetSite(siteId, "Source");
 						siteCache.put(siteId, site.getSiteName());
 						res.setSiteName(site.getSiteName());
 					}
 
 				} catch (Exception ex) {
-					logger.warn("Site fetch failed for siteId {}",
-							mapping.getSiteId());
+					logger.warn("Site fetch failed for siteId {}", mapping.getSiteId());
 					res.setSiteName("Unknown Site");
 				}
 
 				try {
 					if (mapping.getCustomer() != null) {
 
-						Integer customerId = mapping.getCustomer()
-								.getCustomerId();
+						Integer customerId = mapping.getCustomer().getCustomerId();
 
 						if (customerCache.containsKey(customerId)) {
 							res.setCustomerName(customerCache.get(customerId));
 						} else {
-							CustomerMasterEntity customer = customerRepository
-									.findById(customerId).orElse(null);
+							CustomerMasterEntity customer = customerRepository.findById(customerId).orElse(null);
 
 							if (customer != null) {
-								customerCache.put(customerId,
-										customer.getCustomerName());
+								customerCache.put(customerId, customer.getCustomerName());
 								res.setCustomerName(customer.getCustomerName());
 							} else {
 								res.setCustomerName("Unknown Customer");
@@ -642,8 +620,7 @@ public class ContractEntityMappingServiceImpl
 					}
 
 				} catch (Exception ex) {
-					logger.error("Customer fetch failed for mappingId {}",
-							mapping.getMappingId(), ex);
+					logger.error("Customer fetch failed for mappingId {}", mapping.getMappingId(), ex);
 					res.setCustomerName("Unknown Customer");
 				}
 
@@ -656,14 +633,12 @@ public class ContractEntityMappingServiceImpl
 
 		} catch (BadRequestException | ResourceNotFoundException ex) {
 
-			logger.error("Validation error while fetching mapping: {}",
-					ex.getMessage());
+			logger.error("Validation error while fetching mapping: {}", ex.getMessage());
 			throw ex;
 
 		} catch (Exception ex) {
 
-			logger.error("Error while fetching mapping for contract id {}", id,
-					ex);
+			logger.error("Error while fetching mapping for contract id {}", id, ex);
 			throw new DatabaseOperationException("Failed to fetch mapping");
 		}
 	}
