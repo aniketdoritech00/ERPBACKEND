@@ -15,11 +15,27 @@ public class ContractItemPackageResponse {
 	private Integer contractId;
 	private String contractName;
 	private String contractCode;
+	private String mappedItemCode;
 	private String mappingItemName;
+	private String mappingItemCode;
 	private Integer createdBy;
 	private Double basePrice;
 	private Double qty;
 	private Integer modifiedBy;
+
+	public String getMappingItemCode() {
+		return mappingItemCode;
+	}
+	public void setMappingItemCode(String mappingItemCode) {
+		this.mappingItemCode = mappingItemCode;
+	}
+
+	public String getMappedItemCode() {
+		return mappedItemCode;
+	}
+	public void setMappedItemCode(String mappedItemCode) {
+		this.mappedItemCode = mappedItemCode;
+	}
 
 	public Integer getContractMappingId() {
 		return contractMappingId;
