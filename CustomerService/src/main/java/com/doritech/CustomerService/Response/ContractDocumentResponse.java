@@ -6,6 +6,10 @@ public class ContractDocumentResponse {
 
     private Integer documentId;
     private Integer contractId;
+    private String contractName;
+	private String contractNo;
+	private String document;
+
     private String documentType;
     private String documentName;
     private Date uploadDate;
@@ -98,4 +102,29 @@ public class ContractDocumentResponse {
     public void setModifiedOn(Date modifiedOn) {
         this.modifiedOn = modifiedOn;
     }
+
+	public String getContractName() {
+		return contractName;
+	}
+
+	public void setContractName(String contractName) {
+		this.contractName = contractName;
+	}
+
+	public String getContractNo() {
+		return contractNo;
+	}
+
+	public void setContractNo(String contractNo) {
+		this.contractNo = contractNo;
+	}
+
+	public String getDocument() {
+		return document;
+	}
+
+	public void setDocument(String document) {
+		this.document = document;
+	}
+    
 }

@@ -22,4 +22,6 @@ public interface ContractEntityMappingService {
 
 	ResponseEntity saveOrUpdateMappings(@Valid List<ContractEntityMappingRequest> requests);
 
+    ResponseEntity deactivateBulkContractEntity(List<Integer> ids);
+
 }

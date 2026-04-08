@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Entity.StockRequestDetailEntity;
 import com.doritech.CustomerService.Entity.StockRequestEntity;
+import com.doritech.CustomerService.Exception.DuplicateResourceException;
 import com.doritech.CustomerService.Exception.ExternalServiceException;
 import com.doritech.CustomerService.Exception.ResourceNotFoundException;
 import com.doritech.CustomerService.Repository.ContractMasterRepository;
@@ -74,46 +75,24 @@ public class StockRequestServiceImpl implements StockRequestService {
 				return response;
 			}
 
-			if (request.getSourceSiteId()
-					.equals(request.getRequestedSiteId())) {
+			if (request.getSourceSiteId().equals(request.getRequestedSiteId())) {
 
-				logger.warn(
-						"Source site and requested site cannot be same. sourceSiteId: {}, requestedSiteId: {}",
-						request.getSourceSiteId(),
-						request.getRequestedSiteId());
+				logger.warn("Source site and requested site cannot be same. sourceSiteId: {}, requestedSiteId: {}",
+						request.getSourceSiteId(), request.getRequestedSiteId());
 
 				response.setStatusCode(400);
-				response.setMessage(
-						"Source Site and Requested Site cannot be the same");
+				response.setMessage("Source Site and Requested Site cannot be the same");
 				response.setPayload(null);
 
 				return response;
 			}
 
-			if (stockRequestRepository.existsBySourceSiteIdAndRequestedSiteId(
-					request.getSourceSiteId(), request.getRequestedSiteId())) {
+			logger.info("Validating source site with id {}", request.getSourceSiteId());
+			CompSiteResponse sourceSite = validationService.validateAndGetSite(request.getSourceSiteId(), "Source");
 
-				logger.warn(
-						"Duplicate stock request found for sourceSiteId: {} and requestedSiteId: {}",
-						request.getSourceSiteId(),
-						request.getRequestedSiteId());
-
-				response.setMessage(
-						"Source Site and Requested Site already exists");
-				response.setStatusCode(400);
-				response.setPayload(null);
-				return response;
-			}
-			logger.info("Validating source site with id {}",
-					request.getSourceSiteId());
-			CompSiteResponse sourceSite = validationService
-					.validateAndGetSite(request.getSourceSiteId(), "Source");
-
-			logger.info("Validating requested site with id {}",
-					request.getRequestedSiteId());
-			CompSiteResponse requestedSite = validationService
-					.validateAndGetSite(request.getRequestedSiteId(),
-							"Requested");
+			logger.info("Validating requested site with id {}", request.getRequestedSiteId());
+			CompSiteResponse requestedSite = validationService.validateAndGetSite(request.getRequestedSiteId(),
+					"Requested");
 
 			StockRequestEntity entity = toEntity(request);
 			entity.setSourceSiteId(sourceSite.getSiteId());
@@ -125,19 +104,29 @@ public class StockRequestServiceImpl implements StockRequestService {
 
 			for (StockRequestDetailRequest detailRequest : request.getItems()) {
 
-				logger.info("Validating item with id {}",
-						detailRequest.getItemId());
-				ItemIDResponse item = validationService
-						.validateAndGetItem(detailRequest.getItemId());
+				logger.info("Validating item with id {}", detailRequest.getItemId());
+				ItemIDResponse item = validationService.validateAndGetItem(detailRequest.getItemId());
 
 				if (detailRequest.getContractId() != null) {
-					logger.info("Validating contract with id {}",
-							detailRequest.getContractId());
-					contractMasterRepository
-							.findById(detailRequest.getContractId())
+					logger.info("Validating contract with id {}", detailRequest.getContractId());
+					contractMasterRepository.findById(detailRequest.getContractId())
 							.orElseThrow(() -> new ResourceNotFoundException(
-									"Contract not found with id "
-											+ detailRequest.getContractId()));
+									"Contract not found with id " + detailRequest.getContractId()));
+				}
+				if (detailRequest.getContractId() != null) {
+					if (stockRequestDetailsRepository
+							.existsByItemIdAndContractIdAndStockRequest_SourceSiteIdAndStockRequest_RequestedSiteId(
+									detailRequest.getItemId(), detailRequest.getContractId(), request.getSourceSiteId(),
+									request.getRequestedSiteId())) {
+						throw new DuplicateResourceException("Duplicate entry Stock request already exists ");
+					}
+				} else {
+					if (stockRequestDetailsRepository
+							.existsByItemIdAndContractIdIsNullAndStockRequest_SourceSiteIdAndStockRequest_RequestedSiteId(
+									detailRequest.getItemId(), request.getSourceSiteId(),
+									request.getRequestedSiteId())) {
+						throw new DuplicateResourceException("Duplicate entry Stock request already exists ");
+					}
 				}
 
 				StockRequestDetailEntity detail = new StockRequestDetailEntity();
@@ -155,37 +144,35 @@ public class StockRequestServiceImpl implements StockRequestService {
 
 			StockRequestEntity saved = stockRequestRepository.save(entity);
 
-			logger.info("Stock request saved successfully with id {}",
-					saved.getStockRequestId());
+			logger.info("Stock request saved successfully with id {}", saved.getStockRequestId());
 
 			response.setPayload(toResponse(saved));
 			response.setMessage("Data Saved Successfully");
 			response.setStatusCode(201);
 
 		} catch (IllegalArgumentException e) {
-			logger.error("Validation error while saving stock request: {}",
-					e.getMessage());
+			logger.error("Validation error while saving stock request: {}", e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(400);
 			response.setPayload(null);
 		} catch (ResourceNotFoundException e) {
-			logger.error("Resource not found while saving stock request: {}",
-					e.getMessage());
+			logger.error("Resource not found while saving stock request: {}", e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(404);
 			response.setPayload(null);
 		} catch (ExternalServiceException e) {
-			logger.error(
-					"External service error while saving stock request: {}",
-					e.getMessage());
+			logger.error("External service error while saving stock request: {}", e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(502);
 			response.setPayload(null);
-
+		} catch (DuplicateResourceException e) {
+			logger.error("Duplicate  while saving stock request: {}", e.getMessage());
+			response.setMessage(e.getMessage());
+			response.setStatusCode(400);
+			response.setPayload(null);
 		} catch (Exception e) {
-			logger.error("Unexpected error while saving stock request: {}",
-					e.getMessage(), e);
-			response.setMessage("Internal Server Error" + e.getMessage());
+			logger.error("Unexpected error while saving stock request: {}", e.getMessage(), e);
+			response.setMessage("Internal Server Error");
 			response.setStatusCode(500);
 			response.setPayload(null);
 		}
@@ -249,11 +236,9 @@ public class StockRequestServiceImpl implements StockRequestService {
 	}
 
 	@Override
-	public ResponseEntity updateStockRequest(Integer stockRequestId,
-			StockRequestRequest request) {
+	public ResponseEntity updateStockRequest(Integer stockRequestId, StockRequestRequest request) {
 
-		logger.info("Update stock request service started for id {}",
-				stockRequestId);
+		logger.info("Update stock request service started for id {}", stockRequestId);
 
 		ResponseEntity response = new ResponseEntity();
 
@@ -273,62 +258,35 @@ public class StockRequestServiceImpl implements StockRequestService {
 				return response;
 			}
 
-			StockRequestEntity existing = stockRequestRepository
-					.findById(stockRequestId).orElseThrow(() -> {
-						logger.error("Stock request not found with id {}",
-								stockRequestId);
-						return new ResourceNotFoundException(
-								"Stock request not found with id ");
-					});
+			StockRequestEntity existing = stockRequestRepository.findById(stockRequestId).orElseThrow(() -> {
+				logger.error("Stock request not found with id {}", stockRequestId);
+				return new ResourceNotFoundException("Stock request not found with id ");
+			});
 
 			if ("AP".equalsIgnoreCase(existing.getStatus())) {
-				logger.warn("Update blocked. Status is APPROVED for id {}",
-						stockRequestId);
+				logger.warn("Update blocked. Status is APPROVED for id {}", stockRequestId);
 
-				response.setMessage(
-						"Approved stock requests cannot be updated");
+				response.setMessage("Approved stock requests cannot be updated");
 				response.setStatusCode(400);
 				response.setPayload(null);
 				return response;
 			}
 
 			if (!"RE".equalsIgnoreCase(existing.getStatus())) {
-				logger.warn("Update blocked. Invalid status {} for id {}",
-						existing.getStatus(), stockRequestId);
+				logger.warn("Update blocked. Invalid status {} for id {}", existing.getStatus(), stockRequestId);
 
-				response.setMessage(
-						"Only Requested stock requests can be updated");
+				response.setMessage("Only Requested stock requests can be updated");
 				response.setStatusCode(400);
 				response.setPayload(null);
 				return response;
 			}
 
-			if (stockRequestRepository
-					.existsBySourceSiteIdAndRequestedSiteIdAndStockRequestIdNot(
-							request.getSourceSiteId(),
-							request.getRequestedSiteId(), stockRequestId)) {
+			logger.info("Validating source site with id {}", request.getSourceSiteId());
+			CompSiteResponse sourceSite = validationService.validateAndGetSite(request.getSourceSiteId(), "Source");
 
-				logger.warn(
-						"Duplicate found during update for sourceSiteId: {} and requestedSiteId: {}",
-						request.getSourceSiteId(),
-						request.getRequestedSiteId());
-
-				response.setMessage(
-						"Source Site and Requested Site combination already exists");
-				response.setStatusCode(400);
-				response.setPayload(null);
-				return response;
-			}
-			logger.info("Validating source site with id {}",
-					request.getSourceSiteId());
-			CompSiteResponse sourceSite = validationService
-					.validateAndGetSite(request.getSourceSiteId(), "Source");
-
-			logger.info("Validating requested site with id {}",
-					request.getRequestedSiteId());
-			CompSiteResponse requestedSite = validationService
-					.validateAndGetSite(request.getRequestedSiteId(),
-							"Requested");
+			logger.info("Validating requested site with id {}", request.getRequestedSiteId());
+			CompSiteResponse requestedSite = validationService.validateAndGetSite(request.getRequestedSiteId(),
+					"Requested");
 
 			existing.setSourceSiteId(sourceSite.getSiteId());
 			existing.setRequestedSiteId(requestedSite.getSiteId());
@@ -339,30 +297,40 @@ public class StockRequestServiceImpl implements StockRequestService {
 
 			for (StockRequestDetailRequest detailRequest : request.getItems()) {
 
-				logger.info("Validating item with id {}",
-						detailRequest.getItemId());
-				ItemIDResponse item = validationService
-						.validateAndGetItem(detailRequest.getItemId());
+				logger.info("Validating item with id {}", detailRequest.getItemId());
+				ItemIDResponse item = validationService.validateAndGetItem(detailRequest.getItemId());
 
 				if (detailRequest.getContractId() != null) {
-					logger.info("Validating contract with id {}",
-							detailRequest.getContractId());
-					contractMasterRepository
-							.findById(detailRequest.getContractId())
+					logger.info("Validating contract with id {}", detailRequest.getContractId());
+					contractMasterRepository.findById(detailRequest.getContractId())
 							.orElseThrow(() -> new ResourceNotFoundException(
-									"Contract not found with id "
-											+ detailRequest.getContractId()));
+									"Contract not found with id " + detailRequest.getContractId()));
+				}
+
+				if (detailRequest.getContractId() != null) {
+					if (stockRequestDetailsRepository
+							.existsByItemIdAndContractIdAndStockRequest_SourceSiteIdAndStockRequest_RequestedSiteIdAndStockRequest_StockRequestIdNot(
+									detailRequest.getItemId(), detailRequest.getContractId(), request.getSourceSiteId(),
+									request.getRequestedSiteId(), stockRequestId)) {
+
+						throw new DuplicateResourceException("Duplicate entry Stock request already exists ");
+					}
+				} else {
+					if (stockRequestDetailsRepository
+							.existsByItemIdAndContractIdIsNullAndStockRequest_SourceSiteIdAndStockRequest_RequestedSiteIdAndStockRequest_StockRequestIdNot(
+									detailRequest.getItemId(), request.getSourceSiteId(), request.getRequestedSiteId(),
+									stockRequestId)) {
+
+						throw new DuplicateResourceException("Duplicate entry Stock request already exists ");
+					}
 				}
 
 				StockRequestDetailEntity detail;
 
 				if (detailRequest.getStockRequestDetailId() != null) {
-					detail = stockRequestDetailsRepository
-							.findById(detailRequest.getStockRequestDetailId())
-							.orElseThrow(() -> new ResourceNotFoundException(
-									"Stock request detail not found with id "
-											+ detailRequest
-													.getStockRequestDetailId()));
+					detail = stockRequestDetailsRepository.findById(detailRequest.getStockRequestDetailId())
+							.orElseThrow(() -> new ResourceNotFoundException("Stock request detail not found with id "
+									+ detailRequest.getStockRequestDetailId()));
 					detail.setModifiedOn(LocalDateTime.now());
 					detail.setModifiedBy(request.getModifiedBy());
 				} else {
@@ -385,38 +353,42 @@ public class StockRequestServiceImpl implements StockRequestService {
 
 			StockRequestEntity updated = stockRequestRepository.save(existing);
 
-			logger.info("Stock request updated successfully with id {}",
-					stockRequestId);
+			logger.info("Stock request updated successfully with id {}", stockRequestId);
 
 			response.setPayload(toResponse(updated));
 			response.setMessage("Stock request updated successfully");
 			response.setStatusCode(200);
 
-		} catch (IllegalArgumentException e) {
-			logger.error(
-					"Validation error while updating stock request with id {}: {}",
-					stockRequestId, e.getMessage());
+		} catch (DuplicateResourceException e) {
+			logger.error("Duplicate error while updating stock request: {}", e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(400);
 			response.setPayload(null);
+
+		} catch (IllegalArgumentException e) {
+			logger.error("Validation error while updating stock request with id {}: {}", stockRequestId,
+					e.getMessage());
+			response.setMessage(e.getMessage());
+			response.setStatusCode(400);
+			response.setPayload(null);
+
 		} catch (ResourceNotFoundException e) {
-			logger.error(
-					"Resource not found while updating stock request with id {}: {}",
-					stockRequestId, e.getMessage());
+			logger.error("Resource not found while updating stock request with id {}: {}", stockRequestId,
+					e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(404);
 			response.setPayload(null);
+
 		} catch (ExternalServiceException e) {
-			logger.error(
-					"External service error while updating stock request with id {}: {}",
-					stockRequestId, e.getMessage());
+			logger.error("External service error while updating stock request with id {}: {}", stockRequestId,
+					e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(502);
 			response.setPayload(null);
+
 		} catch (Exception e) {
-			logger.error(
-					"Unexpected error while updating stock request with id {}: {}",
-					stockRequestId, e.getMessage(), e);
+			logger.error("Unexpected error while updating stock request with id {}: {}", stockRequestId, e.getMessage(),
+					e);
 			response.setMessage("Internal Server Error");
 			response.setStatusCode(500);
 			response.setPayload(null);
@@ -524,8 +496,7 @@ public class StockRequestServiceImpl implements StockRequestService {
 
 	@Override
 	@Transactional
-	public ResponseEntity approveStockRequest(Integer id,
-			StockRequestRequest request) {
+	public ResponseEntity approveStockRequest(Integer id, StockRequestRequest request) {
 
 		ResponseEntity response = new ResponseEntity();
 
@@ -539,8 +510,7 @@ public class StockRequestServiceImpl implements StockRequestService {
 				return response;
 			}
 
-			if (request == null || request.getItems() == null
-					|| request.getItems().isEmpty()) {
+			if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
 				logger.warn("Invalid request body for stockRequestId: {}", id);
 				response.setStatusCode(400);
 				response.setMessage("Request body cannot be null");
@@ -548,11 +518,9 @@ public class StockRequestServiceImpl implements StockRequestService {
 			}
 
 			StockRequestEntity existing = stockRequestRepository.findById(id)
-					.orElseThrow(() -> new ResourceNotFoundException(
-							"Stock Request Not ound With this id " + id));
+					.orElseThrow(() -> new ResourceNotFoundException("Stock Request Not Found With this id " + id));
 
-			logger.info("StockRequest found. Current status: {}",
-					existing.getStatus());
+			logger.info("StockRequest found. Current status: {}", existing.getStatus());
 
 			if ("AP".equalsIgnoreCase(existing.getStatus())) {
 				logger.warn("Approval blocked. Already APPROVED for id {}", id);
@@ -563,26 +531,18 @@ public class StockRequestServiceImpl implements StockRequestService {
 			}
 
 			if ("DI".equalsIgnoreCase(existing.getStatus())) {
-				logger.warn("Approval blocked. Already DISPATCHED for id {}",
-						id);
+				logger.warn("Approval blocked. Already DISPATCHED for id {}", id);
 
 				response.setStatusCode(400);
-				response.setMessage(
-						"Dispatched stock requests cannot be approved");
+				response.setMessage("Dispatched stock requests cannot be approved");
 				return response;
 			}
 
-			existing.setStatus("AP");
-			existing.setApprovedBy(request.getApprovedBy());
-			existing.setApprovalDate(LocalDate.now());
-
-			logger.info("Processing {} items for approval",
-					request.getItems().size());
+			logger.info("Processing {} items for approval", request.getItems().size());
 
 			for (StockRequestDetailRequest detailRequest : request.getItems()) {
 
-				logger.debug("Processing detailId: {}",
-						detailRequest.getStockRequestDetailId());
+				logger.debug("Processing detailId: {}", detailRequest.getStockRequestDetailId());
 
 				if (detailRequest.getStockRequestDetailId() == null) {
 					logger.error("stockRequestDetailId is null in request");
@@ -594,44 +554,34 @@ public class StockRequestServiceImpl implements StockRequestService {
 
 				StockRequestDetailEntity detail = stockRequestDetailsRepository
 						.findById(detailRequest.getStockRequestDetailId())
-						.orElseThrow(() -> new ResourceNotFoundException(
-								"Stock Request Details Not Found "));
+						.orElseThrow(() -> new ResourceNotFoundException("Stock Request Details Not Found "));
 
 				if (detailRequest.getApprovedQty() == null) {
-					logger.warn("ApprovedQty is null for itemId: {}",
-							detail.getItemId());
+					logger.warn("ApprovedQty is null for itemId: {}", detail.getItemId());
 					response.setStatusCode(400);
 					response.setMessage("Approved quantity cannot be null  ");
 					return response;
 				}
 
-				if (detailRequest.getApprovedQty()
-						.compareTo(BigDecimal.ZERO) == 0) {
-					logger.warn("ApprovedQty is zero for itemId: {}",
-							detail.getItemId());
+				if (detailRequest.getApprovedQty().compareTo(BigDecimal.ZERO) == 0) {
+					logger.warn("ApprovedQty is zero for itemId: {}", detail.getItemId());
 
 					response.setStatusCode(400);
 					response.setMessage("Approved quantity cannot be zero");
 					return response;
 				}
 
-				if (detailRequest.getApprovedQty()
-						.compareTo(detail.getRequestedQty()) > 0) {
-					logger.warn("ApprovedQty > RequestedQty for itemId: {}",
-							detail.getItemId());
+				if (detailRequest.getApprovedQty().compareTo(detail.getRequestedQty()) > 0) {
+					logger.warn("ApprovedQty > RequestedQty for itemId: {}", detail.getItemId());
 					response.setStatusCode(400);
-					response.setMessage(
-							"Approved quantity cannot be greater than requested quantity");
+					response.setMessage("Approved quantity cannot be greater than requested quantity");
 					return response;
 				}
 
-				if (detailRequest.getApprovedQty()
-						.compareTo(BigDecimal.ZERO) < 0) {
-					logger.warn("Negative ApprovedQty for itemId: {}",
-							detail.getItemId());
+				if (detailRequest.getApprovedQty().compareTo(BigDecimal.ZERO) < 0) {
+					logger.warn("Negative ApprovedQty for itemId: {}", detail.getItemId());
 					response.setStatusCode(400);
-					response.setMessage(
-							"Approved quantity cannot be negative ");
+					response.setMessage("Approved quantity cannot be negative ");
 					return response;
 				}
 
@@ -640,9 +590,12 @@ public class StockRequestServiceImpl implements StockRequestService {
 
 				stockRequestDetailsRepository.save(detail);
 
-				logger.debug("Updated detailId: {} successfully",
-						detail.getStockRequestDetailId());
+				logger.debug("Updated detailId: {} successfully", detail.getStockRequestDetailId());
 			}
+
+			existing.setStatus("AP");
+			existing.setApprovedBy(request.getApprovedBy());
+			existing.setApprovalDate(LocalDate.now());
 
 			StockRequestEntity saved = stockRequestRepository.save(existing);
 
@@ -655,30 +608,22 @@ public class StockRequestServiceImpl implements StockRequestService {
 			response.setPayload(enrichResponse);
 
 		} catch (IllegalArgumentException e) {
-			logger.error(
-					"Validation error while updating stock request with id {}: {}",
-					id, e.getMessage());
+			logger.error("Validation error while updating stock request with id {}: {}", id, e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(400);
 			response.setPayload(null);
 		} catch (ResourceNotFoundException e) {
-			logger.error(
-					"Resource not found while updating stock request with id {}: {}",
-					id, e.getMessage());
+			logger.error("Resource not found while updating stock request with id {}: {}", id, e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(404);
 			response.setPayload(null);
 		} catch (ExternalServiceException e) {
-			logger.error(
-					"External service error while updating stock request with id {}: {}",
-					id, e.getMessage());
+			logger.error("External service error while updating stock request with id {}: {}", id, e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(502);
 			response.setPayload(null);
 		} catch (Exception e) {
-			logger.error(
-					"Unexpected error while updating stock request with id {}: {}",
-					id, e.getMessage(), e);
+			logger.error("Unexpected error while updating stock request with id {}: {}", id, e.getMessage(), e);
 			response.setMessage("Internal Server Error");
 			response.setStatusCode(500);
 			response.setPayload(null);

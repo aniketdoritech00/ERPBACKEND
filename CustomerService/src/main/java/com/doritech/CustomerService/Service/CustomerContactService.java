@@ -7,10 +7,14 @@ import com.doritech.CustomerService.Request.CustomerContactRequest;
 
 public interface CustomerContactService {
 
-
-    ResponseEntity getCustomerContacts(Integer customerId);
+	ResponseEntity getCustomerContacts(Integer customerId);
 
 	ResponseEntity saveCustomerContact(List<CustomerContactRequest> requests);
 
-	ResponseEntity getAllCustomerContacts();
+	ResponseEntity getCustomerContactsDetails(Integer contactId);
+
+	ResponseEntity getAllCustomerContacts(int page, int size);
+
+
+	ResponseEntity deleteBulkCustomerContact(List<Integer> contactIds);
 }

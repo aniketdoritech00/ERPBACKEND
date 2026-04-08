@@ -24,4 +24,6 @@ public interface ContractMasterService {
 
 	ResponseEntity getContractDetailsByType(String type);
 
+	ResponseEntity getContractNamesAndIdsForFillter();
+
 }

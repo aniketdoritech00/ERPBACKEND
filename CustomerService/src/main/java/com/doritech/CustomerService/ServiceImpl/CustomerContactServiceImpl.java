@@ -1,16 +1,23 @@
 package com.doritech.CustomerService.ServiceImpl;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.CustomerService.Entity.CustomerContactEntity;
+import com.doritech.CustomerService.Entity.CustomerMasterEntity;
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Exception.InternalServerException;
@@ -28,84 +35,109 @@ public class CustomerContactServiceImpl implements CustomerContactService {
 
 	private final CustomerContactRepository repository;
 
+	@Autowired
+	private CustomerMasterRepository customerMasterRepository;
+
 	public CustomerContactServiceImpl(CustomerContactRepository repository) {
 		this.repository = repository;
 	}
-
-	@Autowired
-	private CustomerMasterRepository customerMasterRepository;
 
 	@Override
 	@Transactional
 	public ResponseEntity saveCustomerContact(List<CustomerContactRequest> requests) {
 
-		logger.info("Save/Update Customer Contact API called");
+		logger.info("saveCustomerContact API called with {} records", requests != null ? requests.size() : 0);
 
-		if (requests == null || requests.isEmpty())
+		if (requests == null || requests.isEmpty()) {
+			logger.error("saveCustomerContact failed: Request body is null or empty");
 			throw new BadRequestException("Request body cannot be null or empty");
+		}
 
 		int saveCount = 0;
 		int updateCount = 0;
 
-		for (CustomerContactRequest request : requests) {
+		try {
 
-			if (request.getCustomerId() == null)
-				throw new BadRequestException("CustomerId is required");
+			for (CustomerContactRequest request : requests) {
 
-			if (!customerMasterRepository.existsById(request.getCustomerId()))
-				throw new ResourceNotFoundException("Customer not found with id: " + request.getCustomerId());
+				if (request.getCustomerId() == null) {
+					logger.error("saveCustomerContact failed: CustomerId is null");
+					throw new BadRequestException("CustomerId is required");
+				}
 
-			CustomerContactEntity entity;
+				if (!customerMasterRepository.existsById(request.getCustomerId())) {
+					logger.error("saveCustomerContact failed: Customer not found with id: {}", request.getCustomerId());
+					throw new ResourceNotFoundException("Customer not found with id: " + request.getCustomerId());
+				}
 
-			if (request.getCustContId() != null) {
+				CustomerContactEntity entity;
 
-				entity = repository.findById(request.getCustContId()).orElseThrow(() -> new ResourceNotFoundException(
-						"Customer Contact not found with id: " + request.getCustContId()));
+				if (request.getCustContId() != null) {
 
-				entity.setContactPerson(request.getContactPerson());
-				entity.setEmail(request.getEmail());
-				entity.setPhone(request.getPhone());
-				entity.setDesignation(request.getDesignation());
-				entity.setRole(request.getRole());
-				entity.setDepartment(request.getDepartment());
-				entity.setIsActive(request.getIsActive());
+					logger.info("Updating Customer Contact with id: {}", request.getCustContId());
 
-				entity.setModifiedBy(request.getCreatedBy());
-				entity.setModifiedOn(LocalDateTime.now());
+					entity = repository.findById(request.getCustContId()).orElseThrow(() -> {
+						logger.error("saveCustomerContact failed: Customer Contact not found with id: {}",
+								request.getCustContId());
+						return new ResourceNotFoundException(
+								"Customer Contact not found with id: " + request.getCustContId());
+					});
 
-				repository.save(entity);
+					entity.setContactPerson(request.getContactPerson());
+					entity.setEmail(request.getEmail());
+					entity.setPhone(request.getPhone());
+					entity.setDesignation(request.getDesignation());
+					entity.setRole(request.getRole());
+					entity.setDepartment(request.getDepartment());
+					entity.setIsActive(request.getIsActive());
+					entity.setModifiedBy(request.getCreatedBy());
+					entity.setModifiedOn(LocalDateTime.now());
 
-				updateCount++;
+					repository.save(entity);
+					updateCount++;
 
-			} else {
+					logger.info("Customer Contact updated successfully with id: {}", request.getCustContId());
 
-				if (request.getCreatedBy() == null)
-					throw new BadRequestException("CreatedBy is required");
+				} else {
 
-				entity = new CustomerContactEntity();
+					if (request.getCreatedBy() == null) {
+						logger.error("saveCustomerContact failed: CreatedBy is null for new contact");
+						throw new BadRequestException("CreatedBy is required");
+					}
 
-				entity.setCustomerId(request.getCustomerId());
-				entity.setContactPerson(request.getContactPerson());
-				entity.setEmail(request.getEmail());
-				entity.setPhone(request.getPhone());
-				entity.setDesignation(request.getDesignation());
-				entity.setRole(request.getRole());
-				entity.setDepartment(request.getDepartment());
-				entity.setIsActive(request.getIsActive() == null ? "Y" : request.getIsActive());
+					logger.info("Saving new Customer Contact for customerId: {}", request.getCustomerId());
 
-				entity.setCreatedBy(request.getCreatedBy());
-				entity.setCreatedOn(LocalDateTime.now());
+					entity = new CustomerContactEntity();
 
-				repository.save(entity);
+					entity.setCustomerId(request.getCustomerId());
+					entity.setContactPerson(request.getContactPerson());
+					entity.setEmail(request.getEmail());
+					entity.setPhone(request.getPhone());
+					entity.setDesignation(request.getDesignation());
+					entity.setRole(request.getRole());
+					entity.setDepartment(request.getDepartment());
+					entity.setIsActive(request.getIsActive() == null ? "Y" : request.getIsActive());
+					entity.setCreatedBy(request.getCreatedBy());
+					entity.setCreatedOn(LocalDateTime.now());
 
-				saveCount++;
+					repository.save(entity);
+					saveCount++;
+
+					logger.info("Customer Contact saved successfully for customerId: {}", request.getCustomerId());
+				}
 			}
+
+		} catch (BadRequestException | ResourceNotFoundException ex) {
+			logger.error("saveCustomerContact handled exception: {}", ex.getMessage());
+			throw ex;
+		} catch (Exception ex) {
+			logger.error("saveCustomerContact unexpected error: {}", ex.getMessage(), ex);
+			throw new InternalServerException("Something went wrong while saving Customer Contact");
 		}
 
-		logger.info("Customer Contacts Saved: {}, Updated: {}", saveCount, updateCount);
+		logger.info("saveCustomerContact completed - Saved: {}, Updated: {}", saveCount, updateCount);
 
 		String message;
-
 		if (saveCount > 0 && updateCount > 0) {
 			message = "Customer Contacts Saved and Updated Successfully";
 		} else if (saveCount > 0) {
@@ -119,27 +151,49 @@ public class CustomerContactServiceImpl implements CustomerContactService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public ResponseEntity getAllCustomerContacts() {
+	public ResponseEntity getAllCustomerContacts(int page, int size) {
 
-		logger.info("Get All Customer Contacts API called");
+		logger.info("getAllCustomerContacts API called with page: {}, size: {}", page, size);
 
 		try {
 
-			List<CustomerContactEntity> contacts = repository.findAll();
+			if (page < 0) {
+				logger.error("getAllCustomerContacts failed: Page index must not be less than zero");
+				throw new BadRequestException("Page index must not be less than zero");
+			}
 
-			if (contacts.isEmpty()) {
-				logger.warn("No Customer Contacts found");
+			if (size <= 0) {
+				logger.error("getAllCustomerContacts failed: Page size must not be less than one");
+				throw new BadRequestException("Page size must not be less than one");
+			}
+
+			Pageable pageable = PageRequest.of(page, size);
+			Page<CustomerContactEntity> contactPage = repository.findAll(pageable);
+
+			if (contactPage.isEmpty()) {
+				logger.warn("getAllCustomerContacts: No Customer Contacts found");
 				return new ResponseEntity("No Customer Contacts Found", 404, null);
 			}
 
-			List<CustomerContactResponse> responseList = new ArrayList<>();
-
-			for (CustomerContactEntity entity : contacts) {
+			List<CustomerContactResponse> responseList = contactPage.getContent().stream().map(entity -> {
 
 				CustomerContactResponse response = new CustomerContactResponse();
 
 				response.setCustContId(entity.getCustContId());
 				response.setCustomerId(entity.getCustomerId());
+
+				if (entity.getCustomerId() != null) {
+					CustomerMasterEntity customerMasterEntity = customerMasterRepository
+							.findByCustomerId(entity.getCustomerId());
+
+					if (customerMasterEntity != null) {
+						response.setCustomerCode(customerMasterEntity.getCustomerCode());
+						response.setCustomerName(customerMasterEntity.getCustomerName());
+					} else {
+						logger.warn("CustomerMaster not found for customerId: {}", entity.getCustomerId());
+					}
+				}
+
 				response.setContactPerson(entity.getContactPerson());
 				response.setEmail(entity.getEmail());
 				response.setPhone(entity.getPhone());
@@ -152,15 +206,28 @@ public class CustomerContactServiceImpl implements CustomerContactService {
 				response.setModifiedBy(entity.getModifiedBy());
 				response.setModifiedOn(entity.getModifiedOn());
 
-				responseList.add(response);
-			}
+				return response;
 
-			logger.info("Customer Contacts fetched successfully");
+			}).toList();
 
-			return new ResponseEntity("Success", 200, responseList);
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("data", responseList);
+			payload.put("currentPage", contactPage.getNumber());
+			payload.put("pageSize", contactPage.getSize());
+			payload.put("totalElements", contactPage.getTotalElements());
+			payload.put("totalPages", contactPage.getTotalPages());
+			payload.put("isLast", contactPage.isLast());
 
+			logger.info("getAllCustomerContacts: Fetched {} records on page {}/{}", responseList.size(), page + 1,
+					contactPage.getTotalPages());
+
+			return new ResponseEntity("Success", 200, payload);
+
+		} catch (BadRequestException ex) {
+			logger.error("getAllCustomerContacts handled exception: {}", ex.getMessage());
+			throw ex;
 		} catch (Exception ex) {
-			logger.error("Error while fetching Customer Contacts", ex);
+			logger.error("getAllCustomerContacts unexpected error: {}", ex.getMessage(), ex);
 			throw new InternalServerException("Something went wrong while fetching Customer Contacts");
 		}
 	}
@@ -169,33 +236,190 @@ public class CustomerContactServiceImpl implements CustomerContactService {
 	@Transactional(readOnly = true)
 	public ResponseEntity getCustomerContacts(Integer customerId) {
 
-		logger.info("Get Customer Contacts {}", customerId);
+		logger.info("getCustomerContacts API called for customerId: {}", customerId);
 
-		if (customerId == null)
-			throw new BadRequestException("CustomerId Cannot Be Null");
+		try {
 
-		List<CustomerContactEntity> list = repository.findByCustomerId(customerId);
+			if (customerId == null) {
+				logger.error("getCustomerContacts failed: CustomerId is null");
+				throw new BadRequestException("CustomerId Cannot Be Null");
+			}
 
-		if (list == null || list.isEmpty())
-			throw new ResourceNotFoundException("Customer Contacts Not Found");
+			if (!customerMasterRepository.existsById(customerId)) {
+				logger.error("getCustomerContacts failed: Customer not found with CustomerId: {}", customerId);
+				throw new ResourceNotFoundException("Customer not found with CustomerId: " + customerId);
+			}
 
-		List<CustomerContactResponse> response = list.stream().map(c -> {
+			List<CustomerContactEntity> list = repository.findByCustomerId(customerId);
 
-			CustomerContactResponse r = new CustomerContactResponse();
+			if (list == null || list.isEmpty()) {
+				logger.warn("getCustomerContacts: No contacts found for customerId: {}", customerId);
+				throw new ResourceNotFoundException("Customer Contacts Not Found for customerId: " + customerId);
+			}
 
-			r.setCustContId(c.getCustContId());
-			r.setContactPerson(c.getContactPerson());
-			r.setEmail(c.getEmail());
-			r.setPhone(c.getPhone());
-			r.setDesignation(c.getDesignation());
-			r.setRole(c.getRole());
-			r.setDepartment(c.getDepartment());
-			r.setIsActive(c.getIsActive());
+			List<CustomerContactResponse> response = list.stream().map(c -> {
 
-			return r;
+				CustomerContactResponse r = new CustomerContactResponse();
 
-		}).toList();
+				r.setCustContId(c.getCustContId());
+				r.setCustomerId(c.getCustomerId());
 
-		return new ResponseEntity("Success", 200, response);
+				if (c.getCustomerId() != null) {
+					CustomerMasterEntity customerMasterEntity = customerMasterRepository
+							.findByCustomerId(c.getCustomerId());
+
+					if (customerMasterEntity != null) {
+						r.setCustomerCode(customerMasterEntity.getCustomerCode());
+						r.setCustomerName(customerMasterEntity.getCustomerName());
+					} else {
+						logger.warn("getCustomerContacts: CustomerMaster not found for customerId: {}",
+								c.getCustomerId());
+					}
+				}
+
+				r.setContactPerson(c.getContactPerson());
+				r.setEmail(c.getEmail());
+				r.setPhone(c.getPhone());
+				r.setDesignation(c.getDesignation());
+				r.setRole(c.getRole());
+				r.setDepartment(c.getDepartment());
+				r.setIsActive(c.getIsActive());
+				r.setCreatedBy(c.getCreatedBy());
+				r.setCreatedOn(c.getCreatedOn());
+				r.setModifiedBy(c.getModifiedBy());
+				r.setModifiedOn(c.getModifiedOn());
+
+				return r;
+
+			}).toList();
+
+			logger.info("getCustomerContacts: Fetched {} contacts for customerId: {}", response.size(), customerId);
+
+			return new ResponseEntity("Success", 200, response);
+
+		} catch (BadRequestException | ResourceNotFoundException ex) {
+			logger.error("getCustomerContacts handled exception: {}", ex.getMessage());
+			throw ex;
+		} catch (Exception ex) {
+			logger.error("getCustomerContacts unexpected error: {}", ex.getMessage(), ex);
+			throw new InternalServerException("Something went wrong while fetching Customer Contacts");
+		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ResponseEntity getCustomerContactsDetails(Integer contactId) {
+
+		logger.info("getCustomerContactsDetails API called for contactId: {}", contactId);
+
+		try {
+
+			if (contactId == null) {
+				logger.error("getCustomerContactsDetails failed: ContactId is null");
+				throw new BadRequestException("ContactId cannot be null");
+			}
+
+			Optional<CustomerContactEntity> optionalContact = repository.findById(contactId);
+
+			if (!optionalContact.isPresent()) {
+				logger.error("getCustomerContactsDetails failed: Customer Contact not found for contactId: {}",
+						contactId);
+				throw new ResourceNotFoundException("Customer Contact not found for contactId: " + contactId);
+			}
+
+			CustomerContactEntity c = optionalContact.get();
+
+			CustomerContactResponse payload = new CustomerContactResponse();
+			payload.setCustContId(c.getCustContId());
+			payload.setCustomerId(c.getCustomerId());
+
+			if (c.getCustomerId() != null) {
+				CustomerMasterEntity customerMasterEntity = customerMasterRepository
+						.findByCustomerId(c.getCustomerId());
+
+				if (customerMasterEntity != null) {
+					payload.setCustomerCode(customerMasterEntity.getCustomerCode());
+					payload.setCustomerName(customerMasterEntity.getCustomerName());
+				} else {
+					logger.warn("getCustomerContactsDetails: CustomerMaster not found for customerId: {}",
+							c.getCustomerId());
+				}
+			}
+
+			payload.setContactPerson(c.getContactPerson());
+			payload.setEmail(c.getEmail());
+			payload.setPhone(c.getPhone());
+			payload.setDesignation(c.getDesignation());
+			payload.setRole(c.getRole());
+			payload.setDepartment(c.getDepartment());
+			payload.setIsActive(c.getIsActive());
+			payload.setCreatedBy(c.getCreatedBy());
+			payload.setCreatedOn(c.getCreatedOn());
+			payload.setModifiedBy(c.getModifiedBy());
+			payload.setModifiedOn(c.getModifiedOn());
+
+			logger.info("getCustomerContactsDetails: Contact fetched successfully for contactId: {}", contactId);
+
+			return new ResponseEntity("Customer Contact fetched successfully", 200, payload);
+
+		} catch (BadRequestException | ResourceNotFoundException ex) {
+			logger.error("getCustomerContactsDetails handled exception: {}", ex.getMessage());
+			throw ex;
+		} catch (Exception ex) {
+			logger.error("getCustomerContactsDetails unexpected error: {}", ex.getMessage(), ex);
+			throw new InternalServerException("Something went wrong while fetching Customer Contact");
+		}
+	}
+
+	@Override
+	public ResponseEntity deleteBulkCustomerContact(List<Integer> contactIds) {
+
+		logger.info("Delete Bulk CustomerContact API called for ids: {}", contactIds);
+
+		ResponseEntity response = new ResponseEntity();
+
+		try {
+
+			if (contactIds == null || contactIds.isEmpty()) {
+				logger.error("Delete Bulk CustomerContact failed: Contact IDs are null or empty");
+				response.setMessage("Contact IDs cannot be null or empty");
+				response.setStatusCode(400);
+				response.setPayload(null);
+				return response;
+			}
+
+			List<CustomerContactEntity> contacts = repository.findAllById(contactIds);
+
+			if (contacts.isEmpty()) {
+				logger.error("Delete Bulk CustomerContact failed: No contacts found for ids: {}", contactIds);
+				response.setMessage("No customer contacts found for given IDs");
+				response.setStatusCode(404);
+				response.setPayload(null);
+				return response;
+			}
+
+			repository.deleteAll(contacts);
+
+			logger.info("Delete Bulk CustomerContact: {} records deleted successfully for ids: {}", contacts.size(),
+					contactIds);
+
+			response.setMessage("Customer contacts deleted successfully");
+			response.setStatusCode(200);
+			response.setPayload(null);
+
+		} catch (DataAccessException e) {
+			logger.error("Delete Bulk CustomerContact: Database error for ids {}: {}", contactIds, e.getMessage(), e);
+			response.setMessage("Database error occurred while deleting customer contacts");
+			response.setStatusCode(500);
+			response.setPayload(null);
+
+		} catch (Exception e) {
+			logger.error("Delete Bulk CustomerContact: Unexpected error for ids {}: {}", contactIds, e.getMessage(), e);
+			response.setMessage("Unable to delete customer contacts");
+			response.setStatusCode(500);
+			response.setPayload(null);
+		}
+
+		return response;
 	}
 }

@@ -46,19 +46,6 @@ public class ContractMasterController {
 		return contractService.saveOrUpdateContract(id, request);
 	}
 
-	/*
-	 * Uncomment if PUT endpoint needed
-	 *
-	 * @PutMapping("/updateContract/{id}") public ResponseEntity
-	 * updateContract(@PathVariable Integer id,
-	 * 
-	 * @Valid @RequestBody ContractMasterRequest request,
-	 * 
-	 * @RequestHeader("X-User-Id") String userId) { Integer user =
-	 * Integer.parseInt(userId); request.setModifiedBy(user);
-	 * logger.info("Update Contract API hit {} by user {}", id, userId); return
-	 * contractService.updateContract(id, request); }
-	 */
 
 	@GetMapping("/getContractById/{id}")
 	public ResponseEntity getContractById(@PathVariable Integer id,
@@ -116,6 +103,13 @@ public class ContractMasterController {
 		logger.info("Get Contract Details By Type API hit {} by user {}", type,
 				userId);
 		return contractService.getContractDetailsByType(type);
+	}
+
+		@GetMapping("/getContractNamesAndIdsForFillter")
+	public ResponseEntity getContractNamesAndIdsForFillter(
+			@RequestHeader("X-User-Id") String userId) {
+		logger.info("Get Contract Names And Ids API hit by user {}", userId);
+		return contractService.getContractNamesAndIdsForFillter();
 	}
 
 }

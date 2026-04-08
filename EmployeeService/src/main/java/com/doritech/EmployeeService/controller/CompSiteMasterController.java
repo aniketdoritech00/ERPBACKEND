@@ -104,6 +104,7 @@ public class CompSiteMasterController {
 				state, country, contactPerson, email, postalCode, createdBy,
 				hierarchyLevelId, isActive, page, size);
 	}
+
 	@GetMapping("/getDistrictBySite/{siteId}")
 	public ResponseEntity getDistrictBySite(@PathVariable Integer siteId) {
 		return compSiteMasterService.getSiteDistrict(siteId);
@@ -134,6 +135,7 @@ public class CompSiteMasterController {
 		}
 
 	}
+
 	@GetMapping("/feign-all-sites")
 	public ResponseEntity fetchAllSitesForFeign() {
 		return compSiteMasterService.getAllSitesForFeign();

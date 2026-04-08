@@ -15,6 +15,7 @@ public class HierarchyMapper {
 
 		return new HierarchyLevelResponseDTO(entity.getId(),
 				entity.getHierarchy().getId(),
+				entity.getHierarchy().getHierarchyName(), // 👈 ADD THIS
 				entity.getHierarchy().getEntityType(), // 👈 ADD THIS
 				entity.getLevelNumber(), entity.getLevelName(),
 				entity.getEndNode(), entity.getCreatedOn());
@@ -49,5 +50,27 @@ public class HierarchyMapper {
 		}
 
 		return dto;
+	}
+
+	public static HierarchyMasterResponseDTO toHierarchyDTO(HierarchyMasterEntity entity){
+		HierarchyMasterResponseDTO dto = new HierarchyMasterResponseDTO();
+
+		dto.setId(entity.getId());
+		dto.setHierarchyName(entity.getHierarchyName());
+		dto.setEntityType(entity.getEntityType());
+		dto.setDescription(entity.getDescription());
+		dto.setActive(entity.getActive());
+		dto.setCreatedOn(entity.getCreatedOn());
+		dto.setModifiedOn(entity.getModifiedOn());
+		dto.setCreatedBy(entity.getCreatedBy());
+		dto.setModifiedBy(entity.getModifiedBy());
+
+		if (entity.getCompany() != null)
+			dto.setCompanyId(entity.getCompany().getId());
+
+		if (entity.getOrganization() != null)
+			dto.setOrganizationId(entity.getOrganization().getId());
+
+			return dto;
 	}
 }
