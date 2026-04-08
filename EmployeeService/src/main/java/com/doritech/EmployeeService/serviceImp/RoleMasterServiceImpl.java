@@ -304,5 +304,22 @@ public class RoleMasterServiceImpl implements RoleMasterService {
 
 		return value;
 	}
+	@Override
+public ResponseEntity fetchAllRoles() {
+    List<RoleMaster> roles = roleRepo.findAll();
+
+    if (roles.isEmpty()) {
+        return new ResponseEntity("No roles found", 404, null);
+    }
+
+    List<Map<String, Object>> roleList = roles.stream().map(role -> {
+        Map<String, Object> map = new HashMap<>();
+        map.put("roleId", role.getRoleId());
+        map.put("roleName", role.getRoleName());
+        return map;
+    }).collect(Collectors.toList());
+
+    return new ResponseEntity("Roles fetched successfully", 200, roleList);
+}
 
 }

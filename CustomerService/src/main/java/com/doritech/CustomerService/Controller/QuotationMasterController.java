@@ -98,4 +98,10 @@ public class QuotationMasterController {
 		return service.getQuotations(quotationCode, customerId, contractId,
 				status, isActive, page, size);
 	}
+	
+	@GetMapping("/getAllQuotationIdAndCode")
+	public ResponseEntity getAllQuotationIdAndCode() {
+		logger.info("Get All Quotation Id And Code");
+		return service.getAllQuotationIdAndCode();
+	}
 }
