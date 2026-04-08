@@ -9,6 +9,9 @@ public class ContractItemMappingResponse {
 	private Integer contractId;
 	private Integer itemId;
 	private BigDecimal quantity;
+	private String contractNo;
+
+	private String contractName;
 	private BigDecimal unitPrice;
 	private Integer buyBackItemId;
 	private BigDecimal buyBackUnitPrice;
@@ -166,6 +169,22 @@ public class ContractItemMappingResponse {
 
 	public void setBuyBackUnitPrice(BigDecimal buyBackUnitPrice) {
 		this.buyBackUnitPrice = buyBackUnitPrice;
+	}
+
+	public String getContractNo() {
+		return contractNo;
+	}
+
+	public void setContractNo(String contractNo) {
+		this.contractNo = contractNo;
+	}
+
+	public String getContractName() {
+		return contractName;
+	}
+
+	public void setContractName(String contractName) {
+		this.contractName = contractName;
 	}
 
 }

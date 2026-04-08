@@ -58,7 +58,6 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 	private ValidationService validationService;
 
 	@Autowired
-
 	private ContractItemPackageRepository contractItemPackageRepository;
 
 	@Value("${item.service.url}")
@@ -117,7 +116,7 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 					entity.setContract(contract);
 					entity.setItemId(request.getItemId());
 					entity.setUnitPrice(request.getUnitPrice());
-					if(request.getBuyBackUnitPrice() != null) {
+					if (request.getBuyBackUnitPrice() != null) {
 						entity.setBuyBackItemId(request.getItemId());
 						entity.setBuyBackUnitPrice(request.getBuyBackUnitPrice());
 					}
@@ -253,6 +252,10 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 			logger.error("ExternalServiceException while updating ContractItemMapping with id {}: {}", id,
 					ex.getMessage());
 			throw ex;
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException while updating ContractItemMapping with id {}: {}", id,
+					ex.getMessage());
+			throw ex;
 		} catch (Exception ex) {
 			logger.error("Unexpected error while updating ContractItemMapping for id {}: {}", id, ex.getMessage(), ex);
 			throw new DatabaseOperationException("Failed to update ContractItemMapping");
@@ -277,6 +280,22 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 
 			ContractItemMappingResponse response = mapper.toResponse(entity);
 
+			if (entity.getContract() != null) {
+
+				String contractName = entity.getContract().getContractName();
+
+				if (contractName != null && !contractName.trim().isEmpty()) {
+					response.setContractId(entity.getContract().getContractId());
+					response.setContractName(contractName);
+					response.setContractNo(entity.getContract().getContractNo());
+				} else {
+					logger.warn("Contract name is null/empty for contractId {}", entity.getContract().getContractId());
+				}
+
+			} else {
+				logger.warn("Contract is null for mapping id {}", id);
+			}
+
 			try {
 				ItemIDResponse item = validationService.validateAndGetItem(entity.getItemId());
 				response.setItemId(item.getItemId());
@@ -292,12 +311,19 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 			}
 
 			logger.info("ContractItemMapping fetched successfully for id {}", id);
+
 			return new ResponseEntity("Contract Item Mapping fetched successfully", 200, response);
 
-		} catch (BadRequestException | ResourceNotFoundException ex) {
-			logger.warn("Validation error while fetching ContractItemMapping {}", ex.getMessage());
+		} catch (BadRequestException ex) {
+			logger.warn("Validation error while fetching ContractItemMapping: {}", ex.getMessage());
 			throw ex;
-
+		} catch (ResourceNotFoundException ex) {
+			logger.warn("ContractItemMapping not found: {}", ex.getMessage());
+			throw ex;
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException while fetching ContractItemMapping for id {}: {}", id,
+					ex.getMessage());
+			throw ex;
 		} catch (Exception ex) {
 			logger.error("Unexpected error while fetching ContractItemMapping for id {}", id, ex);
 			throw new DatabaseOperationException("Failed to fetch ContractItemMapping");
@@ -323,6 +349,20 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 			for (ContractItemMapping mapping : pageResult.getContent()) {
 				ContractItemMappingResponse response = mapper.toResponse(mapping);
 
+				if (mapping.getContract() != null) {
+
+					String contractName = mapping.getContract().getContractName();
+
+					if (contractName != null && !contractName.trim().isEmpty()) {
+						response.setContractId(mapping.getContract().getContractId());
+						response.setContractName(contractName);
+						response.setContractNo(mapping.getContract().getContractNo());
+					} else {
+						logger.warn("Contract name is null/empty for contractId {}",
+								mapping.getContract().getContractId());
+					}
+				}
+
 				try {
 					ItemIDResponse item = validationService.validateAndGetItem(mapping.getItemId());
 					response.setItemId(item.getItemId());
@@ -340,14 +380,25 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 				responses.add(response);
 			}
 
+			// 🔥 Pagination Metadata
+			Map<String, Object> pagination = new HashMap<>();
+			pagination.put("content", responses);
+			pagination.put("currentPage", pageResult.getNumber());
+			pagination.put("pageSize", pageResult.getSize());
+			pagination.put("totalElements", pageResult.getTotalElements());
+			pagination.put("totalPages", pageResult.getTotalPages());
+			pagination.put("isLast", pageResult.isLast());
+
 			logger.info("Total Contract Item Mappings fetched {}", responses.size());
 
-			return new ResponseEntity("Contract Item Mappings fetched successfully", 200, responses);
+			return new ResponseEntity("Contract Item Mappings fetched successfully", 200, pagination);
 
 		} catch (BadRequestException ex) {
 			logger.warn("Validation error while fetching ContractItemMappings {}", ex.getMessage());
 			throw ex;
-
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException while fetching all ContractItemMappings: {}", ex.getMessage());
+			throw ex;
 		} catch (Exception ex) {
 			logger.error("Error while fetching ContractItemMappings", ex);
 			throw new DatabaseOperationException("Failed to fetch ContractItemMappings");
@@ -381,13 +432,17 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 
 			return new ResponseEntity("Contract Item Mapping deleted successfully", 200, null);
 
-		} catch (BadRequestException | ResourceNotFoundException ex) {
-
+		} catch (BadRequestException ex) {
 			logger.warn("Validation error while deleting ContractItemMapping {}", ex.getMessage());
 			throw ex;
-
+		} catch (ResourceNotFoundException ex) {
+			logger.warn("Validation error while deleting ContractItemMapping {}", ex.getMessage());
+			throw ex;
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException while deleting ContractItemMapping for id {}: {}", id,
+					ex.getMessage());
+			throw ex;
 		} catch (Exception ex) {
-
 			logger.error("Unexpected error while deleting ContractItemMapping for id {}", id, ex);
 			throw new DatabaseOperationException("Failed to delete ContractItemMapping");
 		}
@@ -450,7 +505,10 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 		} catch (BadRequestException ex) {
 			logger.warn("Validation error while fetching Contract Items: {}", ex.getMessage());
 			throw ex;
-
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException while fetching Contract Items for contractId {}: {}", contractId,
+					ex.getMessage());
+			throw ex;
 		} catch (Exception ex) {
 			logger.error("Error while fetching Contract Items for contractId {}", contractId, ex);
 			throw new DatabaseOperationException("Failed to fetch Contract Items");
@@ -526,107 +584,120 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 		} catch (BadRequestException ex) {
 			logger.warn("Validation error while fetching ContractItemMappings: {}", ex.getMessage());
 			throw ex;
-
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException while fetching ContractItemMappings for contractId {}: {}",
+					contractId, ex.getMessage());
+			throw ex;
 		} catch (Exception ex) {
 			logger.error("Error while fetching ContractItemMappings for contractId {}", contractId, ex);
 			throw new DatabaseOperationException("Failed to fetch ContractItemMappings");
 		}
 	}
+
 	@Override
 	@Transactional(readOnly = true)
 	public ResponseEntity getPackageItemsByContractAndItem(Integer contractId, Integer itemId) {
 
-	    logger.info("Fetching package items for contractId {} and itemId {}", contractId, itemId);
+		logger.info("Fetching package items for contractId {} and itemId {}", contractId, itemId);
 
-	    if (contractId == null) {
-	        logger.error("ContractId cannot be null");
-	        throw new BadRequestException("ContractId cannot be null");
-	    }
+		if (contractId == null) {
+			logger.error("ContractId cannot be null");
+			throw new BadRequestException("ContractId cannot be null");
+		}
 
-	    if (itemId == null) {
-	        logger.error("ItemId cannot be null");
-	        throw new BadRequestException("ItemId cannot be null");
-	    }
+		if (itemId == null) {
+			logger.error("ItemId cannot be null");
+			throw new BadRequestException("ItemId cannot be null");
+		}
 
-	    try {
+		try {
 
-	        ContractItemMapping mapping = repository
-	                .findByContract_ContractIdAndItemId(contractId, itemId)
-	                .orElseThrow(() -> {
-	                    logger.error("No mapping found for contractId {} and itemId {}", contractId, itemId);
-	                    return new ResourceNotFoundException(
-	                            "No item mapping found for contractId: " + contractId + ", itemId: " + itemId);
-	                });
+			ContractItemMapping mapping = repository.findByContract_ContractIdAndItemId(contractId, itemId)
+					.orElseThrow(() -> {
+						logger.error("No mapping found for contractId {} and itemId {}", contractId, itemId);
+						return new ResourceNotFoundException(
+								"No item mapping found for contractId: " + contractId + ", itemId: " + itemId);
+					});
 
-	        Integer contractMappingId = mapping.getContractMappingId();
-	        logger.info("Found contractMappingId {} for contractId {} and itemId {}", contractMappingId, contractId, itemId);
+			Integer contractMappingId = mapping.getContractMappingId();
+			logger.info("Found contractMappingId {} for contractId {} and itemId {}", contractMappingId, contractId,
+					itemId);
 
-	        List<ContractItemPackage> packages =
-	                contractItemPackageRepository.findByContractItemMapping_ContractMappingId(contractMappingId);
+			List<ContractItemPackage> packages = contractItemPackageRepository
+					.findByContractItemMapping_ContractMappingId(contractMappingId);
 
-	        if (packages == null || packages.isEmpty()) {
-	            logger.warn("No package items found for contractMappingId {}", contractMappingId);
-	            return new ResponseEntity("No package items found", 200, new ArrayList<>());
-	        }
+			if (packages == null || packages.isEmpty()) {
+				logger.warn("No package items found for contractMappingId {}", contractMappingId);
+				return new ResponseEntity("No package items found", 200, new ArrayList<>());
+			}
 
-	        List<ContractItemPackageResponse> responses = new ArrayList<>();
+			List<ContractItemPackageResponse> responses = new ArrayList<>();
 
-	        for (ContractItemPackage pkg : packages) {
+			for (ContractItemPackage pkg : packages) {
 
-	            ContractItemPackageResponse response = new ContractItemPackageResponse();
-	            response.setPackageId(pkg.getPackageId());
-	            response.setContractMappingId(contractMappingId);
-	            response.setMappedItemId(pkg.getMappedItemId());
-	            response.setIsActive(pkg.getIsActive());
-	            response.setCreatedOn(pkg.getCreatedOn());
-	            response.setModifiedOn(pkg.getModifiedOn());
-	            response.setCreatedBy(pkg.getCreatedBy());
-	            response.setModifiedBy(pkg.getModifiedBy());
-	          //  response.setQty(pkg.getQty());
+				ContractItemPackageResponse response = new ContractItemPackageResponse();
+				response.setPackageId(pkg.getPackageId());
+				response.setContractMappingId(contractMappingId);
+				response.setMappedItemId(pkg.getMappedItemId());
+				response.setIsActive(pkg.getIsActive());
+				response.setCreatedOn(pkg.getCreatedOn());
+				response.setModifiedOn(pkg.getModifiedOn());
+				response.setCreatedBy(pkg.getCreatedBy());
+				response.setModifiedBy(pkg.getModifiedBy());
 
-	            try {
-	                logger.info("Fetching item details for mappedItemId {}", pkg.getMappedItemId());
+				try {
+					logger.info("Fetching item details for mappedItemId {}", pkg.getMappedItemId());
 
-	                ItemIDResponse item = validationService.validateAndGetItem(pkg.getMappedItemId());
+					ItemIDResponse item = validationService.validateAndGetItem(pkg.getMappedItemId());
 
-	                logger.info("Fetched itemName: {}, basePrice: {} for mappedItemId {}",
-	                        item.getItemName(), item.getBasePrice(), pkg.getMappedItemId());
+					logger.info("Fetched itemName: {}, basePrice: {} for mappedItemId {}", item.getItemName(),
+							item.getBasePrice(), pkg.getMappedItemId());
 
-	                response.setItemName(item.getItemName());
-	                response.setBasePrice(item.getBasePrice());
-	                response.setQty(item.getQty());
+					response.setItemName(item.getItemName());
+					response.setBasePrice(item.getBasePrice());
+					response.setQty(item.getQty());
 
-	            } catch (ResourceNotFoundException ex) {
-	                logger.warn("Item not found for mappedItemId {}: {}", pkg.getMappedItemId(), ex.getMessage());
-	                response.setItemName("Unknown Item");
-	                response.setBasePrice(null);
-	            } catch (ExternalServiceException ex) {
-	                logger.error("External service error for mappedItemId {}: {}", pkg.getMappedItemId(), ex.getMessage());
-	                response.setItemName("Unknown Item");
-	                response.setBasePrice(null);
-	            } catch (Exception ex) {
-	                logger.error("Unexpected error fetching item details for mappedItemId {}: {}", pkg.getMappedItemId(), ex.getMessage());
-	                response.setItemName("Unknown Item");
-	                response.setBasePrice(null);
-	            }
+				} catch (ResourceNotFoundException ex) {
+					logger.warn("Item not found for mappedItemId {}: {}", pkg.getMappedItemId(), ex.getMessage());
+					response.setItemName("Unknown Item");
+					response.setBasePrice(null);
+				} catch (ExternalServiceException ex) {
+					logger.error("External service error for mappedItemId {}: {}", pkg.getMappedItemId(),
+							ex.getMessage());
+					response.setItemName("Unknown Item");
+					response.setBasePrice(null);
+				} catch (Exception ex) {
+					logger.error("Unexpected error fetching item details for mappedItemId {}: {}",
+							pkg.getMappedItemId(), ex.getMessage());
+					response.setItemName("Unknown Item");
+					response.setBasePrice(null);
+				}
 
-	            responses.add(response);
-	        }
+				responses.add(response);
+			}
 
-	        logger.info("Total package items fetched: {} for contractMappingId {}", responses.size(), contractMappingId);
-	        return new ResponseEntity("Package items fetched successfully", 200, responses);
+			logger.info("Total package items fetched: {} for contractMappingId {}", responses.size(),
+					contractMappingId);
+			return new ResponseEntity("Package items fetched successfully", 200, responses);
 
-	    } catch (BadRequestException | ResourceNotFoundException ex) {
-	        logger.warn("Validation error: {}", ex.getMessage());
-	        throw ex;
-	    } catch (Exception ex) {
-	        logger.error("Unexpected error while fetching package items for contractId {} itemId {}", contractId, itemId, ex);
-	        throw new DatabaseOperationException("Failed to fetch package items");
-	    }
+		} catch (BadRequestException ex) {
+			logger.warn("Validation error: {}", ex.getMessage());
+			throw ex;
+		} catch (ResourceNotFoundException ex) {
+			logger.warn("Validation error: {}", ex.getMessage());
+			throw ex;
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException while fetching package items for contractId {} itemId {}: {}",
+					contractId, itemId, ex.getMessage());
+			throw ex;
+		} catch (Exception ex) {
+			logger.error("Unexpected error while fetching package items for contractId {} itemId {}", contractId,
+					itemId, ex);
+			throw new DatabaseOperationException("Failed to fetch package items");
+		}
 	}
 
-
-@Override
+	@Override
 	@Transactional
 	public ResponseEntity deactivateContractItemMappings(List<Integer> mappingIds, String userId) {
 
@@ -662,14 +733,19 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 
 			return new ResponseEntity("Contract Item Mappings deactivated successfully", 200, null);
 
-		} catch (BadRequestException | ResourceNotFoundException ex) {
-
+		} catch (BadRequestException ex) {
 			logger.warn("Validation failure during bulk deactivation: {}", ex.getMessage());
 			throw ex;
-
+		} catch (ResourceNotFoundException ex) {
+			logger.warn("Validation failure during bulk deactivation: {}", ex.getMessage());
+			throw ex;
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException during bulk deactivation for ids {}: {}", mappingIds,
+					ex.getMessage());
+			throw ex;
 		} catch (Exception ex) {
-
 			logger.error("Error occurred while deactivating ContractItemMappings for ids {}", mappingIds, ex);
 			throw new DatabaseOperationException("Failed to deactivate ContractItemMappings");
 		}
-	}}
+	}
+}
