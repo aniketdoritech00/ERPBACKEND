@@ -367,14 +367,17 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 					ItemIDResponse item = validationService.validateAndGetItem(mapping.getItemId());
 					response.setItemId(item.getItemId());
 					response.setItemName(item.getItemName());
+					response.setItemCode(item.getItemCode());
 				} catch (ResourceNotFoundException ex) {
 					logger.warn("Item not found for itemId {}: {}", mapping.getItemId(), ex.getMessage());
 					response.setItemId(mapping.getItemId());
 					response.setItemName("Unknown Item");
+					response.setItemCode("Unknown Item Code");
 				} catch (Exception ex) {
 					logger.error("Error fetching item details for itemId {}: {}", mapping.getItemId(), ex.getMessage());
 					response.setItemId(mapping.getItemId());
 					response.setItemName("Unknown Item");
+					response.setItemCode("Unknown Item Code");
 				}
 
 				responses.add(response);
