@@ -16,6 +16,8 @@ public class ContractMasterResponse {
 
 	private String customerName;
 
+	private String customerCode;
+
 	private Integer zoneId;
 
 	private String zoneName;
@@ -55,6 +57,14 @@ public class ContractMasterResponse {
 	private Integer createdBy;
 
 	private Integer modifiedBy;
+
+	public String getCustomerCode() {
+		return customerCode;
+	}
+	
+	public void setCustomerCode(String customerCode) {
+		this.customerCode = customerCode;
+	}
 
 	/**
 	 * @return the productTypes

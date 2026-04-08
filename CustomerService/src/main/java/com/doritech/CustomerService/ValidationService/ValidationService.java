@@ -20,6 +20,7 @@ import com.doritech.CustomerService.FeignClient.ItemFeignClient;
 import com.doritech.CustomerService.FeignClient.OrganizationClient;
 import com.doritech.CustomerService.FeignClient.ParamFeignClient;
 import com.doritech.CustomerService.FeignClient.SiteFeignClient;
+import com.doritech.CustomerService.FeignClient.UserClient;
 import com.doritech.CustomerService.Response.CompSiteResponse;
 import com.doritech.CustomerService.Response.CompanyResponse;
 import com.doritech.CustomerService.Response.CompanySiteMappingResponse;
@@ -29,6 +30,7 @@ import com.doritech.CustomerService.Response.HierarchyResponse;
 import com.doritech.CustomerService.Response.ItemIDResponse;
 import com.doritech.CustomerService.Response.OrganizationResponse;
 import com.doritech.CustomerService.Response.ParamResponseDTO;
+import com.doritech.CustomerService.Response.UserResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -51,6 +53,8 @@ public class ValidationService {
 
 	@Autowired
 	private CompanyClient companyClient;
+	@Autowired
+	private UserClient userClient;
 
 	@Autowired
 	private HierarchyClient hierarchyClient;
@@ -440,6 +444,57 @@ public class ValidationService {
 					hierarchyLevelId, ex.getMessage(), ex);
 			throw new ExternalServiceException(
 					"Unable to verify hierarchy from Hierarchy Service");
+		}
+	}
+
+	public UserResponse validateAndGetUser(
+			Integer userId) {
+
+		if (userId == null) {
+			logger.error("User id cannot be null");
+			throw new BadRequestException("User id cannot be null");
+		}
+
+		try {
+			ResponseEntity response = userClient.getUserById(userId);
+
+			if (response == null || response.getPayload() == null) {
+				logger.error("Null response from User Service for id {}",
+						userId);
+				throw new ResourceNotFoundException(
+						"User not found with id " + userId);
+			}
+
+			// Map<String, Object> payloadMap = objectMapper
+			// 		.convertValue(response.getPayload(), Map.class);
+
+			// Object data = payloadMap.get("data");
+
+			// if (data == null) {
+			// 	logger.error("User not found with id {}",
+			// 			userId);
+			// 	throw new ResourceNotFoundException(
+			// 			"User not found with id " + userId);
+			// }
+
+			UserResponse user = objectMapper
+					.convertValue(response.getPayload(), UserResponse.class);
+
+			logger.info("User verified successfully for id {}",
+					userId);
+
+			return user;
+
+		} catch (BadRequestException | ResourceNotFoundException ex) {
+			logger.warn(
+					"Validation error in validateAndGetUser for id {}: {}",
+					userId, ex.getMessage());
+			throw ex;
+		} catch (Exception ex) {
+			logger.error("Error while calling User Service for id {}: {}",
+					userId, ex.getMessage(), ex);
+			throw new ExternalServiceException(
+					"Unable to verify user from User Service");
 		}
 	}
 

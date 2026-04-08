@@ -43,6 +43,9 @@ public class ContractMapper {
 		response.setContractName(entity.getContractName());
 		   if (entity.getCustomer() != null) {
 	            response.setCustomerId(entity.getCustomer().getCustomerId());
+				response.setCustomerName(entity.getCustomer().getCustomerName());
+				response.setCustomerCode(entity.getCustomer().getCustomerCode());
+				
 	        }
 		response.setContractStartDate(entity.getContractStartDate());
 		response.setContractEndDate(entity.getContractEndDate());
