@@ -81,6 +81,7 @@ public class EmployeeAssignmentServiceImpl
 		entity.setSiteId(request.getSiteId());
 		entity.setAssignmentStartDate(request.getAssignmentStartDate());
 		entity.setAssignmentEndDate(request.getAssignmentEndDate());
+		entity.setVisitDate(request.getVisitDate());
 		entity.setStatus("Pending");
 		entity.setRemark("NA");
 		entity.setCreatedBy(request.getCreatedBy());

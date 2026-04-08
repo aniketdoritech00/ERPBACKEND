@@ -372,6 +372,7 @@ public class HierarchyLevelServiceImpl implements HierarchyLevelService {
 
 		HierarchyLevelResponseDTO responseDTO = new HierarchyLevelResponseDTO(
 				entity.getId(), entity.getHierarchy().getId(),
+				entity.getHierarchy().getHierarchyName(), 
 				entity.getHierarchy().getEntityType(), entity.getLevelNumber(),
 				entity.getLevelName(), entity.getEndNode(),
 				entity.getCreatedOn());

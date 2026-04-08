@@ -24,4 +24,6 @@ public interface ContractItemMappingService {
 	ResponseEntity saveOrUpdateItemMapping(List<ContractItemMappingRequest> requests);
 
 	ResponseEntity getPackageItemsByContractAndItem(Integer contractId, Integer itemId);
+		ResponseEntity deactivateContractItemMappings(List<Integer> mappingIds, String userId);
+
 }

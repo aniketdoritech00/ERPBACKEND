@@ -2,10 +2,10 @@ package com.doritech.CustomerService.ServiceImpl;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,7 +113,7 @@ public class QuotationMasterServiceImpl implements QuotationMasterService {
 			QuotationMaster entity = mapper.toEntity(request);
 			entity.setCustomer(customer);
 			entity.setContract(contract);
-			entity.setCreatedOn(new Date());
+			// entity.setCreatedOn(LocalDateTime.now());
 
 			QuotationMaster saved = repository.save(entity);
 
@@ -180,14 +180,13 @@ public class QuotationMasterServiceImpl implements QuotationMasterService {
 
 			if (entity.getContract() != null && entity.getContract().getContractId() != null) {
 
-			    ContractMaster contract = contractRepository
-			            .findById(entity.getContract().getContractId())
-			            .orElse(null);
+				ContractMaster contract = contractRepository.findById(entity.getContract().getContractId())
+						.orElse(null);
 
-			    if (contract != null) {
-			        dto.setContractName(contract.getContractName());
-			        dto.setContractCode(contract.getContractNo());
-			    }
+				if (contract != null) {
+					dto.setContractName(contract.getContractName());
+					dto.setContractCode(contract.getContractNo());
+				}
 			}
 			response.setMessage("Quotation fetched successfully");
 			response.setStatusCode(200);
@@ -253,14 +252,14 @@ public class QuotationMasterServiceImpl implements QuotationMasterService {
 				}
 
 				if (q.getContract() != null) {
-				    Integer contractId = q.getContract().getContractId();
+					Integer contractId = q.getContract().getContractId();
 
-				    if (contractId != null) {
-				        contractRepository.findById(contractId).ifPresent(contract -> {
-				            dto.setContractName(contract.getContractName());
-				            dto.setContractCode(contract.getContractNo());
-				        });
-				    }
+					if (contractId != null) {
+						contractRepository.findById(contractId).ifPresent(contract -> {
+							dto.setContractName(contract.getContractName());
+							dto.setContractCode(contract.getContractNo());
+						});
+					}
 				}
 
 				list.add(dto);
@@ -359,7 +358,7 @@ public class QuotationMasterServiceImpl implements QuotationMasterService {
 			entity.setSalesOrderNo(request.getSalesOrderNo());
 			entity.setIsActive(request.getIsActive());
 			entity.setModifiedBy(request.getModifiedBy());
-			entity.setModifiedOn(new Date());
+			// entity.setModifiedOn(LocalDateTime.now());
 
 			QuotationMaster updated = repository.save(entity);
 
@@ -436,47 +435,47 @@ public class QuotationMasterServiceImpl implements QuotationMasterService {
 
 		return response;
 	}
+
 	@Override
 	public ResponseEntity getQuotations(String quotationCode, Integer customerId, Integer contractId, String status,
-	                                    String isActive, int page, int size) {
+			String isActive, int page, int size) {
 
-	    logger.info("Fetching quotations with filters: quotationCode={}, customerId={}, contractId={}, status={}, isActive={}, page={}, size={}",
-	            quotationCode, customerId, contractId, status, isActive, page, size);
+		logger.info(
+				"Fetching quotations with filters: quotationCode={}, customerId={}, contractId={}, status={}, isActive={}, page={}, size={}",
+				quotationCode, customerId, contractId, status, isActive, page, size);
 
-	    ResponseEntity response = new ResponseEntity();
+		ResponseEntity response = new ResponseEntity();
 
-	    try {
-	        Specification<QuotationMaster> spec = QuotationSpecification.filterQuotations(
-	                quotationCode, customerId, contractId, status, isActive);
+		try {
+			Specification<QuotationMaster> spec = QuotationSpecification.filterQuotations(quotationCode, customerId,
+					contractId, status, isActive);
 
-	        Pageable pageable = PageRequest.of(page, size);
+			Pageable pageable = PageRequest.of(page, size);
 
-	        Page<QuotationMaster> pageResult = repository.findAll(spec, pageable);
+			Page<QuotationMaster> pageResult = repository.findAll(spec, pageable);
 
-	        List<QuotationMasterResponse> responseList = pageResult.getContent()
-	                .stream()
-	                .map(this::toResponse)
-	                .toList();
+			List<QuotationMasterResponse> responseList = pageResult.getContent().stream().map(this::toResponse)
+					.toList();
 
-	        Map<String, Object> pagination = new HashMap<>();
-	        pagination.put("content", responseList);
-	        pagination.put("currentPage", pageResult.getNumber());
-	        pagination.put("totalItems", pageResult.getTotalElements());
-	        pagination.put("totalPages", pageResult.getTotalPages());
-	        pagination.put("pageSize", pageResult.getSize());
+			Map<String, Object> pagination = new HashMap<>();
+			pagination.put("content", responseList);
+			pagination.put("currentPage", pageResult.getNumber());
+			pagination.put("totalItems", pageResult.getTotalElements());
+			pagination.put("totalPages", pageResult.getTotalPages());
+			pagination.put("pageSize", pageResult.getSize());
 
-	        response.setMessage("Quotations fetched successfully");
-	        response.setStatusCode(200);
-	        response.setPayload(pagination);
+			response.setMessage("Quotations fetched successfully");
+			response.setStatusCode(200);
+			response.setPayload(pagination);
 
-	        logger.info("Quotations fetched successfully: totalItems={}", pageResult.getTotalElements());
+			logger.info("Quotations fetched successfully: totalItems={}", pageResult.getTotalElements());
 
-	    } catch (Exception e) {
-	        logger.error("Unexpected error while fetching quotations: {}", e.getMessage(), e);
-	        throw new RuntimeException("Unable to fetch quotations");
-	    }
+		} catch (Exception e) {
+			logger.error("Unexpected error while fetching quotations: {}", e.getMessage(), e);
+			throw new RuntimeException("Unable to fetch quotations");
+		}
 
-	    return response;
+		return response;
 	}
 
 	public QuotationMasterResponse toResponse(QuotationMaster entity) {
@@ -509,6 +508,35 @@ public class QuotationMasterServiceImpl implements QuotationMasterService {
 		response.setModifiedOn(entity.getModifiedOn());
 		response.setCreatedBy(entity.getCreatedBy());
 		response.setModifiedBy(entity.getModifiedBy());
+
+		return response;
+	}
+
+	@Override
+	public ResponseEntity getAllQuotationIdAndCode() {
+
+		logger.info("Get All Quotation Id And Code API called");
+
+		List<QuotationMaster> master = repository.findAll();
+
+		if (master == null || master.isEmpty()) {
+			logger.error("No quotations found");
+			throw new ResourceNotFoundException("No quotations available");
+		}
+
+		List<QuotationMasterResponse> responseList = master.stream().map(entity -> {
+			QuotationMasterResponse dto = new QuotationMasterResponse();
+			dto.setQuotationId(entity.getQuotationId());
+			dto.setQuotationCode(entity.getQuotationCode());
+			return dto;
+		}).collect(Collectors.toList());
+
+		logger.info("Successfully fetched {} quotations", responseList.size());
+
+		ResponseEntity response = new ResponseEntity();
+		response.setMessage("Quotation list fetched successfully");
+		response.setPayload(responseList);
+		response.setStatusCode(200);
 
 		return response;
 	}

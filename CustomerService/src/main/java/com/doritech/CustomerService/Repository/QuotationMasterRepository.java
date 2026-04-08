@@ -15,5 +15,7 @@ public interface QuotationMasterRepository extends JpaRepository<QuotationMaster
 	boolean existsByQuotationCodeAndQuotationIdNot(String quotationCode, Integer id);
 
 	Page<QuotationMaster> findAll(Specification<QuotationMaster> spec, Pageable pageable);
+		long countByStatus(String string);
+
 
 }

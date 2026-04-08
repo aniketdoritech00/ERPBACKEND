@@ -15,154 +15,134 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(GlobalExceptionHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-	@ExceptionHandler(ResourceAlreadyExistsException.class)
-	public ResponseEntity handleAlreadyExists(
-			ResourceAlreadyExistsException ex) {
-		logger.error("Resource Already Exists: ", ex);
-		return new ResponseEntity(ex.getMessage(), 409, null);
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleNotFound(ResourceNotFoundException ex) {
+		logger.error("Resource Not Found: {}", ex.getMessage());
+		return org.springframework.http.ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(new ResponseEntity(ex.getMessage(), 404, null));
 	}
 
 	@ExceptionHandler(NoResourceFoundException.class)
-	public ResponseEntity handleNoResourceFoundException(
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleNoResourceFoundException(
 			NoResourceFoundException ex) {
-
-		return new ResponseEntity(
-				"API endpoint not found: " + ex.getResourcePath(), 404, null);
+		logger.error("API Endpoint Not Found: {}", ex.getResourcePath());
+		return org.springframework.http.ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(new ResponseEntity("API endpoint not found: " + ex.getResourcePath(), 404, null));
 	}
 
-	@ExceptionHandler(ResourceNotFoundException.class)
-	public ResponseEntity handleNotFound(ResourceNotFoundException ex) {
-		logger.error("Resource Not Found: {}", ex.getMessage());
-		return new ResponseEntity(ex.getMessage(), 404, null);
-	}
 	@ExceptionHandler(BadRequestException.class)
-	public ResponseEntity handleBadRequest(BadRequestException ex) {
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleBadRequest(BadRequestException ex) {
 		logger.error("Bad Request: ", ex);
-		return new ResponseEntity(ex.getMessage(), 400, null);
-	}
-
-	@ExceptionHandler(DatabaseOperationException.class)
-	public ResponseEntity handleDatabase(DatabaseOperationException ex) {
-		logger.error("Database Error: ", ex);
-		return new ResponseEntity("Database Operation Failed", 500, null);
-	}
-
-	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity handleDataIntegrityViolation(
-			DataIntegrityViolationException ex, HttpServletRequest request) {
-
-		String userMessage = "Cannot delete this record because it is linked with other records.";
-
-		Throwable rootCause = ex.getRootCause();
-		String httpMethod = request.getMethod();
-
-		if (rootCause != null && rootCause.getMessage() != null) {
-
-			String message = rootCause.getMessage().toLowerCase();
-
-			// FOREIGN KEY ERROR
-			if (message.contains("foreign key")
-					|| message.contains("constraint")) {
-
-				if ("DELETE".equalsIgnoreCase(httpMethod)) {
-					userMessage = "Cannot delete this record because it is linked with other records.";
-				} else if ("PUT".equalsIgnoreCase(httpMethod)
-						|| "PATCH".equalsIgnoreCase(httpMethod)
-						|| "POST".equalsIgnoreCase(httpMethod)) {
-					userMessage = "Cannot update this record because it is linked with other records.";
-				}
-			}
-
-			// DUPLICATE ENTRY
-			if (message.contains("duplicate") || message.contains("unique")) {
-				userMessage = "Duplicate entry. This record already exists.";
-			}
-		}
-
-		// ApiResponse<Object> response = new ApiResponse<>();
-		// response.setSuccess(false);
-		// response.setMessage(userMessage);
-		// response.setData(null);
-		// response.setErrors(null);
-		// response.setStatusCode(HttpStatus.BAD_REQUEST.value());
-		// response.setPath(request.getRequestURI());
-
-		return new ResponseEntity(userMessage, HttpStatus.BAD_REQUEST.value(),
-				null);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(new ResponseEntity(ex.getMessage(), 400, null));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity handleValidation(MethodArgumentNotValidException ex) {
-
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleValidation(
+			MethodArgumentNotValidException ex) {
 		logger.error("Validation Error: ", ex);
-
-		List<String> errors = ex.getBindingResult().getFieldErrors().stream()
-				.map(error -> error.getDefaultMessage()).toList();
-
-		return new ResponseEntity("Validation Failed", 400, errors);
-	}
-
-	@ExceptionHandler(TransactionSystemException.class)
-	public ResponseEntity handleTransaction(TransactionSystemException ex) {
-		logger.error("Transaction Failed: ", ex);
-		return new ResponseEntity("Transaction Failed", 500, null);
-	}
-
-	@ExceptionHandler(DuplicateResourceException.class)
-	public ResponseEntity handleDuplicate(DuplicateResourceException ex) {
-		logger.error("Duplicate Resource: ", ex);
-		return new ResponseEntity(ex.getMessage(), 409, null);
-	}
-
-	@ExceptionHandler(InternalServerException.class)
-	public ResponseEntity handleInternalServer(InternalServerException ex) {
-		logger.error("Internal Server Error: ", ex);
-		return new ResponseEntity(ex.getMessage(), 500, null);
+		List<String> errors = ex.getBindingResult().getFieldErrors().stream().map(error -> error.getDefaultMessage())
+				.toList();
+		return org.springframework.http.ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(new ResponseEntity("Validation Failed", 400, errors));
 	}
 
 	@ExceptionHandler(HandlerMethodValidationException.class)
 	public org.springframework.http.ResponseEntity<ResponseEntity> handleValidationException(
 			HandlerMethodValidationException ex) {
-
-		String errorMessage = ex.getAllErrors().stream()
-				.map(error -> error.getDefaultMessage()).findFirst()
+		logger.error("Handler Method Validation Error: ", ex);
+		String errorMessage = ex.getAllErrors().stream().map(error -> error.getDefaultMessage()).findFirst()
 				.orElse("Validation failed");
-
-		ResponseEntity response = new ResponseEntity();
-		response.setMessage(errorMessage);
-		response.setStatusCode(400);
-		response.setPayload(null);
-
-		return org.springframework.http.ResponseEntity.badRequest()
-				.body(response);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(new ResponseEntity(errorMessage, 400, null));
 	}
 
 	@ExceptionHandler(IllegalArgumentException.class)
-	public org.springframework.http.ResponseEntity<Object> handleIllegalArgumentException(
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleIllegalArgumentException(
 			IllegalArgumentException ex) {
+		logger.error("Illegal Argument: {}", ex.getMessage(), ex);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(new ResponseEntity(ex.getMessage(), 400, null));
+	}
 
-		logger.error("Validation error: {}", ex.getMessage(), ex);
+	@ExceptionHandler(org.springframework.web.bind.MissingRequestHeaderException.class)
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleMissingHeader(
+			org.springframework.web.bind.MissingRequestHeaderException ex) {
+		logger.error("Missing Header: {}", ex.getHeaderName(), ex);
+		String message = "Required header '" + ex.getHeaderName() + "' is missing";
+		return org.springframework.http.ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(new ResponseEntity(message, 400, null));
+	}
 
-		ResponseEntity response = new ResponseEntity();
-		response.setMessage(ex.getMessage());
-		response.setStatusCode(400);
-		response.setPayload(null);
+	@ExceptionHandler(ResourceAlreadyExistsException.class)
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleAlreadyExists(
+			ResourceAlreadyExistsException ex) {
+		logger.error("Resource Already Exists: ", ex);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.CONFLICT)
+				.body(new ResponseEntity(ex.getMessage(), 409, null));
+	}
 
-		return new org.springframework.http.ResponseEntity<>(response,
-				HttpStatus.BAD_REQUEST);
+	@ExceptionHandler(DuplicateResourceException.class)
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleDuplicateResource(
+			DuplicateResourceException ex) {
+		logger.error("Duplicate Resource: ", ex);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.CONFLICT)
+				.body(new ResponseEntity(ex.getMessage(), 409, null));
+	}
+
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleDataIntegrityViolation(
+			DataIntegrityViolationException ex) {
+		logger.error("Data Integrity Violation: ", ex);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.CONFLICT)
+				.body(new ResponseEntity("A data conflict occurred. Please check your input.", 409, null));
+	}
+
+	@ExceptionHandler(ExternalServiceException.class)
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleExternalService(ExternalServiceException ex) {
+		logger.error("External Service Error: ", ex);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+				.body(new ResponseEntity(ex.getMessage(), 502, null));
+	}
+
+	@ExceptionHandler(DatabaseOperationException.class)
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleDatabase(DatabaseOperationException ex) {
+		logger.error("Database Error: ", ex);
+		String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+		return org.springframework.http.ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(new ResponseEntity(message, 500, null));
+	}
+
+	@ExceptionHandler(InternalServerException.class)
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleInternalServer(InternalServerException ex) {
+		logger.error("Internal Server Error: ", ex);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(new ResponseEntity(ex.getMessage(), 500, null));
+	}
+
+	@ExceptionHandler(TransactionSystemException.class)
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleTransaction(TransactionSystemException ex) {
+		logger.error("Transaction Failed: ", ex);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(new ResponseEntity("Transaction Failed", 500, null));
+	}
+
+	@ExceptionHandler(ApplicationException.class)
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleApplicationException(ApplicationException ex) {
+		logger.error("Application Exception [ErrorCode: {}]: ", ex.getErrorCode(), ex);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(new ResponseEntity("[" + ex.getErrorCode() + "] " + ex.getMessage(), 500, null));
 	}
 
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity handleAll(Exception ex) {
+	public org.springframework.http.ResponseEntity<ResponseEntity> handleAll(Exception ex) {
 		logger.error("Unhandled Exception: ", ex);
-		return new ResponseEntity("Internal Server Error", 500, null);
+		return org.springframework.http.ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(new ResponseEntity("Internal Server Error", 500, null));
 	}
 }

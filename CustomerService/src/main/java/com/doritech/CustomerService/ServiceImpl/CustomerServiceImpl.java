@@ -232,19 +232,19 @@ public class CustomerServiceImpl implements CustomerService {
 		} catch (TransactionSystemException e) {
 			logger.error("Transaction failed while processing customer: {}",
 					e.getMessage(), e);
-			return new ResponseEntity("Transaction Failed", 500, null);
+			throw e;
 		} catch (DataAccessException e) {
 			logger.error("Database access error while processing customer: {}",
 					e.getMessage(), e);
-			return new ResponseEntity("Database Operation Failed", 500, null);
+			throw new DatabaseOperationException("Database Operation Failed");
 		} catch (IllegalArgumentException e) {
 			logger.error("Illegal argument while processing customer: {}",
 					e.getMessage(), e);
-			return new ResponseEntity(e.getMessage(), 400, null);
+			throw e;
 		} catch (Exception e) {
 			logger.error("Unexpected error while processing customer: {}",
 					e.getMessage(), e);
-			return new ResponseEntity("Internal Server Error", 500, null);
+			throw new DatabaseOperationException("Internal Server Error");
 		}
 	}
 
@@ -304,16 +304,16 @@ public class CustomerServiceImpl implements CustomerService {
 		} catch (TransactionSystemException e) {
 			logger.error("Transaction failed in updateCustomer for ID {}: {}",
 					id, e.getMessage(), e);
-			return new ResponseEntity("Transaction Failed", 500, null);
+			throw e;
 		} catch (DataAccessException e) {
 			logger.error(
 					"Database access error in updateCustomer for ID {}: {}", id,
 					e.getMessage(), e);
-			return new ResponseEntity("Database Operation Failed", 500, null);
+			throw new DatabaseOperationException("Database Operation Failed");
 		} catch (Exception e) {
 			logger.error("Unexpected error in updateCustomer for ID {}: {}", id,
 					e.getMessage(), e);
-			return new ResponseEntity("Internal Server Error", 500, null);
+			throw new DatabaseOperationException("Internal Server Error");
 		}
 	}
 
@@ -676,13 +676,14 @@ public class CustomerServiceImpl implements CustomerService {
 				throw new ResourceNotFoundException("No Customers Found");
 			}
 
-			List<CustomerResponse> responseList = customers.stream().map(c -> {
-				CustomerResponse res = new CustomerResponse();
-				res.setCustomerId(c.getCustomerId());
-				res.setCustomerName(c.getCustomerName());
-				res.setCustomerCode(c.getCustomerCode());
-				return res;
-			}).toList();
+			List<CustomerResponse> responseList = customers.stream().filter(c -> "Y".equalsIgnoreCase(c.getIsActive()))
+					.map(c -> {
+						CustomerResponse res = new CustomerResponse();
+						res.setCustomerId(c.getCustomerId());
+						res.setCustomerName(c.getCustomerName());
+						res.setCustomerCode(c.getCustomerCode());
+						return res;
+					}).toList();
 
 			logger.info("Total customers fetched: {}", responseList.size());
 
@@ -879,6 +880,44 @@ public class CustomerServiceImpl implements CustomerService {
 		} catch (Exception ex) {
 			logger.error("Unexpected error: {}", ex.getMessage(), ex);
 			throw new DatabaseOperationException("Failed to fetch customers");
+		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ResponseEntity getCustomerNamesForFillter() {
+		logger.info("Get All Customer Names API called");
+
+		try {
+
+			List<CustomerMasterEntity> customers = customerRepo.findAll();
+
+			if (customers.isEmpty()) {
+				logger.warn("No customers found in getAllCustomerNames");
+				throw new ResourceNotFoundException("No Customers Found");
+			}
+
+			List<CustomerResponse> responseList = customers.stream().map(c -> {
+				CustomerResponse res = new CustomerResponse();
+				res.setCustomerId(c.getCustomerId());
+				res.setCustomerName(c.getCustomerName());
+				res.setCustomerCode(c.getCustomerCode());
+				return res;
+			}).toList();
+
+			logger.info("Total customers fetched: {}", responseList.size());
+
+			return new ResponseEntity("Success", 200, responseList);
+
+		} catch (ResourceNotFoundException ex) {
+			logger.warn("No customers found: {}", ex.getMessage());
+			throw ex;
+		} catch (DataAccessException ex) {
+			logger.error("Database access error in getAllCustomerNames: {}", ex.getMessage(), ex);
+			throw new DatabaseOperationException("Failed to fetch customer names");
+		} catch (Exception ex) {
+			logger.error("Unexpected error in getAllCustomerNames: {}", ex.getMessage(), ex);
+			throw new DatabaseOperationException("Failed to fetch customer names");
 		}
 	}
 

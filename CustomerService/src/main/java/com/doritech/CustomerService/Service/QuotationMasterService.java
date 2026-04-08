@@ -22,4 +22,6 @@ public interface QuotationMasterService {
 	ResponseEntity getQuotations(String quotationCode, Integer customerId, Integer contractId, String status,
 			String isActive, int page, int size);
 
+	ResponseEntity getAllQuotationIdAndCode();
+
 }

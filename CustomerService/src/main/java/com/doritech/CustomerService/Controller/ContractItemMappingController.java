@@ -102,4 +102,14 @@ public class ContractItemMappingController {
 
 		return service.getPackageItemsByContractAndItem(contractId, itemId);
 	}
+		
+	@DeleteMapping("/contract-item-mappings")
+	public ResponseEntity deactivateContractItemMappings(
+	        @RequestBody List<Integer> mappingIds,
+	        @RequestHeader("X-User-Id") String userId) {
+
+	    logger.info("Deactivate ContractItemMappings API invoked by user {} for ids {}", userId, mappingIds);
+
+	    return service.deactivateContractItemMappings(mappingIds, userId);
+	}
 }

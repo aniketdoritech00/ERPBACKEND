@@ -35,6 +35,7 @@ public class GodownInventoryTransactionEntity {
 	@JoinColumn(name = "item_id")
 	private ItemMasterEntity item;
 
+	@Column(length = 1)
 	private String transactionType;
 
 	@Column(precision = 10, scale = 3)
@@ -42,8 +43,10 @@ public class GodownInventoryTransactionEntity {
 
 	private LocalDateTime transactionDate;
 
+	@Column(length = 1)
 	private String status;
 
+	@Column(length = 500)
 	private String remarks;
 
 	@Column(name = "created_by", nullable = false, updatable = false)
