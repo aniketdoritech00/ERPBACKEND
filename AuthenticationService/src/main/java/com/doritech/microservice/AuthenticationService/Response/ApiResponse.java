@@ -17,12 +17,10 @@ public class ApiResponse<T> {
         this.timestamp = timestamp;
     }
 
-    // ✅ Static builder factory
     public static <T> Builder<T> builder() {
         return new Builder<>();
     }
 
-    // ✅ Static Success/Error Methods
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
                 .success(true)

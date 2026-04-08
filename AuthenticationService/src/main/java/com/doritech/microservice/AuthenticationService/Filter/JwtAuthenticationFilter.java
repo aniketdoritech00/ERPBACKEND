@@ -34,8 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/auth/health",
             "/actuator",
             "/actuator/health",
-            "/error"
-    );
+            "/error");
 
     public JwtAuthenticationFilter(JwtService jwtService) {
         this.jwtService = jwtService;
@@ -43,11 +42,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain)
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        // ✅ FIX: Use getServletPath() instead of getRequestURI()
         String path = request.getServletPath();
 
         // Allow public URLs without token
@@ -71,19 +69,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            Claims claims   = jwtService.extractAllClaims(jwt);
-            String loginId  = claims.getSubject();
+            Claims claims = jwtService.extractAllClaims(jwt);
+            String loginId = claims.getSubject();
             String roleName = claims.get("roleName", String.class);
 
             if (loginId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                loginId,
-                                null,
-                                roleName != null
-                                        ? Collections.singletonList(new SimpleGrantedAuthority(roleName))
-                                        : Collections.emptyList()
-                        );
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        loginId,
+                        null,
+                        roleName != null
+                                ? Collections.singletonList(new SimpleGrantedAuthority(roleName))
+                                : Collections.emptyList());
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
@@ -106,7 +102,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "{\"statusCode\":%d,\"error\":\"%s\",\"message\":\"%s\"}",
                 status,
                 HttpStatus.valueOf(status).getReasonPhrase(),
-                message
-        ));
+                message));
     }
 }

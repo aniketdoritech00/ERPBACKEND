@@ -151,7 +151,6 @@ public class AmcDetailServiceImpl implements AmcDetailService {
 		return mapper.toResponse(getOrThrow(id));
 	}
 
-	// 🔥 Reusable method
 	private AmcDetailEntity getOrThrow(Integer id) {
 		return repo.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException(

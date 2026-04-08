@@ -49,7 +49,6 @@ public class JwtAuthenticationFilter
 				return chain.filter(exchange);
 			}
 
-			// ✅ Authorization header check
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
 				return onError(exchange, "No Authorization header",
 						HttpStatus.UNAUTHORIZED);
@@ -71,7 +70,6 @@ public class JwtAuthenticationFilter
 						HttpStatus.UNAUTHORIZED);
 			}
 
-			// ✅ Validate JWT
 			if (!jwtUtil.validateJwtToken(token)) {
 				return onError(exchange, "Invalid or expired JWT token",
 						HttpStatus.UNAUTHORIZED);
@@ -85,7 +83,6 @@ public class JwtAuthenticationFilter
 						HttpStatus.UNAUTHORIZED);
 			}
 
-			// ✅ Add user info headers
 			ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
 					.header("X-User-Id", String.valueOf(userId))
 					.header("X-Username", username)
