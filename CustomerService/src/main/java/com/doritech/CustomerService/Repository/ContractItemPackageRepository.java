@@ -35,7 +35,9 @@ public interface ContractItemPackageRepository extends JpaRepository<ContractIte
 			    cmast.contract_name         AS contractName,
 			    cmast.contract_no           AS contractCode,
 			    im1.item_name               AS mappingItemName,
+				im1.item_code               AS mappingItemCode,
 			    im2.item_name               AS mappedItemName,
+				im2.item_code               AS mappedItemCode,
 			    im2.base_price              AS basePrice,
 			    cm.quantity                 AS qty
 			FROM  contract_item_package  cip
