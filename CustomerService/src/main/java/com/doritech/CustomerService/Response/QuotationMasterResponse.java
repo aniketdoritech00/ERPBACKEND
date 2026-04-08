@@ -1,6 +1,6 @@
 package com.doritech.CustomerService.Response;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 public class QuotationMasterResponse {
 
@@ -11,8 +11,8 @@ public class QuotationMasterResponse {
 	private Integer contractId;
 
 	private Integer customerId;
-	   private String remarks;
-	private Date quotationDate;
+	private String remarks;
+	private LocalDateTime quotationDate;
 
 	private String status;
 	private String customerName;
@@ -27,9 +27,9 @@ public class QuotationMasterResponse {
 
 	private String isActive;
 
-	private Date createdOn;
+	private LocalDateTime createdOn;
 
-	private Date modifiedOn;
+	private LocalDateTime modifiedOn;
 
 	private Integer createdBy;
 
@@ -73,14 +73,6 @@ public class QuotationMasterResponse {
 
 	public void setCustomerId(Integer customerId) {
 		this.customerId = customerId;
-	}
-
-	public Date getQuotationDate() {
-		return quotationDate;
-	}
-
-	public void setQuotationDate(Date quotationDate) {
-		this.quotationDate = quotationDate;
 	}
 
 	public String getCustomerName() {
@@ -155,19 +147,27 @@ public class QuotationMasterResponse {
 		this.isActive = isActive;
 	}
 
-	public Date getCreatedOn() {
+	public LocalDateTime getQuotationDate() {
+		return quotationDate;
+	}
+
+	public void setQuotationDate(LocalDateTime quotationDate) {
+		this.quotationDate = quotationDate;
+	}
+
+	public LocalDateTime getCreatedOn() {
 		return createdOn;
 	}
 
-	public void setCreatedOn(Date createdOn) {
+	public void setCreatedOn(LocalDateTime createdOn) {
 		this.createdOn = createdOn;
 	}
 
-	public Date getModifiedOn() {
+	public LocalDateTime getModifiedOn() {
 		return modifiedOn;
 	}
 
-	public void setModifiedOn(Date modifiedOn) {
+	public void setModifiedOn(LocalDateTime modifiedOn) {
 		this.modifiedOn = modifiedOn;
 	}
 

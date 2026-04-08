@@ -183,6 +183,21 @@ public class HierarchyMasterServiceImpl implements HierarchyMasterService {
 	}
 
 	@Override
+	public List<HierarchyMasterResponseDTO> getAllHierarchyNames() {
+
+		List<HierarchyMasterResponseDTO> list = repo
+				.findAll( Sort.by("hierarchyName").ascending())
+				.stream().map(HierarchyMapper::toHierarchyDTO).toList();
+
+		if (list.isEmpty()) {
+			throw new ResourceNotFoundException(
+					"Hierarchy data not found");
+		}
+
+		return list;
+	}
+
+	@Override
 	public void deleteHierarchy(Integer id) {
 
 		if (!repo.existsById(id))

@@ -144,6 +144,11 @@ public class GlobalExceptionHandler {
 					userMessage = "Cannot update this record because it is linked with other records.";
 				}
 			}
+
+			// DUPLICATE ENTRY
+			// if (message.contains("duplicate") || message.contains("unique")) {
+			// 	userMessage = "Duplicate entry. This record already exists.";
+			// }
 		}
 
 		ApiResponse<Object> response = new ApiResponse<>();
