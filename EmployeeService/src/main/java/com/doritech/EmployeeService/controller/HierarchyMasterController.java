@@ -58,6 +58,11 @@ public class HierarchyMasterController {
 		return new ResponseEntity("All Data", 200, service.getAllHierarchy());
 	}
 
+	@GetMapping("/getAllHierarchyNames")
+	public ResponseEntity getAllHierarchyNames() {
+		return new ResponseEntity("All Data", 200, service.getAllHierarchyNames());
+	}
+
 	@GetMapping("/getAllHierarchyWithPagination")
 	public ResponseEntity getAllHierarchy(@RequestParam int page, @RequestParam int size) {
 		return new ResponseEntity("All Data", 200, service.getAllHierarchy(page, size));
