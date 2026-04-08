@@ -15,6 +15,8 @@ public interface HierarchyMasterService {
 	HierarchyMasterResponseDTO getByHierarchyId(Integer id);
 	List<HierarchyMasterResponseDTO> getAllHierarchy();
 
+	List<HierarchyMasterResponseDTO> getAllHierarchyNames();
+
 	PageResponseDTO<HierarchyMasterResponseDTO> getAllHierarchy(int page,
 			int size);
 
