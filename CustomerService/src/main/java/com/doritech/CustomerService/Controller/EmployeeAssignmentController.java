@@ -21,7 +21,6 @@ import com.doritech.CustomerService.Service.EmployeeAssignmentService;
 import com.doritech.CustomerService.ValidationService.ValidationService;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Validation;
 
 @RestController
 @RequestMapping("/customer/api/employeeAssignment")
