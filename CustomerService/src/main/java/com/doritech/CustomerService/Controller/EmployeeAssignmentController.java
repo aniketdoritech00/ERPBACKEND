@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,9 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Request.EmployeeAssignmentRequest;
+import com.doritech.CustomerService.Response.UserResponse;
 import com.doritech.CustomerService.Service.EmployeeAssignmentService;
+import com.doritech.CustomerService.ValidationService.ValidationService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Validation;
 
 @RestController
 @RequestMapping("/customer/api/employeeAssignment")
@@ -25,6 +29,9 @@ public class EmployeeAssignmentController {
 
 	@Autowired
 	private EmployeeAssignmentService assignmentService;
+
+	@Autowired
+	private ValidationService validationService;
 
 	@PostMapping("/saveEmployeeAssignment")
 	public ResponseEntity saveEmployeeAssignment(
@@ -60,12 +67,31 @@ public class EmployeeAssignmentController {
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "100") int size,
 			@RequestParam(defaultValue = "assignmentId") String sortBy,
-			@RequestParam(defaultValue = "asc") String sortDir) {
+			@RequestParam(defaultValue = "asc") String sortDir,@RequestHeader("X-User-Id") String userId) {
 
 		return new ResponseEntity("Assignments fetched successfully",
 				HttpStatus.OK.value(), assignmentService.getEmployeeAssignments(
 						employeeId, page, size, sortBy, sortDir));
 	}
+
+		@GetMapping("/getEmployeeAssignmentsByUserId")
+	public ResponseEntity getEmployeeAssignments(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "100") int size,
+			@RequestParam(defaultValue = "assignmentId") String sortBy,
+			@RequestParam(defaultValue = "asc") String sortDir,@RequestHeader("X-User-Id") String userId) {
+
+		Integer userIdInt = Integer.parseInt(userId);
+
+		UserResponse userResponse = validationService.validateAndGetUser(userIdInt);
+
+		return new ResponseEntity("Assignments fetched successfully",
+				HttpStatus.OK.value(), assignmentService.getEmployeeAssignments(
+						userResponse.getSourceId(), page, size, sortBy, sortDir));
+	}
+
+	
+
 	@GetMapping("/customer-details")
 	public ResponseEntity getCustomerDetails(
 			@RequestParam Integer assignmentId) {

@@ -18,8 +18,11 @@ public class ContractEntityMappingRequest {
 	@NotNull(message = "{site.id.required}")
 	private Integer siteId;
 
+	
+	@NotNull(message = "{siteFromDate.id.required}")
 	private LocalDate siteFromDate;
 
+	@NotNull(message = "{employeeFromDate.id.required}")
 	private LocalDate employeeFromDate;
 
 	@NotNull(message = "{employeeId.id.required}")
@@ -69,17 +72,10 @@ public class ContractEntityMappingRequest {
 		return minNoVisits;
 	}
 
-	/**
-	 * @return the siteFromDate
-	 */
 	public LocalDate getSiteFromDate() {
 		return siteFromDate;
 	}
 
-	/**
-	 * @param siteFromDate
-	 *            the siteFromDate to set
-	 */
 	public void setSiteFromDate(LocalDate siteFromDate) {
 		this.siteFromDate = siteFromDate;
 	}
