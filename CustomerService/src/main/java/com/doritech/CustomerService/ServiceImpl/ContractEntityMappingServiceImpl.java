@@ -515,6 +515,125 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		}
 	}
 
+		@Override
+	@Transactional(readOnly = true)
+	public ResponseEntity getAllContractEntityMappings(String contractType,int page,int size) {
+
+		logger.info("getAllContractEntityMappings API hit with page {} and size {}", page, size);
+
+		if (contractType==null) {
+			logger.error("Contract type cannot be null");
+			throw new BadRequestException("Contract type cannot be null");
+		}
+
+		try {
+
+			Pageable pageable = PageRequest.of(page, size, Sort.by("mappingId").descending());
+			
+			Page<ContractEntityMapping> pageResult = repository.findAllByContract_ContractTypeAndIsActive(contractType, "Y", pageable);
+
+			List<ContractEntityMapping> mappings = pageResult.getContent();
+
+			Map<Integer, CompSiteResponse> siteCache = new HashMap<>();
+			Map<Integer, CustomerMasterEntity> customerCache = new HashMap<>();
+
+			List<ContractEntityMappingResponse> response = new ArrayList<>();
+
+			for (ContractEntityMapping mapping : mappings) {
+
+				ContractEntityMappingResponse res = mapper.toResponse(mapping);
+
+				if (mapping.getContract() != null) {
+					String contractName = mapping.getContract().getContractName();
+					if (contractName != null && !contractName.trim().isEmpty()) {
+						res.setContractId(mapping.getContract().getContractId());
+						res.setContractName(contractName);
+						res.setContractNo(mapping.getContract().getContractNo());
+					} else {
+						logger.warn("Contract name is null/empty for contractId {}",
+								mapping.getContract().getContractId());
+					}
+				} else {
+					logger.warn("Contract is null for mappingId {}", mapping.getMappingId());
+				}
+
+				try {
+					Integer siteId = mapping.getSiteId();
+					if (siteId != null) {
+						if (siteCache.containsKey(siteId)) {
+							CompSiteResponse site = siteCache.get(siteId);
+							res.setSiteName(site.getSiteName());
+							res.setSiteCode(site.getSiteCode());
+						} else {
+							CompSiteResponse site = validationService.validateAndGetSite(siteId, "Source");
+							siteCache.put(siteId, site);
+							res.setSiteName(site.getSiteName());
+							res.setSiteCode(site.getSiteCode());
+						}
+					} else {
+						res.setSiteName("Unknown Site");
+					}
+				} catch (Exception ex) {
+					logger.warn("Site fetch failed for siteId {}", mapping.getSiteId());
+					res.setSiteName("Unknown Site");
+				}
+
+				try {
+					if (mapping.getCustomer() != null) {
+						Integer customerId = mapping.getCustomer().getCustomerId();
+						if (customerId != null) {
+							if (customerCache.containsKey(customerId)) {
+								CustomerMasterEntity customer = customerCache.get(customerId);
+								res.setCustomerName(customer.getCustomerName());
+								res.setCustomerCode(customer.getCustomerCode());
+							} else {
+								CustomerMasterEntity customer = customerRepository.findById(customerId).orElse(null);
+								if (customer != null) {
+									customerCache.put(customerId, customer);
+									res.setCustomerName(customer.getCustomerName());
+									res.setCustomerCode(customer.getCustomerCode());
+								} else {
+									res.setCustomerName("Unknown Customer");
+								}
+							}
+						} else {
+							res.setCustomerName("Unknown Customer");
+						}
+					} else {
+						res.setCustomerName("Unknown Customer");
+					}
+				} catch (Exception ex) {
+					logger.error("Customer fetch failed for mappingId {}", mapping.getMappingId(), ex);
+					res.setCustomerName("Unknown Customer");
+				}
+
+				response.add(res);
+			}
+
+			logger.info("Total mappings fetched in this page {}: {}", pageResult.getNumber(), response.size());
+
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("data", response);
+			payload.put("currentPage", pageResult.getNumber());
+			payload.put("pageSize", pageResult.getSize());
+			payload.put("totalItems", pageResult.getTotalElements());
+			payload.put("totalPages", pageResult.getTotalPages());
+			payload.put("isLast", pageResult.isLast());
+
+			return new ResponseEntity("Success", 200, payload);
+
+		} catch (BadRequestException ex) {
+			logger.warn("Validation error while fetching mappings {}", ex.getMessage());
+			throw ex;
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException while fetching mappings {}", ex.getMessage());
+			throw ex;
+		} catch (Exception ex) {
+			logger.error("Unexpected error while fetching mappings", ex);
+			throw new DatabaseOperationException("Failed to fetch mappings");
+		}
+	}
+
 	@Override
 	@Transactional
 	public ResponseEntity deactivateMapping(Integer id) {

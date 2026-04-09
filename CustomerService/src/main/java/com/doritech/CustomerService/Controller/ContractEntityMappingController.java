@@ -69,6 +69,14 @@ public class ContractEntityMappingController {
 		return service.getAllMappings(page, size);
 	}
 
+	@GetMapping("/getAllContractEntityMappings")
+	public ResponseEntity getAllContractEntityMappings(@RequestParam String contractType, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+
+		logger.info("getAllContractEntityMappings API hit with contract type {}", contractType);
+
+		return service.getAllContractEntityMappings(contractType,page,size);
+	}
+
 	@DeleteMapping("/deactivateContractEntity/{id}")
 	public ResponseEntity deactivateMapping(@PathVariable Integer id,
 			@RequestHeader("X-User-Id") String userId) {
