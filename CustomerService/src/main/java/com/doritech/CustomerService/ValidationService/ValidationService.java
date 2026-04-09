@@ -447,8 +447,7 @@ public class ValidationService {
 		}
 	}
 
-	public UserResponse validateAndGetUser(
-			Integer userId) {
+	public UserResponse validateAndGetUser(Integer userId) {
 
 		if (userId == null) {
 			logger.error("User id cannot be null");
@@ -464,18 +463,6 @@ public class ValidationService {
 				throw new ResourceNotFoundException(
 						"User not found with id " + userId);
 			}
-
-			// Map<String, Object> payloadMap = objectMapper
-			// 		.convertValue(response.getPayload(), Map.class);
-
-			// Object data = payloadMap.get("data");
-
-			// if (data == null) {
-			// 	logger.error("User not found with id {}",
-			// 			userId);
-			// 	throw new ResourceNotFoundException(
-			// 			"User not found with id " + userId);
-			// }
 
 			UserResponse user = objectMapper
 					.convertValue(response.getPayload(), UserResponse.class);

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -51,6 +52,18 @@ public class ItemMasterServiceImpl implements ItemMasterService {
 	@Override
 	public ItemMasterResponseDTO updateItem(Integer id,
 			ItemMasterRequestDTO dto) {
+
+		if (dto.getItemType() != null && dto.getItemType().length() > 1) {
+			throw new BusinessException("Item Type must be only 1 character (e.g., B, S)");
+		}
+
+		if (dto.getCategory() != null && dto.getCategory().length() > 2) {
+			throw new BusinessException("Category must be max 2 characters (e.g., HW)");
+		}
+
+		if (dto.getUnitOfMeasure() != null && dto.getUnitOfMeasure().length() > 2) {
+			throw new BusinessException("Unit of Measure must be max 2 characters (e.g., PC)");
+		}
 
 		ItemMasterEntity entity = repo.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException(
@@ -145,8 +158,6 @@ public class ItemMasterServiceImpl implements ItemMasterService {
 						ParamResponseDTO::getDesp1,
 						ParamResponseDTO::getDesp2));
 
-
-
 		entityEntities.forEach(item -> {
 
 			if (item.getItemType() != null) {
@@ -195,7 +206,7 @@ public class ItemMasterServiceImpl implements ItemMasterService {
 						ParamResponseDTO::getDesp1,
 						ParamResponseDTO::getDesp2));
 
-						Map<String, String> typeMap = typeParams.stream()
+		Map<String, String> typeMap = typeParams.stream()
 				.collect(Collectors.toMap(
 						ParamResponseDTO::getDesp1,
 						ParamResponseDTO::getDesp2));
