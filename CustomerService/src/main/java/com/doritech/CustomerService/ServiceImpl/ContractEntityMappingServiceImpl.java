@@ -41,6 +41,7 @@ import com.doritech.CustomerService.Repository.CustomerMasterRepository;
 import com.doritech.CustomerService.Request.ContractEntityMappingRequest;
 import com.doritech.CustomerService.Response.CompSiteResponse;
 import com.doritech.CustomerService.Response.ContractEntityMappingResponse;
+import com.doritech.CustomerService.Response.EmployeeDTO;
 import com.doritech.CustomerService.Response.HierarchyLevelResponseDTO;
 import com.doritech.CustomerService.Response.ItemIDResponse;
 import com.doritech.CustomerService.Response.ParamResponseDTO;
@@ -602,9 +603,9 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 				if(employeeAllocation.isPresent()) {
 					res.setFaId(employeeAllocation.get().getEmployeeId());
+					EmployeeDTO employeeDTO = validationService.validateEmployeeExists(employeeAllocation.get().getEmployeeId());
+					res.setFaName(employeeDTO.getEmployeeName());
 				}
-
-						
 
 				if (mapping.getContract() != null) {
 					String contractName = mapping.getContract().getContractName();

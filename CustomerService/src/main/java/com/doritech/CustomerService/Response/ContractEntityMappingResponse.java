@@ -19,6 +19,7 @@ public class ContractEntityMappingResponse {
 	private String siteDistrictName;
 	private String ifsc;
 	private Integer faId;
+	private String faName;
 	private String zoneName;
 	private List<String> productList;
 	private Integer minNoVisits;
@@ -29,6 +30,8 @@ public class ContractEntityMappingResponse {
 	private LocalDateTime modifiedOn;
 	private Integer createdBy;
 	private Integer modifiedBy;
+
+	
 
 	
 
@@ -224,6 +227,14 @@ public class ContractEntityMappingResponse {
 
     public void setFaId(Integer faId) {
         this.faId = faId;
+    }
+
+    public String getFaName() {
+        return faName;
+    }
+
+    public void setFaName(String faName) {
+        this.faName = faName;
     }
 
 }

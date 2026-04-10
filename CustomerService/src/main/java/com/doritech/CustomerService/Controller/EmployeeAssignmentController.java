@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,6 +46,21 @@ public class EmployeeAssignmentController {
 		return new ResponseEntity("Employee Assignment save Successfully",
 				HttpStatus.OK.value(),
 				assignmentService.saveEmployeeAssignment(request));
+	}
+
+	@PutMapping("/updateEmployeeAssignmentStatus/{assignmentId}")
+	public ResponseEntity updateEmployeeAssignmentStatus(
+			@PathVariable Integer assignmentId,
+			@RequestBody EmployeeAssignmentRequest request,
+			@RequestHeader("X-User-Id") String userId,
+			
+			HttpServletRequest httpServletRequest) throws BadRequestException {
+
+		request.setModifiedBy(Integer.parseInt(userId));
+
+		return new ResponseEntity("Employee Assignment Status updated successfully",
+				HttpStatus.OK.value(),
+				assignmentService.updateEmployeeAssignmentStatus(assignmentId, request));
 	}
 
 	@PostMapping("/saveBulkEmployeeAssignment")
