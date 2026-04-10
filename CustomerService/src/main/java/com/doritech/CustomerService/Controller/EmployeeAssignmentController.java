@@ -74,7 +74,7 @@ public class EmployeeAssignmentController {
 						employeeId, page, size, sortBy, sortDir));
 	}
 
-		@GetMapping("/getEmployeeAssignmentsByUserId")
+@GetMapping("/getEmployeeAssignmentsByUserId")
 	public ResponseEntity getEmployeeAssignments(
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "100") int size,
