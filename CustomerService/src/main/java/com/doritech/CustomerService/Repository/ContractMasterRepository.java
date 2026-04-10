@@ -32,7 +32,7 @@ public interface ContractMasterRepository
 			    SELECT c FROM ContractMaster c
 			    WHERE c.contractType = :type
 			    AND c.contractId NOT IN (
-			        SELECT ea.contract.contractId FROM EmployeeAssignmentEntity ea
+			        SELECT ea.contractEntityMapping.contract.contractId FROM EmployeeAssignmentEntity ea
 			        WHERE LOWER(ea.status) = LOWER(:status)
 			    )
 			""")

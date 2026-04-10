@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotNull;
 
 public class EmployeeAssignmentRequest {
 
-	@NotNull(message = "{assignment.contract.id.required}")
-	private Integer contractId;
+	@NotNull(message = "{assignment.mapping.id.required}")
+	private Integer mappingId;
 
 	@NotNull(message = "{assignment.employee.id.required}")
 	private Integer employeeId;
@@ -30,6 +30,10 @@ public class EmployeeAssignmentRequest {
 	// @NotNull(message = "{assignment.created.by.required}")
 	private Integer createdBy;
 
+	private Integer modifiedBy;
+
+	
+
 	/**
 	 * @return the visitDate
 	 */
@@ -46,18 +50,18 @@ public class EmployeeAssignmentRequest {
 	}
 
 	/**
-	 * @return the contractId
+	 * @return the mappingId
 	 */
-	public Integer getContractId() {
-		return contractId;
+	public Integer getMappingId() {
+		return mappingId;
 	}
 
 	/**
-	 * @param contractId
-	 *            the contractId to set
+	 * @param mappingId
+	 *            the mappingId to set
 	 */
-	public void setContractId(Integer contractId) {
-		this.contractId = contractId;
+	public void setMappingId(Integer mappingId) {
+		this.mappingId = mappingId;
 	}
 
 	/**
@@ -163,6 +167,14 @@ public class EmployeeAssignmentRequest {
 	 */
 	public void setCreatedBy(Integer createdBy) {
 		this.createdBy = createdBy;
+	}
+
+	public Integer getModifiedBy() {
+		return modifiedBy;
+	}
+
+	public void setModifiedBy(Integer modifiedBy) {
+		this.modifiedBy = modifiedBy;
 	}
 
 }

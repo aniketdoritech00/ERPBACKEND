@@ -24,8 +24,8 @@ public class EmployeeAssignmentEntity {
 	private Integer assignmentId;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "contract_id", nullable = false)
-	private ContractMaster contract;
+	@JoinColumn(name = "mapping_id", nullable = false)
+	private ContractEntityMapping contractEntityMapping;
 
 	@Column(name = "employee_id", nullable = false)
 	private Integer employeeId;
@@ -101,20 +101,7 @@ public class EmployeeAssignmentEntity {
 		this.assignmentId = assignmentId;
 	}
 
-	/**
-	 * @return the contract
-	 */
-	public ContractMaster getContract() {
-		return contract;
-	}
-
-	/**
-	 * @param contract
-	 *            the contract to set
-	 */
-	public void setContract(ContractMaster contract) {
-		this.contract = contract;
-	}
+	
 
 	/**
 	 * @return the employeeId
@@ -264,6 +251,14 @@ public class EmployeeAssignmentEntity {
 	 */
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;
+	}
+
+	public ContractEntityMapping getContractEntityMapping() {
+		return contractEntityMapping;
+	}
+
+	public void setContractEntityMapping(ContractEntityMapping contractEntityMapping) {
+		this.contractEntityMapping = contractEntityMapping;
 	}
 
 }

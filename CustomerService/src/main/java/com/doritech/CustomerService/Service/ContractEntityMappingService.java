@@ -16,6 +16,8 @@ public interface ContractEntityMappingService {
 
 	ResponseEntity getAllMappings(int page, int size);
 
+	ResponseEntity getAllContractEntityMappings(String contractType,int page,int size);
+
 	ResponseEntity deactivateMapping(Integer id);
 
 	ResponseEntity getMappingByContractId(Integer id);
