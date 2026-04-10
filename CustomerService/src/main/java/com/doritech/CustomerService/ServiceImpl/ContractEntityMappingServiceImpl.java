@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.CustomerService.Entity.ContractEntityMapping;
+import com.doritech.CustomerService.Entity.ContractItemMapping;
 import com.doritech.CustomerService.Entity.ContractMaster;
 import com.doritech.CustomerService.Entity.CustomerBranchAllocation;
 import com.doritech.CustomerService.Entity.CustomerEmployeeAllocation;
@@ -29,6 +33,7 @@ import com.doritech.CustomerService.Exception.ExternalServiceException;
 import com.doritech.CustomerService.Exception.ResourceNotFoundException;
 import com.doritech.CustomerService.Mapper.ContractEntityMappingMapper;
 import com.doritech.CustomerService.Repository.ContractEntityMappingRepository;
+import com.doritech.CustomerService.Repository.ContractItemMappingRepository;
 import com.doritech.CustomerService.Repository.ContractMasterRepository;
 import com.doritech.CustomerService.Repository.CustomerBranchAllocationRepository;
 import com.doritech.CustomerService.Repository.CustomerEmployeeAllocationRepository;
@@ -36,6 +41,9 @@ import com.doritech.CustomerService.Repository.CustomerMasterRepository;
 import com.doritech.CustomerService.Request.ContractEntityMappingRequest;
 import com.doritech.CustomerService.Response.CompSiteResponse;
 import com.doritech.CustomerService.Response.ContractEntityMappingResponse;
+import com.doritech.CustomerService.Response.HierarchyLevelResponseDTO;
+import com.doritech.CustomerService.Response.ItemIDResponse;
+import com.doritech.CustomerService.Response.ParamResponseDTO;
 import com.doritech.CustomerService.Service.ContractEntityMappingService;
 import com.doritech.CustomerService.ValidationService.ValidationService;
 
@@ -52,6 +60,9 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 	@Autowired
 	private CustomerMasterRepository customerRepository;
+
+	@Autowired
+	private ContractItemMappingRepository contractItemMappingRepository;
 
 	@Autowired
 	private ContractEntityMappingMapper mapper;
@@ -539,9 +550,61 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 			List<ContractEntityMappingResponse> response = new ArrayList<>();
 
+			List<ItemIDResponse> itemIDResponses = validationService.getAllItems();
+
+			List<ParamResponseDTO> categoryParamResponseDTOs = validationService.getParamByCodeAndSerial("Item",
+					"Category");
+
+			List<ParamResponseDTO> typeParamResponseDTOs = validationService.getParamByCodeAndSerial("CONTRACT",
+					"CONTRACT_TYPE");
+
+			Map<Integer, String> itemIdToCategoryMap = itemIDResponses.stream()
+					.collect(Collectors.toMap(ItemIDResponse::getItemId, ItemIDResponse::getCategory, (a, b) -> a
+
+					));
+
+			Map<String, String> categoryToParamMap = categoryParamResponseDTOs.stream()
+					.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
+
+			Map<String, String> typeToParamMap = typeParamResponseDTOs.stream()
+					.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
+
 			for (ContractEntityMapping mapping : mappings) {
 
 				ContractEntityMappingResponse res = mapper.toResponse(mapping);
+
+				String paramType = typeToParamMap.get(mapping.getContract().getContractType());
+				res.setContractType(paramType);
+				res.setMinNoVisits(mapping.getMinNoVisits());
+
+				HierarchyLevelResponseDTO responseDTO = validationService
+						.validateAndGetHierarchyLevel(mapping.getCustomer().getHierarchyLevelId());
+				res.setZoneName(responseDTO.getLevelName());
+
+				List<ContractItemMapping> contractItemMappings = contractItemMappingRepository
+						.findByContract_ContractId(mapping.getContract().getContractId());
+
+				List<String> productTypes = contractItemMappings.stream().map(itemMapping -> {
+					Integer itemId = itemMapping.getItemId();
+
+					String category = itemIdToCategoryMap.get(itemId);
+
+					if (category == null) {
+						return null;
+					}
+
+					return categoryToParamMap.get(category);
+				}).filter(Objects::nonNull).toList();
+
+				res.setProductList(productTypes);
+
+				Optional<CustomerEmployeeAllocation> employeeAllocation = customerEmployeeAllocationRepository.findByCustomerCustomerIdAndIsActive(mapping.getCustomer().getCustomerId(), "Y");
+
+				if(employeeAllocation.isPresent()) {
+					res.setFaId(employeeAllocation.get().getEmployeeId());
+				}
+
+						
 
 				if (mapping.getContract() != null) {
 					String contractName = mapping.getContract().getContractName();
@@ -564,11 +627,15 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 							CompSiteResponse site = siteCache.get(siteId);
 							res.setSiteName(site.getSiteName());
 							res.setSiteCode(site.getSiteCode());
+							res.setSiteDistrictName(site.getDistrict());
+							res.setIfsc(site.getIfsc());
 						} else {
 							CompSiteResponse site = validationService.validateAndGetSite(siteId, "Source");
 							siteCache.put(siteId, site);
 							res.setSiteName(site.getSiteName());
 							res.setSiteCode(site.getSiteCode());
+							res.setSiteDistrictName(site.getDistrict());
+							res.setIfsc(site.getIfsc());
 						}
 					} else {
 						res.setSiteName("Unknown Site");

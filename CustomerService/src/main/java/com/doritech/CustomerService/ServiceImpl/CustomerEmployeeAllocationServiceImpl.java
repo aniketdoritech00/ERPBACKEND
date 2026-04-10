@@ -133,7 +133,7 @@ public class CustomerEmployeeAllocationServiceImpl
 		List<CustomerEmployeeAllocation> list = repo.findByIsActive("Y");
 
 		if (list.isEmpty()) {
-			throw new ResourceNotFoundException("No active allocations found");
+			throw new ResourceNotFoundException("No active employee allocations found");
 		}
 
 		List<EmployeeDTO> empList = validationService.validateEmployees();
@@ -176,7 +176,7 @@ public class CustomerEmployeeAllocationServiceImpl
 
 		if (pageResult.isEmpty()) {
 			throw new ResourceNotFoundException(
-					"No data found for given filters");
+					"No active employee allocations found for given filters combination");
 		}
 
 		List<EmployeeDTO> empList = validationService.validateEmployees();
@@ -230,7 +230,7 @@ public class CustomerEmployeeAllocationServiceImpl
 				pageable);
 
 		if (pageResult.isEmpty()) {
-			throw new ResourceNotFoundException("No active allocations found");
+			throw new ResourceNotFoundException("No active employee allocations found");
 		}
 
 		List<EmployeeDTO> empList = validationService.validateEmployees();

@@ -1,28 +1,78 @@
 package com.doritech.CustomerService.Response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ContractEntityMappingResponse {
 
 	private Integer mappingId;
 	private Integer contractId;
+	private String contractName;
+	private String contractNo;
+	private String contractType;
 	private Integer customerId;
-	private Integer siteId;
-	private Integer minNoVisits;
-	private Integer visitsFrequency;
-	private String visitsPaid;
+	private String customerCode;
 	private String customerName;
+	private Integer siteId;
 	private String siteName;
 	private String siteCode;
-	private String customerCode;
-	private String contractNo;
-
-	private String contractName;
+	private String siteDistrictName;
+	private String ifsc;
+	private Integer faId;
+	private String zoneName;
+	private List<String> productList;
+	private Integer minNoVisits;
+	private Integer visitsFrequency;
+	private String visitsPaid;	
 	private String isActive;
 	private LocalDateTime createdOn;
 	private LocalDateTime modifiedOn;
 	private Integer createdBy;
 	private Integer modifiedBy;
+
+	
+
+	public String getContractType() {
+		return contractType;
+	}
+
+	public void setContractType(String contractType) {
+		this.contractType = contractType;
+	}
+
+	
+
+	public String getSiteDistrictName() {
+        return siteDistrictName;
+    }
+
+    public void setSiteDistrictName(String siteDistrictName) {
+        this.siteDistrictName = siteDistrictName;
+    }
+
+    public String getIfsc() {
+        return ifsc;
+    }
+
+    public void setIfsc(String ifsc) {
+        this.ifsc = ifsc;
+    }
+
+    public String getZoneName() {
+		return zoneName;
+	}
+
+	public void setZoneName(String zoneName) {
+		this.zoneName = zoneName;
+	}
+
+	public List<String> getProductList() {
+		return productList;
+	}
+
+	public void setProductList(List<String> productList) {
+		this.productList = productList;
+	}
 
 	public Integer getMappingId() {
 		return mappingId;
@@ -167,5 +217,13 @@ public class ContractEntityMappingResponse {
 	public void setContractName(String contractName) {
 		this.contractName = contractName;
 	}
+
+    public Integer getFaId() {
+        return faId;
+    }
+
+    public void setFaId(Integer faId) {
+        this.faId = faId;
+    }
 
 }
