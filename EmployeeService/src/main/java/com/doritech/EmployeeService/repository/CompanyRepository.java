@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import com.doritech.EmployeeService.entity.CompanyEntity;
+import com.doritech.EmployeeService.entity.EmployeeMaster;
 
 public interface CompanyRepository
 		extends
@@ -42,4 +43,6 @@ public interface CompanyRepository
 
 	@Query("SELECT c.id, c.companyName, c.companyCode FROM CompanyEntity c WHERE c.active = 'Y'")
 	List<Object[]> findCompanyIdAndName();
+
+	Optional<CompanyEntity> findByCompanyCodeIgnoreCase(String companyCode);
 }

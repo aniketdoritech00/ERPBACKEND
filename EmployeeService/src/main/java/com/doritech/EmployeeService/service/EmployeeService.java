@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.doritech.EmployeeService.entity.ResponseEntity;
 import com.doritech.EmployeeService.request.EmployeeRequest;
@@ -38,5 +39,7 @@ public interface EmployeeService {
 	ResponseEntity getAllAssociateFa(Integer siteId);
 
 	ResponseEntity getEmployeeDistrict(Integer employeeId);
+
+	ResponseEntity uploadEmployeeExcel(MultipartFile file, Integer userIdInt);
 
 }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.doritech.microservice.AuthenticationService.Entity.ResponseEntity;
 import com.doritech.microservice.AuthenticationService.Entity.UserMaster;
 import com.doritech.microservice.AuthenticationService.Exception.InvalidCredentialsException;
+import com.doritech.microservice.AuthenticationService.Repository.EmployeeMasterRepository;
 import com.doritech.microservice.AuthenticationService.Repository.UserMasterRepository;
 import com.doritech.microservice.AuthenticationService.Request.LoginRequest;
 import com.doritech.microservice.AuthenticationService.Service.AuthService;
@@ -25,6 +26,9 @@ public class AuthServiceImpl implements AuthService {
 
 	@Autowired
 	private JwtService jwtService;
+	
+	@Autowired
+	private EmployeeMasterRepository employeeMasterRepository;
 
 	@Override
 	public ResponseEntity login(LoginRequest request) {
@@ -35,7 +39,17 @@ public class AuthServiceImpl implements AuthService {
 		if (!passwordEncoder.matches(combined, user.getPassword())) {
 			throw new InvalidCredentialsException("Login failed. Invalid credentials");
 		}
-		String token = jwtService.generateTokenWithUserData(user);
+
+		Integer employeeId = user.getSourceId();
+
+		String employeeName = null;
+
+		if (employeeId != null) {
+			employeeName = employeeMasterRepository.findByEmployeeId(employeeId).map(emp -> emp.getEmployeeName()).orElse(null);
+		}
+
+		String token = jwtService.generateTokenWithUserData(user, employeeName);
+
 		user.setLastLogin(LocalDateTime.now());
 		userRepo.save(user);
 		return new ResponseEntity("Login successful", 200, token);
