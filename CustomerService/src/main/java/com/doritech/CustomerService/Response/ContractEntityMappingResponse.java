@@ -1,5 +1,6 @@
 package com.doritech.CustomerService.Response;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,6 +13,8 @@ public class ContractEntityMappingResponse {
 	private String contractType;
 	private Integer customerId;
 	private String customerCode;
+	private LocalDate contractStartDate;
+	private LocalDate contractEndDate;
 	private String customerName;
 	private Integer siteId;
 	private String siteName;
@@ -236,5 +239,17 @@ public class ContractEntityMappingResponse {
     public void setFaName(String faName) {
         this.faName = faName;
     }
+	public LocalDate getContractStartDate() {
+		return contractStartDate;
+	}
+	public void setContractStartDate(LocalDate contractStartDate) {
+		this.contractStartDate = contractStartDate;
+	}
+	public LocalDate getContractEndDate() {
+		return contractEndDate;
+	}
+	public void setContractEndDate(LocalDate contractEndDate) {
+		this.contractEndDate = contractEndDate;
+	}
 
 }

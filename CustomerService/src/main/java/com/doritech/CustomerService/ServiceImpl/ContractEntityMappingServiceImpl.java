@@ -81,7 +81,8 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 	@Transactional
 	public ResponseEntity saveOrUpdateMappings(List<ContractEntityMappingRequest> requests) {
 
-		logger.info("SaveOrUpdate ContractEntityMapping API called for {} requests", requests.size());
+		logger.info("SaveOrUpdate ContractEntityMapping API called for {} requests",
+				requests != null ? requests.size() : 0);
 
 		if (requests == null || requests.isEmpty()) {
 			logger.error("Request list is empty");
@@ -101,20 +102,19 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 			for (ContractEntityMappingRequest request : requests) {
 
-				logger.info("Processing request — mappingId: {}, contractId: {}, customerId: {}, siteId: {}",
-						request.getMappingId(), request.getContractId(), request.getCustomerId(), request.getSiteId());
+				logger.info("Processing mappingId: {}, contractId: {}, customerId: {}", request.getMappingId(),
+						request.getContractId(), request.getCustomerId());
 
 				ContractMaster contract = contractRepository.findById(request.getContractId()).orElseThrow(() -> {
-					logger.error("Contract not found with id {}", request.getContractId());
+					logger.error("Contract not found {}", request.getContractId());
 					return new ResourceNotFoundException("Contract not found with id " + request.getContractId());
 				});
 
 				CustomerMasterEntity customer = customerRepository.findById(request.getCustomerId()).orElseThrow(() -> {
-					logger.error("Customer not found with id {}", request.getCustomerId());
+					logger.error("Customer not found {}", request.getCustomerId());
 					return new ResourceNotFoundException("Customer not found with id " + request.getCustomerId());
 				});
 
-				logger.info("Validating site with id {}", request.getSiteId());
 				validationService.validateSiteExists(request.getSiteId());
 
 				CustomerBranchAllocation existingBranch = customerBranchAllocationRepository
@@ -123,40 +123,42 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 				if (existingBranch == null) {
 
-					CustomerBranchAllocation branchAllocation = new CustomerBranchAllocation();
-					branchAllocation.setCustomer(customer);
-					branchAllocation.setSiteId(request.getSiteId());
-					branchAllocation.setFromDate(request.getSiteFromDate());
-					branchAllocation.setIsActive("Y");
-					branchAllocation.setCreatedBy(request.getCreatedBy());
+					CustomerBranchAllocation branch = new CustomerBranchAllocation();
+					branch.setCustomer(customer);
+					branch.setSiteId(request.getSiteId());
+					branch.setFromDate(request.getSiteFromDate());
+					branch.setIsActive("Y");
+					branch.setCreatedBy(request.getCreatedBy());
 
-					customerBranchAllocationRepository.save(branchAllocation);
+					customerBranchAllocationRepository.save(branch);
 
 				} else {
 
 					LocalDate existingDate = existingBranch.getFromDate();
 					LocalDate newDate = request.getSiteFromDate();
 
-					if (!newDate.isAfter(existingDate)) {
-						logger.error("Branch already assigned till {}", existingDate);
-						throw new BadRequestException(
-								"Site Already assigned till " + existingDate + ". Please assign after this date");
+					if (!existingDate.equals(newDate)) {
+
+						if (!newDate.isAfter(existingDate)) {
+							logger.error("Branch already assigned till {}", existingDate);
+							throw new BadRequestException(
+									"Site already assigned till " + existingDate + ". Please assign after this date");
+						}
+
+						existingBranch.setIsActive("N");
+						customerBranchAllocationRepository.save(existingBranch);
+
+						CustomerBranchAllocation newBranch = new CustomerBranchAllocation();
+						newBranch.setCustomer(customer);
+						newBranch.setSiteId(request.getSiteId());
+						newBranch.setFromDate(newDate);
+						newBranch.setIsActive("Y");
+						newBranch.setCreatedBy(request.getCreatedBy());
+
+						customerBranchAllocationRepository.save(newBranch);
 					}
-
-					existingBranch.setIsActive("N");
-					customerBranchAllocationRepository.save(existingBranch);
-
-					CustomerBranchAllocation newAllocation = new CustomerBranchAllocation();
-					newAllocation.setCustomer(customer);
-					newAllocation.setSiteId(request.getSiteId());
-					newAllocation.setFromDate(newDate);
-					newAllocation.setIsActive("Y");
-					newAllocation.setCreatedBy(request.getCreatedBy());
-
-					customerBranchAllocationRepository.save(newAllocation);
 				}
 
-				logger.info("Validating employee with id {}", request.getEmployeeId());
 				validationService.validateEmployeeExists(request.getEmployeeId());
 
 				CustomerEmployeeAllocation existingEmployee = customerEmployeeAllocationRepository
@@ -165,105 +167,88 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 				if (existingEmployee == null) {
 
-					CustomerEmployeeAllocation employeeAllocation = new CustomerEmployeeAllocation();
-					employeeAllocation.setCustomer(customer);
-					employeeAllocation.setEmployeeId(request.getEmployeeId());
-					employeeAllocation.setFromDate(request.getEmployeeFromDate());
-					employeeAllocation.setIsActive("Y");
-					employeeAllocation.setCreatedBy(request.getCreatedBy());
+					CustomerEmployeeAllocation emp = new CustomerEmployeeAllocation();
+					emp.setCustomer(customer);
+					emp.setEmployeeId(request.getEmployeeId());
+					emp.setFromDate(request.getEmployeeFromDate());
+					emp.setIsActive("Y");
+					emp.setCreatedBy(request.getCreatedBy());
 
-					customerEmployeeAllocationRepository.save(employeeAllocation);
+					customerEmployeeAllocationRepository.save(emp);
 
 				} else {
 
 					LocalDate existingDate = existingEmployee.getFromDate();
 					LocalDate newDate = request.getEmployeeFromDate();
 
-					if (!newDate.isAfter(existingDate)) {
-						logger.error("Employee already assigned till {}", existingDate);
-						throw new BadRequestException(
-								"Employee already assigned till " + existingDate + ". Assign after this date");
+					if (!existingDate.equals(newDate)) {
+
+						if (!newDate.isAfter(existingDate)) {
+							logger.error("Employee already assigned till {}", existingDate);
+							throw new BadRequestException(
+									"Employee already assigned till " + existingDate + ". Assign after this date");
+						}
+
+						existingEmployee.setIsActive("N");
+						customerEmployeeAllocationRepository.save(existingEmployee);
+
+						CustomerEmployeeAllocation newEmp = new CustomerEmployeeAllocation();
+						newEmp.setCustomer(customer);
+						newEmp.setEmployeeId(request.getEmployeeId());
+						newEmp.setFromDate(newDate);
+						newEmp.setIsActive("Y");
+						newEmp.setCreatedBy(request.getCreatedBy());
+
+						customerEmployeeAllocationRepository.save(newEmp);
 					}
-
-					existingEmployee.setIsActive("N");
-					customerEmployeeAllocationRepository.save(existingEmployee);
-
-					CustomerEmployeeAllocation newAllocation = new CustomerEmployeeAllocation();
-					newAllocation.setCustomer(customer);
-					newAllocation.setEmployeeId(request.getEmployeeId());
-					newAllocation.setFromDate(newDate);
-					newAllocation.setIsActive("Y");
-					newAllocation.setCreatedBy(request.getCreatedBy());
-
-					customerEmployeeAllocationRepository.save(newAllocation);
 				}
 
-				if (request.getMappingId() != null && repository.existsById(request.getMappingId())) {
+				ContractEntityMapping mapping;
 
-					logger.info("Updating existing mapping with id {}", request.getMappingId());
+				if (request.getMappingId() != null) {
 
-					ContractEntityMapping mapping = repository.findById(request.getMappingId()).orElseThrow(() -> {
-						logger.error("Mapping not found with id {}", request.getMappingId());
-						return new ResourceNotFoundException("Mapping not found with id " + request.getMappingId());
-					});
+					mapping = repository.findById(request.getMappingId()).orElseThrow(
+							() -> new ResourceNotFoundException("Mapping not found with id " + request.getMappingId()));
 
-					mapping.setContract(contract);
-					mapping.setCustomer(customer);
-					mapping.setSiteId(request.getSiteId());
-					mapping.setMinNoVisits(request.getMinNoVisits());
-					mapping.setVisitsFrequency(request.getVisitsFrequency());
-					mapping.setVisitsPaid(request.getVisitsPaid());
-					mapping.setIsActive(request.getIsActive());
 					mapping.setModifiedBy(request.getModifiedBy());
 					mapping.setModifiedOn(LocalDateTime.now());
 
-					repository.save(mapping);
-
-					logger.info("Mapping updated successfully with id {}", request.getMappingId());
-					responseList.add(mapper.toResponse(mapping));
-
 				} else {
 
-					logger.info("Creating new mapping for contractId {}", request.getContractId());
-
-					ContractEntityMapping mapping = new ContractEntityMapping();
-					mapping.setContract(contract);
-					mapping.setCustomer(customer);
-					mapping.setSiteId(request.getSiteId());
-					mapping.setMinNoVisits(request.getMinNoVisits());
-					mapping.setVisitsFrequency(request.getVisitsFrequency());
-					mapping.setVisitsPaid(request.getVisitsPaid());
-					mapping.setIsActive(request.getIsActive());
+					mapping = new ContractEntityMapping();
 					mapping.setCreatedBy(request.getCreatedBy());
 					mapping.setCreatedOn(LocalDateTime.now());
-					mapping.setModifiedBy(null);
-					mapping.setModifiedOn(null);
-
-					ContractEntityMapping saved;
-					try {
-						saved = repository.save(mapping);
-					} catch (Exception ex) {
-						logger.error("DB error while saving mapping for contractId {}: {}", request.getContractId(),
-								ex.getMessage(), ex);
-						throw new DatabaseOperationException("Failed to save mapping");
-					}
-
-					logger.info("Mapping created successfully with id {}", saved.getMappingId());
-					responseList.add(mapper.toResponse(saved));
 				}
+
+				mapping.setContract(contract);
+				mapping.setCustomer(customer);
+				mapping.setSiteId(request.getSiteId());
+				mapping.setMinNoVisits(request.getMinNoVisits());
+				mapping.setVisitsFrequency(request.getVisitsFrequency());
+				mapping.setVisitsPaid(request.getVisitsPaid());
+				mapping.setIsActive(request.getIsActive());
+
+				ContractEntityMapping saved;
+
+				try {
+					saved = repository.save(mapping);
+				} catch (Exception ex) {
+					logger.error("DB error while saving mapping: {}", ex.getMessage(), ex);
+					throw new DatabaseOperationException("Failed to save mapping");
+				}
+
+				responseList.add(mapper.toResponse(saved));
 			}
 
-			logger.info("Processed total {} mappings", responseList.size());
 			return new ResponseEntity("Mappings saved/updated successfully", 200, responseList);
 
 		} catch (BadRequestException | ResourceNotFoundException ex) {
-			logger.warn("Client error in saveOrUpdateMappings: {}", ex.getMessage());
 			throw ex;
+
 		} catch (ExternalServiceException | DatabaseOperationException ex) {
-			logger.error("Service/DB error in saveOrUpdateMappings: {}", ex.getMessage());
 			throw ex;
+
 		} catch (Exception ex) {
-			logger.error("Unexpected error in saveOrUpdateMappings: {}", ex.getMessage(), ex);
 			throw new DatabaseOperationException("Failed to save or update mappings");
 		}
 	}
@@ -542,7 +527,7 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 			Pageable pageable = PageRequest.of(page, size, Sort.by("mappingId").descending());
 			
-			Page<ContractEntityMapping> pageResult = repository.findAllByContract_ContractTypeAndIsActive(contractType, "Y", pageable);
+			Page<ContractEntityMapping> pageResult = repository.findAvailableContracts(contractType, "Pending", pageable);
 
 			List<ContractEntityMapping> mappings = pageResult.getContent();
 
@@ -595,7 +580,7 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 					}
 
 					return categoryToParamMap.get(category);
-				}).filter(Objects::nonNull).toList();
+				}).filter(Objects::nonNull).distinct().toList();
 
 				res.setProductList(productTypes);
 
@@ -613,6 +598,9 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 						res.setContractId(mapping.getContract().getContractId());
 						res.setContractName(contractName);
 						res.setContractNo(mapping.getContract().getContractNo());
+						res.setContractStartDate(mapping.getContract().getContractStartDate());	
+						res.setContractEndDate(mapping.getContract().getContractEndDate());
+						
 					} else {
 						logger.warn("Contract name is null/empty for contractId {}",
 								mapping.getContract().getContractId());

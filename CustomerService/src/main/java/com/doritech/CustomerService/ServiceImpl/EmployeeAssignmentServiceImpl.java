@@ -276,7 +276,7 @@ public class EmployeeAssignmentServiceImpl
 							}
 
 							return categoryToParamMap.get(category);
-						}).filter(Objects::nonNull).toList();
+						}).filter(Objects::nonNull).distinct().toList();
 
 				response.setProductName(productTypes);
 

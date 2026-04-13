@@ -9,6 +9,8 @@ public interface ContractItemPackageProjection {
 
 	Integer getMappedItemId();
 
+	Integer getMappingItemId();
+
 	String getIsActive();
 	Integer getContractId();
 	LocalDateTime getCreatedOn();
