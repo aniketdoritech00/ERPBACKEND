@@ -33,4 +33,6 @@ public interface CustomerEmployeeAllocationRepository
 
     CustomerEmployeeAllocation findByCustomer_CustomerIdAndEmployeeIdAndIsActive(Integer customerId, Integer employeeId,
             String string);
+
+    List<CustomerEmployeeAllocation> findByEmployeeIdAndIsActive(Integer employeeId, String string);
 }

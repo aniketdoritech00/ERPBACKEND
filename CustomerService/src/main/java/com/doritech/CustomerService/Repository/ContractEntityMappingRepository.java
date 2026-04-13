@@ -41,4 +41,7 @@ public interface ContractEntityMappingRepository
 			@Param("status") String status,
 			Pageable pageable);
 
+	List<ContractEntityMapping> findByContract_ContractIdAndCustomer_CustomerIdAndSiteId(Integer contractId,
+			Integer customerId, Integer siteId);
+
 }

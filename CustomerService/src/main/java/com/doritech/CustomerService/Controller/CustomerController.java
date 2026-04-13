@@ -112,4 +112,9 @@ public class CustomerController {
 				customerId);
 		return customerService.getCustomerByHierarchy(customerId);
 	}
+
+	@GetMapping("getCustomerDetailsByCustomerId/{customerId}")
+	public ResponseEntity getCustomerDetailsByCustomerId(@PathVariable Integer customerId) {
+		return customerService.getCustomerDetailsByCustomerId(customerId);
+	}
 }

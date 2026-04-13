@@ -29,4 +29,6 @@ public interface CustomerService {
 	ResponseEntity getAllCustomers(int page, int size);
 
 	ResponseEntity getCustomerNamesForFillter();
+
+    ResponseEntity getCustomerDetailsByCustomerId(Integer customerId);
 }
