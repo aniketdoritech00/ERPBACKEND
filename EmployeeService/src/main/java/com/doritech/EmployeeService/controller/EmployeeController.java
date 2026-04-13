@@ -1,5 +1,6 @@
 package com.doritech.EmployeeService.controller;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -142,5 +143,15 @@ public class EmployeeController {
 		}
 
 		return org.springframework.http.ResponseEntity.status(statusCode).body(response.getMessage());
+	}
+	@GetMapping("/downloadEmployeeTemplate")
+	public org.springframework.http.ResponseEntity<?> downloadEmployeeTemplate() {
+
+	    byte[] file = employeeService.generateEmployeeTemplate();
+
+	    return org.springframework.http.ResponseEntity.ok()
+	            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=employee_template.xlsx")
+	            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+	            .body(file);
 	}
 }

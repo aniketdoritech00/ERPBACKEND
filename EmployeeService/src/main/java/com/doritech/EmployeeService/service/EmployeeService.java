@@ -42,4 +42,6 @@ public interface EmployeeService {
 
 	ResponseEntity uploadEmployeeExcel(MultipartFile file, Integer userIdInt);
 
+	byte[] generateEmployeeTemplate();
+
 }
