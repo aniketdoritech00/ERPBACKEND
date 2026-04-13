@@ -627,4 +627,36 @@ public class EmployeeServiceImpl implements EmployeeService {
 				.map(ParamResponseDTO::getDesp1).findFirst().orElseThrow(() -> new BusinessException(
 						fieldName + " value '" + excelValue + "' is invalid. No matching record found."));
 	}
+	
+	public byte[] generateEmployeeTemplate() {
+
+	    try {
+	        Workbook workbook = new XSSFWorkbook();
+	        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+	        Sheet sheet = workbook.createSheet("Employee Template");
+
+	        Row header = sheet.createRow(0);
+
+	        String[] columns = {
+	                "Employee Code","Company Code","Site Code","Email","Phone",
+	                "Designation","Department","Role","Address","City","District",
+	                "State","Country","Postal Code","Parent Employee Code",
+	                "Date Of Joining","Date Of Leaving"
+	        };
+
+	        for (int i = 0; i < columns.length; i++) {
+	            header.createCell(i).setCellValue(columns[i]);
+	            sheet.autoSizeColumn(i);
+	        }
+
+	        workbook.write(out);
+	        workbook.close();
+
+	        return out.toByteArray();
+
+	    } catch (Exception e) {
+	        throw new RuntimeException("Error while generating template", e);
+	    }
+	}
 }

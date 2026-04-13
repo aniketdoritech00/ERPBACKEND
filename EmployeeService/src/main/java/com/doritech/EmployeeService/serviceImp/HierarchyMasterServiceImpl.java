@@ -99,6 +99,7 @@ public class HierarchyMasterServiceImpl implements HierarchyMasterService {
 									"Organization not found")));
 		}
 		entity.setActive(dto.getActive());
+		entity.setHierarchyLevels(dto.getHierarchyLevels());
 		entity.setModifiedBy(dto.getModifiedBy());
 		entity = repo.save(entity);
 
