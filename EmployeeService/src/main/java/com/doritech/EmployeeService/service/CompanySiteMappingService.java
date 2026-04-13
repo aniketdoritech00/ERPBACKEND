@@ -27,4 +27,6 @@ public interface CompanySiteMappingService {
 	ResponseEntity getActiveCompSiteNameAndCodeAndId();
 
 	ResponseEntity getAllCompSiteMappingByCompId(Integer compId);
+
+	ResponseEntity getAllCompSiteNameAndCodeAndId();
 }
