@@ -90,4 +90,9 @@ public class CompSiteMappingController {
 	public ResponseEntity getActiveCompSiteNameAndCodeAndId() {
 		return companySiteMappingService.getActiveCompSiteNameAndCodeAndId();
 	}
+	
+	@GetMapping("/getAllCompSiteNameAndCodeAndId")
+	public ResponseEntity getAllCompSiteNameAndCodeAndId() {
+		return companySiteMappingService.getAllCompSiteNameAndCodeAndId();
+	}
 }

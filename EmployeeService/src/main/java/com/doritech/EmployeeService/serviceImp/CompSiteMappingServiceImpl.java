@@ -388,4 +388,44 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 		}
 		return response;
 	}
+	
+
+	@Override
+	public ResponseEntity getAllCompSiteNameAndCodeAndId() {
+
+		ResponseEntity response = new ResponseEntity();
+
+		try {
+
+			List<CompSiteMasterEntity> entities = compSiteMasterRepository.findAll();
+			if (entities.isEmpty() || entities == null) {
+				response.setMessage("Site details Not Found ");
+				response.setStatusCode(404);
+				return response;
+			}
+
+			List<Map<String, Object>> list = new ArrayList<>();
+
+			for (CompSiteMasterEntity entity : entities) {
+
+				Map<String, Object> map = new HashMap<>();
+
+				map.put("siteId", entity.getSiteId());
+				map.put("siteName", entity.getSiteName());
+				map.put("siteCode", entity.getSiteCode());
+
+				list.add(map);
+			}
+
+			response.setMessage("All site details fetched successfully");
+			response.setPayload(list);
+			response.setStatusCode(200);
+
+		} catch (Exception e) {
+			response.setMessage("Internal Server Error");
+			response.setStatusCode(500);
+		}
+
+		return response;
+	}
 }

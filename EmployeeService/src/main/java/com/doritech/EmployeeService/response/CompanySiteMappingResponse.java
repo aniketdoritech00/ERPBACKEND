@@ -6,9 +6,11 @@ public class CompanySiteMappingResponse {
 
     private Integer compSiteId;
     private Integer compId;
-//    private String companyName;   
+    private String companyName;  
+    private String compCode;
     private Integer siteId;
-//    private String siteName;      
+    private String siteName;  
+    private String siteCode;
     private Boolean isPrimarySite;
     private String isActive;
     private LocalDateTime createdOn;
@@ -16,7 +18,6 @@ public class CompanySiteMappingResponse {
     private Integer createdBy;
     private Integer modifiedBy;
 
-    
 
     public Integer getCompSiteId() {
         return compSiteId;
@@ -91,4 +92,36 @@ public class CompanySiteMappingResponse {
     public void setModifiedBy(Integer modifiedBy) {
         this.modifiedBy = modifiedBy;
     }
+
+	public String getCompanyName() {
+		return companyName;
+	}
+
+	public void setCompanyName(String companyName) {
+		this.companyName = companyName;
+	}
+
+	public String getSiteName() {
+		return siteName;
+	}
+
+	public void setSiteName(String siteName) {
+		this.siteName = siteName;
+	}
+
+	public String getCompCode() {
+		return compCode;
+	}
+
+	public void setCompCode(String compCode) {
+		this.compCode = compCode;
+	}
+
+	public String getSiteCode() {
+		return siteCode;
+	}
+
+	public void setSiteCode(String siteCode) {
+		this.siteCode = siteCode;
+	}
 }
