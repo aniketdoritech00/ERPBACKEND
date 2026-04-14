@@ -27,4 +27,6 @@ public interface CompanySiteMappingRepository
 
 	List<CompSiteMappingEntity> findByCompanyEntity_Id(Integer compId);
 
+	List<CompSiteMappingEntity> findByCompanyEntity_IdAndIsActive(Integer comp, String string);
+
 }

@@ -44,4 +44,6 @@ public interface EmployeeService {
 
 	byte[] generateEmployeeTemplate();
 
+	List<Map<String, Object>> getAllEmployeeByCompanyId(Integer compId);
+
 }

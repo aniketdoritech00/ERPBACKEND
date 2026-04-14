@@ -33,4 +33,6 @@ public interface EmployeeMasterRepository extends JpaRepository<EmployeeMaster, 
 
 	@Query("SELECT e.employeeCode FROM EmployeeMaster e WHERE e.employeeCode IN :codes")
 	Set<String> findExistingEmployeeCodes(@Param("codes") List<String> codes);
+
+	List<EmployeeMaster> findByCompany_IdAndIsActive(Integer compId, String string);
 }

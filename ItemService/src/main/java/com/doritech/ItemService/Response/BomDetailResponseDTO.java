@@ -6,6 +6,7 @@ public class BomDetailResponseDTO {
 
 	private Integer bomItemId;
 	private String bomItemName;
+	private String bomItemCode;
 	private List<BomRawItemResponseDTO> rawItems;
 
 	/**
@@ -47,7 +48,13 @@ public class BomDetailResponseDTO {
 	public void setRawItems(List<BomRawItemResponseDTO> rawItems) {
 		this.rawItems = rawItems;
 	}
+	public String getBomItemCode() {
+		return bomItemCode;
+	}
+	public void setBomItemCode(String bomItemCode) {
+		this.bomItemCode = bomItemCode;
+	}
 
-	// getters setters
+	
 
 }

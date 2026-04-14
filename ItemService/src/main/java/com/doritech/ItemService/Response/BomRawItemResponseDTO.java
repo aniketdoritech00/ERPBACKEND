@@ -8,6 +8,7 @@ public class BomRawItemResponseDTO {
 	private Integer bomDetailId;
 	private Integer rawItemId;
 	private String rawItemName;
+	private String rawItemCode;
 	private BigDecimal quantity;
 	private String isActive;
 	private Integer createdBy;
@@ -132,6 +133,12 @@ public class BomRawItemResponseDTO {
 	public void setModifiedOn(LocalDateTime modifiedOn) {
 		this.modifiedOn = modifiedOn;
 	}
+	public String getRawItemCode() {
+		return rawItemCode;
+	}
+	public void setRawItemCode(String rawItemCode) {
+		this.rawItemCode = rawItemCode;
+	}
 
-	// getters setters
+	
 }
