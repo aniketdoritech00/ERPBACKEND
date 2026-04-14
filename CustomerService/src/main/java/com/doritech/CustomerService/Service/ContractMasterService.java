@@ -8,8 +8,6 @@ import com.doritech.CustomerService.Request.ContractMasterRequest;
 
 public interface ContractMasterService {
 
-
-
     ResponseEntity getContractById(Integer id);
 
 	ResponseEntity getAllContracts(int page, int size);

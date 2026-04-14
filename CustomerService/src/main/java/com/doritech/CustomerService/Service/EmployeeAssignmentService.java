@@ -12,6 +12,8 @@ public interface EmployeeAssignmentService {
 	EmployeeAssignmentResponse saveEmployeeAssignment(
 			EmployeeAssignmentRequest request);
 
+	EmployeeAssignmentResponse updateEmployeeAssignmentStatus(Integer assignmentId, EmployeeAssignmentRequest request);
+
 	List<EmployeeAssignmentResponse> saveBulkEmployeeAssignment(
 			List<EmployeeAssignmentRequest> requests);
 
@@ -20,5 +22,7 @@ public interface EmployeeAssignmentService {
 			String sortDir);
 
 	ResponseEntity getCustomerDetailsByAssignmentId(Integer assignmentId);
+
+	ResponseEntity updateStatusAfterPdfGenerate(Integer assignmentId);
 
 }

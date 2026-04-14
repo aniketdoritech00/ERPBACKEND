@@ -1,11 +1,11 @@
 package com.doritech.CustomerService.ServiceImpl;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,7 +113,7 @@ public class QuotationMasterServiceImpl implements QuotationMasterService {
 			QuotationMaster entity = mapper.toEntity(request);
 			entity.setCustomer(customer);
 			entity.setContract(contract);
-			//entity.setCreatedOn(LocalDateTime.now());
+			// entity.setCreatedOn(LocalDateTime.now());
 
 			QuotationMaster saved = repository.save(entity);
 
@@ -358,7 +358,7 @@ public class QuotationMasterServiceImpl implements QuotationMasterService {
 			entity.setSalesOrderNo(request.getSalesOrderNo());
 			entity.setIsActive(request.getIsActive());
 			entity.setModifiedBy(request.getModifiedBy());
-			//entity.setModifiedOn(LocalDateTime.now());
+			// entity.setModifiedOn(LocalDateTime.now());
 
 			QuotationMaster updated = repository.save(entity);
 
@@ -508,6 +508,35 @@ public class QuotationMasterServiceImpl implements QuotationMasterService {
 		response.setModifiedOn(entity.getModifiedOn());
 		response.setCreatedBy(entity.getCreatedBy());
 		response.setModifiedBy(entity.getModifiedBy());
+
+		return response;
+	}
+
+	@Override
+	public ResponseEntity getAllQuotationIdAndCode() {
+
+		logger.info("Get All Quotation Id And Code API called");
+
+		List<QuotationMaster> master = repository.findAll();
+
+		if (master == null || master.isEmpty()) {
+			logger.error("No quotations found");
+			throw new ResourceNotFoundException("No quotations available");
+		}
+
+		List<QuotationMasterResponse> responseList = master.stream().map(entity -> {
+			QuotationMasterResponse dto = new QuotationMasterResponse();
+			dto.setQuotationId(entity.getQuotationId());
+			dto.setQuotationCode(entity.getQuotationCode());
+			return dto;
+		}).collect(Collectors.toList());
+
+		logger.info("Successfully fetched {} quotations", responseList.size());
+
+		ResponseEntity response = new ResponseEntity();
+		response.setMessage("Quotation list fetched successfully");
+		response.setPayload(responseList);
+		response.setStatusCode(200);
 
 		return response;
 	}

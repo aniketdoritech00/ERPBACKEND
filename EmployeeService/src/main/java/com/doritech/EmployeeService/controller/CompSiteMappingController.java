@@ -90,4 +90,15 @@ public class CompSiteMappingController {
 	public ResponseEntity getActiveCompSiteNameAndCodeAndId() {
 		return companySiteMappingService.getActiveCompSiteNameAndCodeAndId();
 	}
+	
+	@GetMapping("/getAllCompSiteNameAndCodeAndId")
+	public ResponseEntity getAllCompSiteNameAndCodeAndId() {
+		return companySiteMappingService.getAllCompSiteNameAndCodeAndId();
+	}
+	@GetMapping("/getAllActiveSiteByCompanyId/{compId}")
+	public ResponseEntity getAllActiveSiteByCompanyId(@PathVariable Integer compId,@RequestHeader(value = "X-User-Id", required = false) String userId,
+			HttpServletRequest servletRequest) {
+		return companySiteMappingService.getAllActiveSiteByCompanyId(compId);
+	}
+
 }

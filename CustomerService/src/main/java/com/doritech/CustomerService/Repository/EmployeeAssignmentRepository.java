@@ -21,14 +21,17 @@ public interface EmployeeAssignmentRepository
 	Page<EmployeeAssignmentEntity> findByEmployeeId(Integer employeeId,
 			Pageable pageable);
 
-	@Query("SELECT ea.contract.contractId FROM EmployeeAssignmentEntity ea WHERE LOWER(ea.status) = LOWER(:status)")
-	List<Integer> findContractIdsByStatus(@Param("status") String status);
+@Query("SELECT ea.contractEntityMapping.contract.contractId " +
+       "FROM EmployeeAssignmentEntity ea " +
+       "WHERE LOWER(ea.status) = LOWER(:status)")
+List<Integer> findContractIdsByStatus(@Param("status") String status);
 
-	@Query("SELECT c.customerId, c.customerName, c.district, cem.minNoVisits "
-			+ "FROM EmployeeAssignmentEntity ea " + "JOIN ea.contract cm "
-			+ "JOIN cm.customer c "
-			+ "JOIN ContractEntityMapping cem ON cem.contract.contractId = cm.contractId "
-			+ "WHERE ea.assignmentId = :assignmentId")
-	Object[] getCustomerDetailsByAssignmentId(
-			@Param("assignmentId") Integer assignmentId);
+@Query("SELECT c.customerId, c.customerName, c.district, cem.minNoVisits " +
+       "FROM EmployeeAssignmentEntity ea " +
+       "JOIN ea.contractEntityMapping cem " +
+       "JOIN cem.contract cm " +
+       "JOIN cm.customer c " +
+       "WHERE ea.assignmentId = :assignmentId")
+Object[] getCustomerDetailsByAssignmentId(
+        @Param("assignmentId") Integer assignmentId);
 }

@@ -1,6 +1,7 @@
 package com.doritech.CustomerService.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +26,6 @@ public interface CustomerBranchAllocationRepository
 
     CustomerBranchAllocation findByCustomer_CustomerIdAndSiteIdAndIsActive(Integer customerId, Integer siteId,
             String string);
+
+    List<CustomerBranchAllocation> findByCustomer_CustomerIdAndSiteId(Integer customerId, Integer siteId);
 }

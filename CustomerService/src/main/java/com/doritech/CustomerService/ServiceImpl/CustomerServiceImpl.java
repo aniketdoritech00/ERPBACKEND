@@ -17,6 +17,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.annotation.Transactional;
@@ -232,19 +233,19 @@ public class CustomerServiceImpl implements CustomerService {
 		} catch (TransactionSystemException e) {
 			logger.error("Transaction failed while processing customer: {}",
 					e.getMessage(), e);
-			return new ResponseEntity("Transaction Failed", 500, null);
+			throw e;
 		} catch (DataAccessException e) {
 			logger.error("Database access error while processing customer: {}",
 					e.getMessage(), e);
-			return new ResponseEntity("Database Operation Failed", 500, null);
+			throw new DatabaseOperationException("Database Operation Failed");
 		} catch (IllegalArgumentException e) {
 			logger.error("Illegal argument while processing customer: {}",
 					e.getMessage(), e);
-			return new ResponseEntity(e.getMessage(), 400, null);
+			throw e;
 		} catch (Exception e) {
 			logger.error("Unexpected error while processing customer: {}",
 					e.getMessage(), e);
-			return new ResponseEntity("Internal Server Error", 500, null);
+			throw new DatabaseOperationException("Internal Server Error");
 		}
 	}
 
@@ -304,16 +305,16 @@ public class CustomerServiceImpl implements CustomerService {
 		} catch (TransactionSystemException e) {
 			logger.error("Transaction failed in updateCustomer for ID {}: {}",
 					id, e.getMessage(), e);
-			return new ResponseEntity("Transaction Failed", 500, null);
+			throw e;
 		} catch (DataAccessException e) {
 			logger.error(
 					"Database access error in updateCustomer for ID {}: {}", id,
 					e.getMessage(), e);
-			return new ResponseEntity("Database Operation Failed", 500, null);
+			throw new DatabaseOperationException("Database Operation Failed");
 		} catch (Exception e) {
 			logger.error("Unexpected error in updateCustomer for ID {}: {}", id,
 					e.getMessage(), e);
-			return new ResponseEntity("Internal Server Error", 500, null);
+			throw new DatabaseOperationException("Internal Server Error");
 		}
 	}
 
@@ -883,7 +884,6 @@ public class CustomerServiceImpl implements CustomerService {
 		}
 	}
 
-	
 	@Override
 	@Transactional(readOnly = true)
 	public ResponseEntity getCustomerNamesForFillter() {
@@ -919,6 +919,64 @@ public class CustomerServiceImpl implements CustomerService {
 		} catch (Exception ex) {
 			logger.error("Unexpected error in getAllCustomerNames: {}", ex.getMessage(), ex);
 			throw new DatabaseOperationException("Failed to fetch customer names");
+		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ResponseEntity getCustomerDetailsByCustomerId(Integer customerId) {
+
+		ResponseEntity response = new ResponseEntity();
+		logger.info("Fetching customer details for ID: {}", customerId);
+
+		try {
+			List<Object[]> results = customerRepo.findCustomerDetailsByCustomerId(customerId);
+
+			if (results == null || results.isEmpty()) {
+				logger.warn("No data found for customer ID: {}", customerId);
+
+				response.setStatusCode(HttpStatus.NOT_FOUND.value());
+				response.setMessage("No data available for customer ID: " + customerId);
+				response.setPayload(null);
+				return response;
+			}
+
+			Object[] row = results.get(0);
+
+			if (row == null || row.length == 0) {
+				logger.warn("Empty row received for customer ID: {}", customerId);
+
+				response.setStatusCode(HttpStatus.NOT_FOUND.value());
+				response.setMessage("No valid data found for customer ID: " + customerId);
+				response.setPayload(null);
+				return response;
+			}
+
+			CustomerResponse customer = new CustomerResponse();
+
+			customer.setCustomerName(row.length > 0 && row[0] != null ? row[0].toString() : null);
+			customer.setCustomerCode(row.length > 1 && row[1] != null ? row[1].toString() : null); 
+			customer.setDistrict(row.length > 2 && row[2] != null ? row[2].toString() : null);
+			customer.setAddress(row.length > 3 && row[3] != null ? row[3].toString() : null);
+			customer.setLevelName(row.length > 4 && row[4] != null ? row[4].toString() : null);
+			customer.setEmail(row.length > 5 && row[5] != null ? row[5].toString() : null);
+
+			logger.info("Customer details fetched successfully for ID: {}", customerId);
+
+			response.setStatusCode(HttpStatus.OK.value());
+			response.setMessage("Customer details fetched successfully");
+			response.setPayload(customer);
+
+			return response;
+
+		} catch (Exception e) {
+			logger.error("Error while fetching customer details for ID: {}", customerId, e);
+
+			response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+			response.setMessage("Something went wrong while fetching customer details");
+			response.setPayload(null);
+
+			return response;
 		}
 	}
 

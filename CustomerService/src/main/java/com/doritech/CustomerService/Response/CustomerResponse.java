@@ -29,6 +29,8 @@ public class CustomerResponse {
 	private String orgName;
 	private String companyName;
 	private String companyCode;
+	private String levelName;
+	private String email;
 	private List<CustomerEntityTypeResponse> entityTypes;
 	private List<CustomerContactResponse> contacts;
 
@@ -38,29 +40,34 @@ public class CustomerResponse {
 	public Integer getMinNoVisits() {
 		return minNoVisits;
 	}
+
 	/**
 	 * @param minNoVisits
-	 *            the minNoVisits to set
+	 *                    the minNoVisits to set
 	 */
 	public void setMinNoVisits(Integer minNoVisits) {
 		this.minNoVisits = minNoVisits;
 	}
+
 	/**
 	 * @return the district
 	 */
 	public String getDistrict() {
 		return district;
 	}
+
 	/**
 	 * @param district
-	 *            the district to set
+	 *                 the district to set
 	 */
 	public void setDistrict(String district) {
 		this.district = district;
 	}
+
 	public Integer getCustomerId() {
 		return customerId;
 	}
+
 	public void setCustomerId(Integer customerId) {
 		this.customerId = customerId;
 	}
@@ -68,6 +75,7 @@ public class CustomerResponse {
 	public String getCustomerName() {
 		return customerName;
 	}
+
 	public void setCustomerName(String customerName) {
 		this.customerName = customerName;
 	}
@@ -75,6 +83,7 @@ public class CustomerResponse {
 	public String getCustomerCode() {
 		return customerCode;
 	}
+
 	public void setCustomerCode(String customerCode) {
 		this.customerCode = customerCode;
 	}
@@ -82,6 +91,7 @@ public class CustomerResponse {
 	public Integer getOrgId() {
 		return orgId;
 	}
+
 	public void setOrgId(Integer orgId) {
 		this.orgId = orgId;
 	}
@@ -89,6 +99,7 @@ public class CustomerResponse {
 	public Integer getCompId() {
 		return compId;
 	}
+
 	public void setCompId(Integer compId) {
 		this.compId = compId;
 	}
@@ -96,6 +107,7 @@ public class CustomerResponse {
 	public String getAddress() {
 		return address;
 	}
+
 	public void setAddress(String address) {
 		this.address = address;
 	}
@@ -103,6 +115,7 @@ public class CustomerResponse {
 	public String getCity() {
 		return city;
 	}
+
 	public void setCity(String city) {
 		this.city = city;
 	}
@@ -110,6 +123,7 @@ public class CustomerResponse {
 	public String getState() {
 		return state;
 	}
+
 	public void setState(String state) {
 		this.state = state;
 	}
@@ -117,6 +131,7 @@ public class CustomerResponse {
 	public String getCountry() {
 		return country;
 	}
+
 	public void setCountry(String country) {
 		this.country = country;
 	}
@@ -124,6 +139,7 @@ public class CustomerResponse {
 	public String getPostalCode() {
 		return postalCode;
 	}
+
 	public void setPostalCode(String postalCode) {
 		this.postalCode = postalCode;
 	}
@@ -131,6 +147,7 @@ public class CustomerResponse {
 	public String getGstin() {
 		return gstin;
 	}
+
 	public void setGstin(String gstin) {
 		this.gstin = gstin;
 	}
@@ -138,6 +155,7 @@ public class CustomerResponse {
 	public Integer getParentId() {
 		return parentId;
 	}
+
 	public void setParentId(Integer parentId) {
 		this.parentId = parentId;
 	}
@@ -145,6 +163,7 @@ public class CustomerResponse {
 	public Integer getHierarchyLevelId() {
 		return hierarchyLevelId;
 	}
+
 	public void setHierarchyLevelId(Integer hierarchyLevelId) {
 		this.hierarchyLevelId = hierarchyLevelId;
 	}
@@ -152,6 +171,7 @@ public class CustomerResponse {
 	public String getIsActive() {
 		return isActive;
 	}
+
 	public void setIsActive(String isActive) {
 		this.isActive = isActive;
 	}
@@ -159,6 +179,7 @@ public class CustomerResponse {
 	public LocalDateTime getCreatedOn() {
 		return createdOn;
 	}
+
 	public void setCreatedOn(LocalDateTime createdOn) {
 		this.createdOn = createdOn;
 	}
@@ -166,12 +187,15 @@ public class CustomerResponse {
 	public String getHierarchyName() {
 		return hierarchyName;
 	}
+
 	public void setHierarchyName(String hierarchyName) {
 		this.hierarchyName = hierarchyName;
 	}
+
 	public LocalDateTime getModifiedOn() {
 		return modifiedOn;
 	}
+
 	public void setModifiedOn(LocalDateTime modifiedOn) {
 		this.modifiedOn = modifiedOn;
 	}
@@ -179,6 +203,7 @@ public class CustomerResponse {
 	public Integer getCreatedBy() {
 		return createdBy;
 	}
+
 	public void setCreatedBy(Integer createdBy) {
 		this.createdBy = createdBy;
 	}
@@ -186,6 +211,7 @@ public class CustomerResponse {
 	public Integer getModifiedBy() {
 		return modifiedBy;
 	}
+
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;
 	}
@@ -193,6 +219,7 @@ public class CustomerResponse {
 	public List<CustomerEntityTypeResponse> getEntityTypes() {
 		return entityTypes;
 	}
+
 	public void setEntityTypes(List<CustomerEntityTypeResponse> entityTypes) {
 		this.entityTypes = entityTypes;
 	}
@@ -200,25 +227,49 @@ public class CustomerResponse {
 	public String getOrgName() {
 		return orgName;
 	}
+
 	public void setOrgName(String orgName) {
 		this.orgName = orgName;
 	}
+
 	public String getCompanyName() {
 		return companyName;
 	}
+
 	public void setCompanyName(String companyName) {
 		this.companyName = companyName;
 	}
+
 	public String getCompanyCode() {
 		return companyCode;
 	}
+
 	public void setCompanyCode(String companyCode) {
 		this.companyCode = companyCode;
 	}
+
 	public List<CustomerContactResponse> getContacts() {
 		return contacts;
 	}
+
 	public void setContacts(List<CustomerContactResponse> contacts) {
 		this.contacts = contacts;
 	}
+
+	public String getLevelName() {
+		return levelName;
+	}
+
+	public void setLevelName(String levelName) {
+		this.levelName = levelName;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
 }

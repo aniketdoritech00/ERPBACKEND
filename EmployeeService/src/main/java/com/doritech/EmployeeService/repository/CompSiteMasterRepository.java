@@ -13,20 +13,20 @@ import org.springframework.stereotype.Repository;
 import com.doritech.EmployeeService.entity.CompSiteMasterEntity;
 
 @Repository
-public interface CompSiteMasterRepository
-		extends
-			JpaRepository<CompSiteMasterEntity, Integer> {
+public interface CompSiteMasterRepository extends JpaRepository<CompSiteMasterEntity, Integer> {
 	boolean existsBySiteCodeIgnoreCase(String siteCode);
 
 	@Query("SELECT c.siteId, c.siteName,c.siteCode FROM CompSiteMasterEntity c WHERE c.isActive = 'Y'")
 	List<Object[]> findSiteIdAndName();
 
-	Page<CompSiteMasterEntity> findAll(
-			Specification<CompSiteMasterEntity> filter, Pageable pageable);
+	Page<CompSiteMasterEntity> findAll(Specification<CompSiteMasterEntity> filter, Pageable pageable);
+
 	List<CompSiteMasterEntity> findByIsActive(String string);
 
 	boolean existsBySiteCodeIgnoreCaseAndSiteIdNot(String siteCode, Integer id);
 
 	Optional<CompSiteMasterEntity> findBySiteCode(String siteCode);
+
+	Optional<CompSiteMasterEntity> findBySiteCodeIgnoreCase(String siteCode);
 
 }

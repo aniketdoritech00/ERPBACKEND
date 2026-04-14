@@ -9,7 +9,5 @@ import com.doritech.microservice.AuthenticationService.Entity.UserMaster;
 
 @Repository
 public interface UserMasterRepository extends JpaRepository<UserMaster, Integer> {
-
 	Optional<UserMaster> findByLoginId(String loginId);
-
 }

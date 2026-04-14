@@ -28,4 +28,6 @@ public interface RoleMasterService {
 
 	ResponseEntity getAllRoles();
 
+    ResponseEntity fetchAllRoles();
+
 }

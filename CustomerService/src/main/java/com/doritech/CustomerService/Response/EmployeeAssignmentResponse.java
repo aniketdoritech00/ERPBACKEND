@@ -7,7 +7,7 @@ import java.util.List;
 public class EmployeeAssignmentResponse {
 
 	private Integer assignmentId;
-	private Integer contractId;
+	private Integer mappingId;
 	private Integer employeeId;
 	private String employeeName;
 	private Integer siteId;
@@ -178,17 +178,17 @@ public class EmployeeAssignmentResponse {
 		this.assignmentId = assignmentId;
 	}
 	/**
-	 * @return the contractId
+	 * @return the mappingId
 	 */
-	public Integer getContractId() {
-		return contractId;
+	public Integer getMappingId() {
+		return mappingId;
 	}
 	/**
-	 * @param contractId
-	 *            the contractId to set
+	 * @param mappingId
+	 *            the mappingId to set
 	 */
-	public void setContractId(Integer contractId) {
-		this.contractId = contractId;
+	public void setMappingId(Integer mappingId) {
+		this.mappingId = mappingId;
 	}
 	/**
 	 * @return the employeeId

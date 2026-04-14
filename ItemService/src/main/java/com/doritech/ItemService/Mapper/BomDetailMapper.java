@@ -15,6 +15,7 @@ public interface BomDetailMapper {
 
 	@Mapping(source = "rawItem.itemId", target = "rawItemId")
 	@Mapping(source = "rawItem.itemName", target = "rawItemName")
+	@Mapping(source = "rawItem.itemCode", target = "rawItemCode") 
 	BomRawItemResponseDTO toRawItemDto(BomDetailEntity entity);
 
 	@Mapping(target = "createdOn", ignore = true)
@@ -29,6 +30,7 @@ public interface BomDetailMapper {
 
 		if (!entities.isEmpty()) {
 			dto.setBomItemName(entities.get(0).getBomItem().getItemName());
+		      dto.setBomItemCode(entities.get(0).getBomItem().getItemCode());
 		}
 
 		dto.setRawItems(entities.stream().map(this::toRawItemDto).toList());

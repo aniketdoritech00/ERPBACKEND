@@ -91,4 +91,8 @@ public class RoleMasterController {
 	public ResponseEntity getAllRoles() {
 		return roleService.getAllRoles();
 	}
+	@GetMapping("/roles")
+public ResponseEntity fetchAllRoles() {
+    return roleService.fetchAllRoles();
+}
 }

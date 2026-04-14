@@ -1,5 +1,6 @@
 package com.doritech.CustomerService.ServiceImpl;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import com.doritech.CustomerService.Entity.ContractEntityMapping;
 import com.doritech.CustomerService.Entity.ContractItemMapping;
-import com.doritech.CustomerService.Entity.ContractMaster;
 import com.doritech.CustomerService.Entity.CustomerMasterEntity;
 import com.doritech.CustomerService.Entity.EmployeeAssignmentEntity;
 import com.doritech.CustomerService.Entity.ResponseEntity;
@@ -42,9 +42,7 @@ import com.doritech.CustomerService.ValidationService.ValidationService;
 import jakarta.transaction.Transactional;
 
 @Service
-public class EmployeeAssignmentServiceImpl
-		implements
-			EmployeeAssignmentService {
+public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService {
 
 	@Autowired
 	private EmployeeAssignmentRepository repository;
@@ -62,21 +60,18 @@ public class EmployeeAssignmentServiceImpl
 
 	@Override
 	@Transactional
-	public EmployeeAssignmentResponse saveEmployeeAssignment(
-			EmployeeAssignmentRequest request) {
+	public EmployeeAssignmentResponse saveEmployeeAssignment(EmployeeAssignmentRequest request) {
 
 		EmployeeAssignmentEntity entity = new EmployeeAssignmentEntity();
 
-		Optional<ContractMaster> contractMaster = contractMasterRepository
-				.findById(request.getContractId());
+		Optional<ContractEntityMapping> contractEntityMapping = contractEntityMappingRepository
+				.findById(request.getMappingId());
 
-		if (contractMaster.isEmpty()) {
-			throw new ResourceNotFoundException(
-					"Contract not Found with this ID "
-							+ request.getContractId());
+		if (contractEntityMapping.isEmpty()) {
+			throw new ResourceNotFoundException("Contract not Found with this ID " + request.getMappingId());
 		}
 
-		entity.setContract(contractMaster.get());
+		entity.setContractEntityMapping(contractEntityMapping.get());
 		entity.setEmployeeId(request.getEmployeeId());
 		entity.setSiteId(request.getSiteId());
 		entity.setAssignmentStartDate(request.getAssignmentStartDate());
@@ -93,36 +88,55 @@ public class EmployeeAssignmentServiceImpl
 
 	@Override
 	@Transactional
-	public List<EmployeeAssignmentResponse> saveBulkEmployeeAssignment(
-			List<EmployeeAssignmentRequest> requests) {
+	public EmployeeAssignmentResponse updateEmployeeAssignmentStatus(Integer assignmentId,
+			EmployeeAssignmentRequest request) {
+
+		EmployeeAssignmentEntity entity = repository.findById(assignmentId)
+				.orElseThrow(() -> new ResourceNotFoundException("Assignment not found with ID " + assignmentId));
+
+		Optional<ContractEntityMapping> contractEntityMapping = contractEntityMappingRepository
+				.findById(request.getMappingId());
+
+		if (contractEntityMapping.isEmpty()) {
+			throw new ResourceNotFoundException("Contract Mapping not Found with this ID " + request.getMappingId());
+		}
+
+		entity.setStatus(request.getStatus());
+		entity.setRemark(request.getRemark());
+		entity.setModifiedBy(request.getModifiedBy());
+
+		EmployeeAssignmentEntity saved = repository.save(entity);
+
+		return mapToResponse(saved);
+	}
+
+	@Override
+	@Transactional
+	public List<EmployeeAssignmentResponse> saveBulkEmployeeAssignment(List<EmployeeAssignmentRequest> requests) {
 
 		if (requests == null || requests.isEmpty()) {
 			throw new ResourceNotFoundException("Request list cannot be empty");
 		}
 
-		Set<Integer> contractIds = requests.stream()
-				.map(EmployeeAssignmentRequest::getContractId)
+		Set<Integer> contractIds = requests.stream().map(EmployeeAssignmentRequest::getMappingId)
 				.collect(Collectors.toSet());
 
-		Map<Integer, ContractMaster> contractMap = contractMasterRepository
-				.findAllById(contractIds).stream().collect(Collectors
-						.toMap(ContractMaster::getContractId, c -> c));
+		Map<Integer, ContractEntityMapping> contractMap = contractEntityMappingRepository.findAllById(contractIds)
+				.stream().collect(Collectors.toMap(ContractEntityMapping::getMappingId, c -> c));
 
 		List<EmployeeAssignmentEntity> entities = new ArrayList<>();
 
 		for (EmployeeAssignmentRequest request : requests) {
 
-			ContractMaster contract = contractMap.get(request.getContractId());
+			ContractEntityMapping contractEntityMapping = contractMap.get(request.getMappingId());
 
-			if (contract == null) {
-				throw new ResourceNotFoundException(
-						"Contract not found with ID "
-								+ request.getContractId());
+			if (contractEntityMapping == null) {
+				throw new ResourceNotFoundException("Contract not found with ID " + request.getMappingId());
 			}
 
 			EmployeeAssignmentEntity entity = new EmployeeAssignmentEntity();
 
-			entity.setContract(contract);
+			entity.setContractEntityMapping(contractEntityMapping);
 			entity.setEmployeeId(request.getEmployeeId());
 			entity.setSiteId(request.getSiteId());
 			entity.setAssignmentStartDate(request.getAssignmentStartDate());
@@ -135,16 +149,14 @@ public class EmployeeAssignmentServiceImpl
 			entities.add(entity);
 		}
 
-		List<EmployeeAssignmentEntity> savedEntities = repository
-				.saveAll(entities);
+		List<EmployeeAssignmentEntity> savedEntities = repository.saveAll(entities);
 
 		return savedEntities.stream().map(this::mapToResponse).toList();
 	}
 
 	@Override
-	public PageResponse<EmployeeAssignmentResponse> getEmployeeAssignments(
-			Integer employeeId, int page, int size, String sortBy,
-			String sortDir) {
+	public PageResponse<EmployeeAssignmentResponse> getEmployeeAssignments(Integer employeeId, int page, int size,
+			String sortBy, String sortDir) {
 
 		// 🔥 Common Validation
 		if (page < 0) {
@@ -159,16 +171,13 @@ public class EmployeeAssignmentServiceImpl
 			size = 100;
 		}
 
-		List<String> allowedSortFields = List.of("assignmentId", "createdOn",
-				"status");
+		List<String> allowedSortFields = List.of("assignmentId", "createdOn", "status");
 
 		if (!allowedSortFields.contains(sortBy)) {
 			sortBy = "assignmentId";
 		}
 
-		Sort sort = sortDir.equalsIgnoreCase("desc")
-				? Sort.by(sortBy).descending()
-				: Sort.by(sortBy).ascending();
+		Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
 
 		Pageable pageable = PageRequest.of(page, size, sort);
 
@@ -181,89 +190,79 @@ public class EmployeeAssignmentServiceImpl
 			entityPage = repository.findAll(pageable);
 		}
 
-		Page<EmployeeAssignmentResponse> dtoPage = entityPage
-				.map(this::mapToResponse);
+		Page<EmployeeAssignmentResponse> dtoPage = entityPage.map(this::mapToResponse);
 
 		List<EmployeeAssignmentResponse> content = dtoPage.getContent();
 
 		List<ItemIDResponse> itemIDResponses = validationService.getAllItems();
 
-		List<ParamResponseDTO> categoryParamResponseDTOs = validationService
-				.getParamByCodeAndSerial("Item", "Category");
+		List<ParamResponseDTO> categoryParamResponseDTOs = validationService.getParamByCodeAndSerial("Item",
+				"Category");
 
 		Map<Integer, String> itemIdToCategoryMap = itemIDResponses.stream()
-				.collect(Collectors.toMap(ItemIDResponse::getItemId,
-						ItemIDResponse::getCategory, (a, b) -> a
+				.collect(Collectors.toMap(ItemIDResponse::getItemId, ItemIDResponse::getCategory, (a, b) -> a
 
 				));
 
-		Map<String, String> categoryToParamMap = categoryParamResponseDTOs
-				.stream().collect(Collectors.toMap(ParamResponseDTO::getDesp1,
-						ParamResponseDTO::getDesp2, (a, b) -> a));
+		Map<String, String> categoryToParamMap = categoryParamResponseDTOs.stream()
+				.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
 
-		List<ParamResponseDTO> typeParamResponseDTOs = validationService
-				.getParamByCodeAndSerial("CONTRACT", "CONTRACT_TYPE");
+		List<ParamResponseDTO> typeParamResponseDTOs = validationService.getParamByCodeAndSerial("CONTRACT",
+				"CONTRACT_TYPE");
 
 		Map<String, String> typeToParamMap = typeParamResponseDTOs.stream()
-				.collect(Collectors.toMap(ParamResponseDTO::getDesp1,
-						ParamResponseDTO::getDesp2, (a, b) -> a));
+				.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
 
 		for (int i = 0; i < content.size(); i++) {
 
 			EmployeeAssignmentResponse response = content.get(i);
 			EmployeeAssignmentEntity entity = entityPage.getContent().get(i);
 
-			ContractMaster contract = entity.getContract();
+			ContractEntityMapping contractEntityMapping = entity.getContractEntityMapping();
 
-			if (contract != null && contract.getCustomer() != null) {
+			if (contractEntityMapping != null && contractEntityMapping.getCustomer() != null) {
 
-				response.setCustomerName(
-						contract.getCustomer().getCustomerName());
+				response.setCustomerName(contractEntityMapping.getCustomer().getCustomerName());
 
-				response.setCustomerId(contract.getCustomer().getCustomerId());
+				response.setCustomerId(contractEntityMapping.getCustomer().getCustomerId());
 
 				HierarchyLevelResponseDTO responseDTO = validationService
-						.validateAndGetHierarchyLevel(
-								contract.getCustomer().getHierarchyLevelId());
+						.validateAndGetHierarchyLevel(contractEntityMapping.getCustomer().getHierarchyLevelId());
 
 				if (responseDTO != null) {
 					response.setZoneName(responseDTO.getLevelName());
 				}
 
-				String paramType = typeToParamMap
-						.get(contract.getContractType());
+				String paramType = typeToParamMap.get(contractEntityMapping.getContract().getContractType());
 
 				response.setVisitType(paramType);
 
 				List<ContractItemMapping> contractItemMappings = contractItemMappingRepository
-						.findByContract_ContractId(contract.getContractId());
+						.findByContract_ContractId(contractEntityMapping.getContract().getContractId());
 
-				List<String> productTypes = contractItemMappings.stream()
-						.map(itemMapping -> {
-							Integer itemId = itemMapping.getItemId();
+				List<String> productTypes = contractItemMappings.stream().map(itemMapping -> {
+					Integer itemId = itemMapping.getItemId();
 
-							String category = itemIdToCategoryMap.get(itemId);
+					String category = itemIdToCategoryMap.get(itemId);
 
-							if (category == null) {
-								return null;
-							}
+					if (category == null) {
+						return null;
+					}
 
-							return categoryToParamMap.get(category);
-						}).filter(Objects::nonNull).toList();
+					return categoryToParamMap.get(category);
+				}).filter(Objects::nonNull).distinct().toList();
 
 				response.setProductName(productTypes);
 
 				List<CompanySiteMappingResponse> companySites = validationService
-						.getAllCompSiteMappingByCompId(
-								contract.getCustomer().getCompId());
+						.getAllCompSiteMappingByCompId(contractEntityMapping.getCustomer().getCompId());
 
 				if (companySites != null && !companySites.isEmpty()) {
 
 					Integer siteId = companySites.get(0).getSiteId();
 					response.setSiteId(siteId);
 
-					CompSiteResponse siteResponse = validationService
-							.validateAndGetSite(siteId, "AB");
+					CompSiteResponse siteResponse = validationService.validateAndGetSite(siteId, "AB");
 
 					if (siteResponse != null) {
 						response.setSiteName(siteResponse.getSiteName());
@@ -274,46 +273,43 @@ public class EmployeeAssignmentServiceImpl
 			}
 		}
 
-		return new PageResponse<>(dtoPage.getContent(), dtoPage.getNumber(),
-				dtoPage.getSize(), dtoPage.getTotalElements(),
-				dtoPage.getTotalPages(), dtoPage.isLast());
+		return new PageResponse<>(dtoPage.getContent(), dtoPage.getNumber(), dtoPage.getSize(),
+				dtoPage.getTotalElements(), dtoPage.getTotalPages(), dtoPage.isLast());
 	}
 
-	private EmployeeAssignmentResponse mapToResponse(
-			EmployeeAssignmentEntity entity) {
+	private EmployeeAssignmentResponse mapToResponse(EmployeeAssignmentEntity entity) {
 
 		EmployeeAssignmentResponse response = new EmployeeAssignmentResponse();
 
 		response.setAssignmentId(entity.getAssignmentId());
 
-		response.setContractId(entity.getContract() != null
-				? entity.getContract().getContractId()
-				: null);
+		response.setMappingId(
+				entity.getContractEntityMapping() != null && entity.getContractEntityMapping().getContract() != null
+						? entity.getContractEntityMapping().getContract().getContractId()
+						: null);
 
 		response.setEmployeeId(entity.getEmployeeId());
 
-		EmployeeDTO employeeDTO = validationService
-				.validateEmployeeExists(entity.getEmployeeId());
+		EmployeeDTO employeeDTO = validationService.validateEmployeeExists(entity.getEmployeeId());
 		response.setEmployeeName(employeeDTO.getEmployeeName());
 
 		response.setSiteId(entity.getSiteId());
 
-		response.setAssignmentStartDate(entity.getAssignmentStartDate() != null
-				? entity.getAssignmentStartDate().toLocalDate()
-				: null);
+		response.setAssignmentStartDate(
+				entity.getAssignmentStartDate() != null ? entity.getAssignmentStartDate().toLocalDate() : null);
 
-		response.setAssignmentEndDate(entity.getAssignmentEndDate() != null
-				? entity.getAssignmentEndDate().toLocalDate()
-				: null);
+		response.setAssignmentEndDate(
+				entity.getAssignmentEndDate() != null ? entity.getAssignmentEndDate().toLocalDate() : null);
 
-		response.setVisitDate(entity.getVisitDate() != null
-				? entity.getVisitDate().toLocalDate()
-				: null);
+		response.setVisitDate(entity.getVisitDate() != null ? entity.getVisitDate().toLocalDate() : null);
 
 		response.setStatus(entity.getStatus());
 		response.setRemark(entity.getRemark());
 
-		response.setVisitType(entity.getContract().getContractType());
+		response.setVisitType(
+				entity.getContractEntityMapping() != null && entity.getContractEntityMapping().getContract() != null
+						? entity.getContractEntityMapping().getContract().getContractType()
+						: null);
 
 		response.setCreatedOn(entity.getCreatedOn());
 		response.setModifiedOn(entity.getModifiedOn());
@@ -326,43 +322,35 @@ public class EmployeeAssignmentServiceImpl
 
 	@Transactional
 	@Override
-	public ResponseEntity getCustomerDetailsByAssignmentId(
-			Integer assignmentId) {
+	public ResponseEntity getCustomerDetailsByAssignmentId(Integer assignmentId) {
 
 		if (assignmentId == null) {
-			throw new IllegalArgumentException(
-					"Assignment ID must not be null");
+			throw new IllegalArgumentException("Assignment ID must not be null");
 		}
 
 		try {
 
-			EmployeeAssignmentEntity assignment = repository
-					.findById(assignmentId)
-					.orElseThrow(() -> new ResourceNotFoundException(
-							"Assignment not found"));
+			EmployeeAssignmentEntity assignment = repository.findById(assignmentId)
+					.orElseThrow(() -> new ResourceNotFoundException("Assignment not found"));
 
-			ContractMaster contract = assignment.getContract();
-			if (contract == null) {
-				throw new ResourceNotFoundException(
-						"Contract not found for assignment");
+			ContractEntityMapping contractEntityMapping = assignment.getContractEntityMapping();
+			if (contractEntityMapping == null) {
+				throw new ResourceNotFoundException("Contract not found for assignment");
 			}
 
-			CustomerMasterEntity customer = contract.getCustomer();
+			CustomerMasterEntity customer = contractEntityMapping.getCustomer();
 			if (customer == null) {
-				throw new ResourceNotFoundException(
-						"Customer not found for contract");
+				throw new ResourceNotFoundException("Customer not found for contract");
 			}
 
 			List<ContractEntityMapping> mappings = contractEntityMappingRepository
-					.findByContract(contract);
+					.findByContract(contractEntityMapping.getContract());
 
 			Integer minNoVisits = null;
 
 			if (mappings != null && !mappings.isEmpty()) {
-				minNoVisits = mappings.stream()
-						.map(ContractEntityMapping::getMinNoVisits)
-						.filter(Objects::nonNull).min(Integer::compareTo)
-						.orElse(null);
+				minNoVisits = mappings.stream().map(ContractEntityMapping::getMinNoVisits).filter(Objects::nonNull)
+						.min(Integer::compareTo).orElse(null);
 			}
 
 			CustomerResponse dto = new CustomerResponse();
@@ -380,4 +368,21 @@ public class EmployeeAssignmentServiceImpl
 		}
 	}
 
+	@Override
+	@Transactional
+	public ResponseEntity updateStatusAfterPdfGenerate(Integer assignmentId) {
+
+		Optional<EmployeeAssignmentEntity> optional = repository.findById(assignmentId);
+
+		if (optional.isEmpty()) {
+			return new ResponseEntity("Assignment not found", 404, null);
+		}
+		EmployeeAssignmentEntity assignment = optional.get();
+		assignment.setStatus("Completed");
+		assignment.setModifiedOn(LocalDateTime.now());
+
+		repository.save(assignment);
+
+		return new ResponseEntity("Status updated successfully", 200, null);
+	}
 }

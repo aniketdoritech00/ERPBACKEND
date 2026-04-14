@@ -18,8 +18,8 @@ import com.doritech.CustomerService.Projection.CustomerWithContactProjection;
 @Repository
 public interface CustomerMasterRepository
 		extends
-			JpaRepository<CustomerMasterEntity, Integer>,
-			JpaSpecificationExecutor<CustomerMasterEntity> {
+		JpaRepository<CustomerMasterEntity, Integer>,
+		JpaSpecificationExecutor<CustomerMasterEntity> {
 
 	Optional<CustomerMasterEntity> findByCustomerCodeIgnoreCase(
 			String customerCode);
@@ -195,5 +195,28 @@ public interface CustomerMasterRepository
 	List<CustomerSummaryProjection> findByOrgAndHierarchy(
 			@Param("orgId") Integer orgId, @Param("levelId") Integer levelId);
 
-		long countByIsActive(String string);
+	long countByIsActive(String string);
+
+	@Query(value = """
+			SELECT
+			    cm.customer_name,
+			    cm.customer_code,
+			    cm.district,
+			    cm.address,
+			    hl.level_name,
+			    (
+			        SELECT cc.email
+			        FROM customer_contact cc
+			        WHERE cc.customer_id = cm.customer_id
+			          AND cc.is_active = 'Y'
+			        ORDER BY cc.cust_cont_id ASC
+			        LIMIT 1
+			    ) AS first_contact_email
+			FROM customer_master cm
+			LEFT JOIN hierarchy_level hl
+			    ON cm.hierarchy_level_id = hl.hierarchy_level_id
+			WHERE cm.customer_id = :customerId
+			  AND cm.is_active = 'Y'
+			""", nativeQuery = true)
+	List<Object[]> findCustomerDetailsByCustomerId(@Param("customerId") Integer customerId);
 }

@@ -41,6 +41,8 @@ public class ContractItemPackageMapper {
         response.setPackageId(p.getPackageId());
         response.setContractMappingId(p.getContractMappingId());
         response.setMappedItemId(p.getMappedItemId());
+        response.setMappedItemCode(p.getMappedItemCode());
+        response.setMappingItemCode(p.getMappingItemCode());
         response.setIsActive(p.getIsActive());
         response.setCreatedOn(p.getCreatedOn());
         response.setModifiedOn(p.getModifiedOn());
