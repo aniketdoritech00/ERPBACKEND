@@ -319,6 +319,28 @@ public class EmployeeServiceImpl implements EmployeeService {
 	}
 
 	@Override
+	public List<Map<String, Object>> getAllEmployeeByCompanyId(Integer compId) {
+
+		List<EmployeeMaster> employees = employeeMasterRepository.findByCompany_IdAndIsActive(compId, "Y");
+
+		if (employees.isEmpty()) {
+			throw new ResourceNotFoundException("No active Parent employees found for given companyId");
+		}
+
+		List<Map<String, Object>> list = new ArrayList<>();
+
+		for (EmployeeMaster emp : employees) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("parentId", emp.getEmployeeId());
+			map.put("parentName", emp.getEmployeeName());
+			map.put("parentCode", emp.getEmployeeCode());
+			list.add(map);
+		}
+
+		return list;
+	}
+
+	@Override
 	public ResponseEntity getAllActiveEmployees() {
 
 		List<EmployeeMaster> employees = employeeMasterRepository.findByIsActive("Y");
@@ -627,36 +649,33 @@ public class EmployeeServiceImpl implements EmployeeService {
 				.map(ParamResponseDTO::getDesp1).findFirst().orElseThrow(() -> new BusinessException(
 						fieldName + " value '" + excelValue + "' is invalid. No matching record found."));
 	}
-	
+
 	public byte[] generateEmployeeTemplate() {
 
-	    try {
-	        Workbook workbook = new XSSFWorkbook();
-	        ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try {
+			Workbook workbook = new XSSFWorkbook();
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-	        Sheet sheet = workbook.createSheet("Employee Template");
+			Sheet sheet = workbook.createSheet("Employee Template");
 
-	        Row header = sheet.createRow(0);
+			Row header = sheet.createRow(0);
 
-	        String[] columns = {
-	                "Employee Code","Company Code","Site Code","Email","Phone",
-	                "Designation","Department","Role","Address","City","District",
-	                "State","Country","Postal Code","Parent Employee Code",
-	                "Date Of Joining","Date Of Leaving"
-	        };
+			String[] columns = { "Employee Code", "Company Code", "Site Code", "Email", "Phone", "Designation",
+					"Department", "Role", "Address", "City", "District", "State", "Country", "Postal Code",
+					"Parent Employee Code", "Date Of Joining", "Date Of Leaving" };
 
-	        for (int i = 0; i < columns.length; i++) {
-	            header.createCell(i).setCellValue(columns[i]);
-	            sheet.autoSizeColumn(i);
-	        }
+			for (int i = 0; i < columns.length; i++) {
+				header.createCell(i).setCellValue(columns[i]);
+				sheet.autoSizeColumn(i);
+			}
 
-	        workbook.write(out);
-	        workbook.close();
+			workbook.write(out);
+			workbook.close();
 
-	        return out.toByteArray();
+			return out.toByteArray();
 
-	    } catch (Exception e) {
-	        throw new RuntimeException("Error while generating template", e);
-	    }
+		} catch (Exception e) {
+			throw new RuntimeException("Error while generating template", e);
+		}
 	}
 }

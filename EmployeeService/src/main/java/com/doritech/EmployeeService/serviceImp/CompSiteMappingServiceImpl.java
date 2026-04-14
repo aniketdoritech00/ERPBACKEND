@@ -35,8 +35,7 @@ import jakarta.validation.Valid;
 @Service
 public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(CompSiteMappingServiceImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(CompSiteMappingServiceImpl.class);
 
 	@Autowired
 	private CompanySiteMappingRepository repository;
@@ -51,21 +50,17 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 	private AuditService auditService;
 
 	@Override
-	public ResponseEntity saveCompSiteMapping(
-			@Valid CompanySiteMappingRequest request) {
+	public ResponseEntity saveCompSiteMapping(@Valid CompanySiteMappingRequest request) {
 
-		logger.info("Saving Company Site Mapping for CompanyId: {}",
-				request.getCompId());
+		logger.info("Saving Company Site Mapping for CompanyId: {}", request.getCompId());
 
-		boolean exists = repository
-				.existsByCompanyEntity_IdAndCompSiteMaster_SiteId(
-						request.getCompId(), request.getSiteId());
+		boolean exists = repository.existsByCompanyEntity_IdAndCompSiteMaster_SiteId(request.getCompId(),
+				request.getSiteId());
 
 		if (exists) {
 
 			ResponseEntity response = new ResponseEntity();
-			response.setMessage(
-					"This company and site mapping already exists.");
+			response.setMessage("This company and site mapping already exists.");
 			response.setStatusCode(400);
 			response.setPayload(null);
 
@@ -73,35 +68,28 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 		}
 
 		CompanyEntity company = companyRepository.findById(request.getCompId())
-				.orElseThrow(() -> new ResourceNotFoundException(
-						"Company not found with id: " + request.getCompId()));
+				.orElseThrow(() -> new ResourceNotFoundException("Company not found with id: " + request.getCompId()));
 
-		CompSiteMasterEntity site = compSiteMasterRepository
-				.findById(request.getSiteId())
-				.orElseThrow(() -> new ResourceNotFoundException(
-						"Site not found with id: " + request.getSiteId()));
+		CompSiteMasterEntity site = compSiteMasterRepository.findById(request.getSiteId())
+				.orElseThrow(() -> new ResourceNotFoundException("Site not found with id: " + request.getSiteId()));
 
-		CompSiteMappingEntity entity = CompSiteMappingMapper
-				.mapToEntity(request);
+		CompSiteMappingEntity entity = CompSiteMappingMapper.mapToEntity(request);
 		entity.setCompanyEntity(company);
 		entity.setCompSiteMaster(site);
 
 		CompSiteMappingEntity saved = repository.save(entity);
 
-		auditService.logAudit(request.getCreatedBy(), 1, "comp_site_mapping",
-				saved.getCompSiteId(), "INSERT", null, saved, "ALL", "SYSTEM",
-				"SYSTEM");
+		auditService.logAudit(request.getCreatedBy(), 1, "comp_site_mapping", saved.getCompSiteId(), "INSERT", null,
+				saved, "ALL", "SYSTEM", "SYSTEM");
 
-		CompanySiteMappingResponse responseData = CompSiteMappingMapper
-				.mapToResponse(saved);
+		CompanySiteMappingResponse responseData = CompSiteMappingMapper.mapToResponse(saved);
 
 		ResponseEntity response = new ResponseEntity();
 		response.setMessage("Data Saved Successfully");
 		response.setPayload(responseData);
 		response.setStatusCode(201);
 
-		logger.info("Company Site Mapping saved successfully with id: {}",
-				saved.getCompSiteId());
+		logger.info("Company Site Mapping saved successfully with id: {}", saved.getCompSiteId());
 
 		return response;
 	}
@@ -116,8 +104,7 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 			Optional<CompSiteMappingEntity> optional = repository.findById(Id);
 
 			if (optional.isPresent()) {
-				CompanySiteMappingResponse data = CompSiteMappingMapper
-						.mapToResponse(optional.get());
+				CompanySiteMappingResponse data = CompSiteMappingMapper.mapToResponse(optional.get());
 
 				response.setMessage("Data fetched successfully");
 				response.setPayload(data);
@@ -128,8 +115,7 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 			}
 
 		} catch (Exception e) {
-			logger.error("Error occurred while fetching Company Site Mapping",
-					e);
+			logger.error("Error occurred while fetching Company Site Mapping", e);
 			response.setMessage("Internal Server Error");
 			response.setStatusCode(500);
 		}
@@ -145,9 +131,8 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 			Pageable pageable = PageRequest.of(page, size);
 			Page<CompSiteMappingEntity> pageData = repository.findAll(pageable);
 
-			List<CompanySiteMappingResponse> list = pageData.getContent()
-					.stream().map(CompSiteMappingMapper::mapToResponse)
-					.toList();
+			List<CompanySiteMappingResponse> list = pageData.getContent().stream()
+					.map(CompSiteMappingMapper::mapToResponse).toList();
 
 			PageResponse<CompanySiteMappingResponse> pageResponse = new PageResponse<>();
 			pageResponse.setContent(list);
@@ -171,33 +156,27 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 	}
 
 	@Override
-	public ResponseEntity updateCompSiteMapping(Integer Id,
-			@Valid CompanySiteMappingRequest request) {
+	public ResponseEntity updateCompSiteMapping(Integer Id, @Valid CompanySiteMappingRequest request) {
 		ResponseEntity response = new ResponseEntity();
 		logger.info("Updating Company Site Mapping with id: {}", Id);
 
 		CompSiteMappingEntity entity = repository.findById(Id)
-				.orElseThrow(() -> new ResourceNotFoundException(
-						"Company Site Mapping not found with id: " + Id));
+				.orElseThrow(() -> new ResourceNotFoundException("Company Site Mapping not found with id: " + Id));
 
-		boolean exists = repository
-				.existsByCompanyEntity_IdAndCompSiteMaster_SiteIdAndCompSiteIdNot(
-						request.getCompId(), request.getSiteId(), Id);
+		boolean exists = repository.existsByCompanyEntity_IdAndCompSiteMaster_SiteIdAndCompSiteIdNot(
+				request.getCompId(), request.getSiteId(), Id);
 
 		if (exists) {
-			response.setMessage(
-					"This company and site mapping already exists.");
+			response.setMessage("This company and site mapping already exists.");
 			response.setStatusCode(400);
 			return response;
 		}
 
 		CompanyEntity company = companyRepository.findById(request.getCompId())
-				.orElseThrow(() -> new ResourceNotFoundException(
-						"Company not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("Company not found"));
 
-		CompSiteMasterEntity site = compSiteMasterRepository
-				.findById(request.getSiteId()).orElseThrow(
-						() -> new ResourceNotFoundException("Site not found"));
+		CompSiteMasterEntity site = compSiteMasterRepository.findById(request.getSiteId())
+				.orElseThrow(() -> new ResourceNotFoundException("Site not found"));
 
 		entity.setCompanyEntity(company);
 		entity.setCompSiteMaster(site);
@@ -207,12 +186,10 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 
 		CompSiteMappingEntity updated = repository.save(entity);
 
-		auditService.logAudit(request.getModifiedBy(), 1, "comp_site_mapping",
-				Id, "UPDATE", entity, updated, "UPDATED_FIELDS", "SYSTEM",
-				"SYSTEM");
+		auditService.logAudit(request.getModifiedBy(), 1, "comp_site_mapping", Id, "UPDATE", entity, updated,
+				"UPDATED_FIELDS", "SYSTEM", "SYSTEM");
 
-		CompanySiteMappingResponse responseData = CompSiteMappingMapper
-				.mapToResponse(updated);
+		CompanySiteMappingResponse responseData = CompSiteMappingMapper.mapToResponse(updated);
 
 		response.setMessage("Data Updated Successfully");
 		response.setPayload(responseData);
@@ -244,8 +221,7 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 
 			for (CompSiteMappingEntity entity : entities) {
 
-				auditService.logAudit(entity.getModifiedBy(), 1,
-						"comp_site_mapping", entity.getCompSiteId(), "DELETE",
+				auditService.logAudit(entity.getModifiedBy(), 1, "comp_site_mapping", entity.getCompSiteId(), "DELETE",
 						entity, null, "ALL", "SYSTEM", "SYSTEM");
 			}
 
@@ -254,8 +230,7 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 			if (entities.size() == 1) {
 				response.setMessage("Record deleted successfully");
 			} else {
-				response.setMessage(
-						entities.size() + " records deleted successfully");
+				response.setMessage(entities.size() + " records deleted successfully");
 			}
 
 			response.setStatusCode(200);
@@ -268,9 +243,9 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 
 		return response;
 	}
+
 	@Override
-	public ResponseEntity filterCompSiteMapping(
-			CompanySiteMappingRequest request, int page, int size) {
+	public ResponseEntity filterCompSiteMapping(CompanySiteMappingRequest request, int page, int size) {
 
 		ResponseEntity response = new ResponseEntity();
 
@@ -278,15 +253,12 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 
 			Pageable pageable = PageRequest.of(page, size);
 
-			Specification<CompSiteMappingEntity> specification = CompSiteMappingSpecification
-					.filter(request);
+			Specification<CompSiteMappingEntity> specification = CompSiteMappingSpecification.filter(request);
 
-			Page<CompSiteMappingEntity> pageData = repository
-					.findAll(specification, pageable);
+			Page<CompSiteMappingEntity> pageData = repository.findAll(specification, pageable);
 
-			List<CompanySiteMappingResponse> list = pageData.getContent()
-					.stream().map(CompSiteMappingMapper::mapToResponse)
-					.toList();
+			List<CompanySiteMappingResponse> list = pageData.getContent().stream()
+					.map(CompSiteMappingMapper::mapToResponse).toList();
 
 			PageResponse<CompanySiteMappingResponse> pageResponse = new PageResponse<>();
 
@@ -319,8 +291,7 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 
 		try {
 
-			List<CompSiteMasterEntity> entities = compSiteMasterRepository
-					.findByIsActive("Y");
+			List<CompSiteMasterEntity> entities = compSiteMasterRepository.findByIsActive("Y");
 
 			List<Map<String, Object>> list = new ArrayList<>();
 
@@ -352,25 +323,21 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 	public ResponseEntity getAllCompSiteMappingByCompId(Integer compId) {
 		ResponseEntity response = new ResponseEntity();
 		try {
-			logger.info("Fetching Company Site Mapping with compId: {}",
-					compId);
+			logger.info("Fetching Company Site Mapping with compId: {}", compId);
 
-			List<CompSiteMappingEntity> mappingEntities = repository
-					.findByCompanyEntity_Id(compId);
+			List<CompSiteMappingEntity> mappingEntities = repository.findByCompanyEntity_Id(compId);
 
 			List<CompanySiteMappingResponse> companySiteMappingResponses = new ArrayList<>();
 
 			if (mappingEntities.isEmpty()) {
 
-				response.setMessage(
-						"Data Not Found With this CompId " + compId);
+				response.setMessage("Data Not Found With this CompId " + compId);
 				response.setStatusCode(404);
 				response.setPayload(null);
 			} else {
 
 				for (CompSiteMappingEntity entity : mappingEntities) {
-					CompanySiteMappingResponse data = CompSiteMappingMapper
-							.mapToResponse(entity);
+					CompanySiteMappingResponse data = CompSiteMappingMapper.mapToResponse(entity);
 
 					companySiteMappingResponses.add(data);
 
@@ -381,14 +348,12 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 			}
 
 		} catch (Exception e) {
-			logger.error("Error occurred while fetching Company Site Mapping",
-					e);
+			logger.error("Error occurred while fetching Company Site Mapping", e);
 			response.setMessage("Internal Server Error");
 			response.setStatusCode(500);
 		}
 		return response;
 	}
-	
 
 	@Override
 	public ResponseEntity getAllCompSiteNameAndCodeAndId() {
@@ -427,5 +392,27 @@ public class CompSiteMappingServiceImpl implements CompanySiteMappingService {
 		}
 
 		return response;
+	}
+
+	@Override
+	public ResponseEntity getAllActiveSiteByCompanyId(Integer comp) {
+
+		List<CompSiteMappingEntity> sites = repository.findByCompanyEntity_IdAndIsActive(comp, "Y");
+
+		if (sites.isEmpty()) {
+			throw new ResourceNotFoundException("No active sites found for given company");
+		}
+
+		List<Map<String, Object>> list = new ArrayList<>();
+
+		for (CompSiteMappingEntity obj : sites) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("siteId", obj.getCompSiteMaster().getSiteId());
+			map.put("siteName", obj.getCompSiteMaster().getSiteName());
+			map.put("siteCode", obj.getCompSiteMaster().getSiteCode());
+			list.add(map);
+		}
+
+		return new ResponseEntity("Site list fetched successfully for this company" , 200, list);
 	}
 }

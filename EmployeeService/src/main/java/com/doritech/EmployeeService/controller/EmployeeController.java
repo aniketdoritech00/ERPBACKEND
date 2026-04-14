@@ -1,6 +1,5 @@
 package com.doritech.EmployeeService.controller;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -108,6 +107,17 @@ public class EmployeeController {
 		return new ResponseEntity("Parent ID & Name fetched successfully", 200, list);
 	}
 
+	@GetMapping("/getAllEmployeeByCompanyId/{compId}")
+	public ResponseEntity getAllEmployeeByCompanyId(
+	        @PathVariable Integer compId,
+	        @RequestHeader(value = "X-User-Id", required = false) String userId,
+	        HttpServletRequest servletRequest) {
+
+	    List<Map<String, Object>> list = employeeService.getAllEmployeeByCompanyId(compId);
+
+	    return new ResponseEntity("Parent ID & Name fetched successfully", 200, list);
+	}
+
 	@GetMapping("/getAllActiveEmployees")
 	public ResponseEntity getAllActiveEmployees(@RequestHeader(value = "X-User-Id", required = false) String userId,
 			HttpServletRequest servletRequest) {
@@ -144,14 +154,14 @@ public class EmployeeController {
 
 		return org.springframework.http.ResponseEntity.status(statusCode).body(response.getMessage());
 	}
+
 	@GetMapping("/downloadEmployeeTemplate")
 	public org.springframework.http.ResponseEntity<?> downloadEmployeeTemplate() {
 
-	    byte[] file = employeeService.generateEmployeeTemplate();
+		byte[] file = employeeService.generateEmployeeTemplate();
 
-	    return org.springframework.http.ResponseEntity.ok()
-	            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=employee_template.xlsx")
-	            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-	            .body(file);
+		return org.springframework.http.ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=employee_template.xlsx")
+				.contentType(MediaType.APPLICATION_OCTET_STREAM).body(file);
 	}
 }
