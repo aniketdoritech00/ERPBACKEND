@@ -9,6 +9,7 @@ public class CustomerEmployeeAllocationResponse {
 	private String customerName;
 	private Integer employeeId;
 	private String employeeName;
+	private String employeeCode;
 	private LocalDate fromDate;
 	private String isActive;
 
@@ -103,6 +104,12 @@ public class CustomerEmployeeAllocationResponse {
 	public void setIsActive(String isActive) {
 		this.isActive = isActive;
 	}
+	public String getEmployeeCode() {
+		return employeeCode;
+	}
+	public void setEmployeeCode(String employeeCode) {
+		this.employeeCode = employeeCode;
+	}
 
-	// getters & setters
+	
 }
