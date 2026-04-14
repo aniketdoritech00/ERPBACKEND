@@ -23,4 +23,6 @@ public interface EmployeeAssignmentService {
 
 	ResponseEntity getCustomerDetailsByAssignmentId(Integer assignmentId);
 
+	ResponseEntity updateStatusAfterPdfGenerate(Integer assignmentId);
+
 }

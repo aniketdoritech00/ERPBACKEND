@@ -113,5 +113,10 @@ public class EmployeeAssignmentController {
 			@RequestParam Integer assignmentId) {
 		return assignmentService.getCustomerDetailsByAssignmentId(assignmentId);
 	}
+	@GetMapping("/updateStatusAfterPdfGenerate")
+	public ResponseEntity updateStatusAfterPdfGenerate(@RequestParam Integer assignmentId) {
 
+		return assignmentService.updateStatusAfterPdfGenerate(assignmentId);
+
+	}
 }
