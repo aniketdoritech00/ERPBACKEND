@@ -121,6 +121,7 @@ public class CustomerEmployeeAllocationServiceImpl
 		res.setCustomerName(entity.getCustomer().getCustomerName());
 		res.setEmployeeId(entity.getEmployeeId());
 		res.setEmployeeName(emp.getEmployeeName());
+		res.setEmployeeCode(emp.getEmployeeCode());
 		res.setFromDate(entity.getFromDate());
 		res.setIsActive(entity.getIsActive());
 

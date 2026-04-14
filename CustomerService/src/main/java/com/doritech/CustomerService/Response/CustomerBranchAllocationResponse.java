@@ -9,6 +9,7 @@ public class CustomerBranchAllocationResponse {
     private String customerName;
     private Integer siteId;
     private String siteName;
+    private String siteCode;
     private LocalDate fromDate;
     private String isActive;
     private LocalDateTime createdOn;
@@ -85,4 +86,12 @@ public class CustomerBranchAllocationResponse {
     public void setModifiedOn(LocalDateTime modifiedOn) {
         this.modifiedOn = modifiedOn;
     }
+
+	public String getSiteCode() {
+		return siteCode;
+	}
+
+	public void setSiteCode(String siteCode) {
+		this.siteCode = siteCode;
+	}
 }
