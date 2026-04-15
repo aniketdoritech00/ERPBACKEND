@@ -27,7 +27,7 @@ public class ItemMasterRequestDTO {
 
 	private String itemDescription;
 	private Integer vendorId;
-	@Size(max = 2, message = "Category max length is 2", groups = OnCreate.class)
+	@Size(max = 5, message = "Category max length is 5", groups = OnCreate.class)
 	private String category;
 	@Size(max = 2, message = "Unit of measure must not exceed 2 characters", groups = OnCreate.class)
 	private String unitOfMeasure;
