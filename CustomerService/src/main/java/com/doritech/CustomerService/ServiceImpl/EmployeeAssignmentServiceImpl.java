@@ -24,7 +24,6 @@ import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Exception.ResourceNotFoundException;
 import com.doritech.CustomerService.Repository.ContractEntityMappingRepository;
 import com.doritech.CustomerService.Repository.ContractItemMappingRepository;
-import com.doritech.CustomerService.Repository.ContractMasterRepository;
 import com.doritech.CustomerService.Repository.EmployeeAssignmentRepository;
 import com.doritech.CustomerService.Request.EmployeeAssignmentRequest;
 import com.doritech.CustomerService.Response.CompSiteResponse;
@@ -46,9 +45,6 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 	@Autowired
 	private EmployeeAssignmentRepository repository;
-
-	@Autowired
-	private ContractMasterRepository contractMasterRepository;
 
 	@Autowired
 	private ContractItemMappingRepository contractItemMappingRepository;
@@ -158,7 +154,6 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 	public PageResponse<EmployeeAssignmentResponse> getEmployeeAssignments(Integer employeeId, int page, int size,
 			String sortBy, String sortDir) {
 
-		// 🔥 Common Validation
 		if (page < 0) {
 			throw new IllegalArgumentException("Page cannot be negative");
 		}
@@ -181,7 +176,6 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 		Pageable pageable = PageRequest.of(page, size, sort);
 
-		// 🔥 Dynamic Logic
 		Page<EmployeeAssignmentEntity> entityPage;
 
 		if (employeeId != null) {
