@@ -165,6 +165,7 @@ public class CustomerServiceImpl implements CustomerService {
 			customer.setCustomerCode(request.getCustomerCode());
 			customer.setOrgId(request.getOrgId());
 			customer.setCompId(request.getCompId());
+			customer.setIfsc(request.getIfsc());
 			customer.setAddress(request.getAddress());
 			customer.setCity(request.getCity());
 			customer.setDistrict(request.getDistrict());
@@ -276,6 +277,7 @@ public class CustomerServiceImpl implements CustomerService {
 
 			customer.setCustomerName(request.getCustomerName());
 			customer.setAddress(request.getAddress());
+			customer.setIfsc(request.getIfsc());
 			customer.setCity(request.getCity());
 			customer.setDistrict(request.getDistrict());
 			customer.setState(request.getState());
@@ -358,6 +360,7 @@ public class CustomerServiceImpl implements CustomerService {
 				res.setCustomerCode(row.getCustomerCode());
 				res.setOrgId(row.getOrgId());
 				res.setCompId(row.getCompId());
+				res.setIfsc(row.getIfsc());
 				res.setAddress(row.getAddress());
 				res.setCity(row.getCity());
 				res.setDistrict(row.getDistrict());
@@ -489,6 +492,7 @@ public class CustomerServiceImpl implements CustomerService {
 							d.setCustomerCode(row.getCustomerCode());
 							d.setOrgId(row.getOrgId());
 							d.setCompId(row.getCompId());
+							d.setIfsc(row.getIfsc());
 							d.setAddress(row.getAddress());
 							d.setCity(row.getCity());
 							d.setDistrict(row.getDistrict());
@@ -713,6 +717,7 @@ public class CustomerServiceImpl implements CustomerService {
 		response.setCustomerCode(saved.getCustomerCode());
 		response.setOrgId(saved.getOrgId());
 		response.setCompId(saved.getCompId());
+		response.setIfsc(saved.getIfsc());
 		response.setAddress(saved.getAddress());
 		response.setCity(saved.getCity());
 		response.setDistrict(saved.getDistrict());
@@ -741,6 +746,7 @@ public class CustomerServiceImpl implements CustomerService {
 		res.setCustomerCode(first.getCustomerCode());
 		res.setOrgId(first.getOrgId());
 		res.setCompId(first.getCompId());
+		res.setIfsc(first.getIfsc());
 		res.setAddress(first.getAddress());
 		res.setCity(first.getCity());
 		res.setDistrict(first.getDistrict());
@@ -851,6 +857,7 @@ public class CustomerServiceImpl implements CustomerService {
 				res.setCustomerCode(row.getCustomerCode());
 				res.setOrgId(row.getOrgId());
 				res.setCompId(row.getCompId());
+				res.setIfsc(row.getIfsc());
 				res.setAddress(row.getAddress());
 				res.setCity(row.getCity());
 				res.setDistrict(row.getDistrict());

@@ -654,14 +654,12 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 							res.setSiteName(site.getSiteName());
 							res.setSiteCode(site.getSiteCode());
 							res.setSiteDistrictName(site.getDistrict());
-							res.setIfsc(site.getIfsc());
 						} else {
 							CompSiteResponse site = validationService.validateAndGetSite(siteId, "Source");
 							siteCache.put(siteId, site);
 							res.setSiteName(site.getSiteName());
 							res.setSiteCode(site.getSiteCode());
 							res.setSiteDistrictName(site.getDistrict());
-							res.setIfsc(site.getIfsc());
 						}
 					} else {
 						res.setSiteName("Unknown Site");
@@ -700,6 +698,7 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 					res.setCustomerName("Unknown Customer");
 				}
 
+				res.setIfsc(mapping.getContract().getCustomer().getIfsc());
 				response.add(res);
 			}
 

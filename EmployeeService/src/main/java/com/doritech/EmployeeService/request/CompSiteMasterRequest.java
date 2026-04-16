@@ -1,5 +1,6 @@
 package com.doritech.EmployeeService.request;
 
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,11 +17,8 @@ public class CompSiteMasterRequest {
 	@NotBlank(message = "{site.siteCode.required}")
 	@Size(max = 50, message = "{site.siteCode.size}")
 	private String siteCode;
-	@Size(max = 50, message = "site.ifsc.size")
-	private String ifsc;
-
-	@Size(max = 50, message = "site.siteType.size")
-	private String siteType;
+	@Column(name = "gst_no", length = 50)
+	private String gstNo;
 
 	@NotNull(message = "{site.hierarchyLevelId.required}")
 	private Integer hierarchyLevelId;
@@ -67,17 +65,17 @@ public class CompSiteMasterRequest {
 	private Integer modifiedBy;
 
 	/**
-	 * @return the ifsc
+	 * @return the gstNo
 	 */
-	public String getIfsc() {
-		return ifsc;
+	public String getGstNo() {
+		return gstNo;
 	}
 
 	/**
-	 * @param ifsc the ifsc to set
+	 * @param gstNo the gstNo to set
 	 */
-	public void setIfsc(String ifsc) {
-		this.ifsc = ifsc;
+	public void setGstNo(String gstNo) {
+		this.gstNo = gstNo;
 	}
 
 	public String getSiteName() {
@@ -222,11 +220,4 @@ public class CompSiteMasterRequest {
 		this.district = district;
 	}
 
-	public String getSiteType() {
-		return siteType;
-	}
-
-	public void setSiteType(String siteType) {
-		this.siteType = siteType;
-	}
 }

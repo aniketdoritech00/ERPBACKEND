@@ -15,6 +15,7 @@ public class CustomerDetailsResponse {
 	private String customerCode;
 	private Integer orgId;
 	private Integer compId;
+	private String ifsc;
 	private String address;
 	private String city;
 	private String district;
@@ -37,6 +38,8 @@ public class CustomerDetailsResponse {
 	private List<CustomerContactResponse> contacts;
 
 	private Integer createdBy;
+
+	
 
 	/**
 	 * @return the district
@@ -243,6 +246,14 @@ public class CustomerDetailsResponse {
 
 	public void setCreatedBy(Integer createdBy) {
 		this.createdBy = createdBy;
+	}
+
+	public String getIfsc() {
+		return ifsc;
+	}
+
+	public void setIfsc(String ifsc) {
+		this.ifsc = ifsc;
 	}
 
 }

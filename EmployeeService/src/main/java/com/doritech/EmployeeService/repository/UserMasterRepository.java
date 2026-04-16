@@ -26,6 +26,8 @@ public interface UserMasterRepository extends JpaRepository<UserMaster, Integer>
 
 	List<UserMaster> findAllByUserType(String string);
 
+	Optional<UserMaster> findByUserId(Integer userId);
+
 	boolean existsBySourceIdAndUserIdNot(Integer sourceId, Integer id);
 
 	List<UserMaster> findByRoleRoleIdIn(ArrayList arrayList);

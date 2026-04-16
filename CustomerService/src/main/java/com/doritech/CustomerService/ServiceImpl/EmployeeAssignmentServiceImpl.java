@@ -248,6 +248,8 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 				response.setProductName(productTypes);
 
+				response.setIfsc(contractEntityMapping.getCustomer().getIfsc());
+
 				List<CompanySiteMappingResponse> companySites = validationService
 						.getAllCompSiteMappingByCompId(contractEntityMapping.getCustomer().getCompId());
 
@@ -260,7 +262,7 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 					if (siteResponse != null) {
 						response.setSiteName(siteResponse.getSiteName());
-						response.setIfsc(siteResponse.getIfsc());
+						
 						response.setDistrict(siteResponse.getDistrict());
 					}
 				}
@@ -288,6 +290,8 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 		response.setEmployeeName(employeeDTO.getEmployeeName());
 
 		response.setSiteId(entity.getSiteId());
+
+		response.setIfsc(entity.getContractEntityMapping().getContract().getCustomer().getIfsc());
 
 		response.setAssignmentStartDate(
 				entity.getAssignmentStartDate() != null ? entity.getAssignmentStartDate().toLocalDate() : null);

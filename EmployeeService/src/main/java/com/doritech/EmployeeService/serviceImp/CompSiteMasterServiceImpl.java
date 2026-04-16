@@ -196,13 +196,13 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 				.orElseThrow(() -> new ResourceNotFoundException(
 						"Company Site not found with id: " + id));
 		
-		if ("BANK".equalsIgnoreCase(request.getSiteType())
-	            && (request.getIfsc() == null || request.getIfsc().trim().isEmpty())) {
+		// if ("BANK".equalsIgnoreCase(request.getSiteType())
+	    //         && (request.getIfsc() == null || request.getIfsc().trim().isEmpty())) {
 
-	        response.setMessage("IFSC is mandatory when Site Type is BANK");
-	        response.setStatusCode(400);
-	        return response;
-	    }
+	    //     response.setMessage("IFSC is mandatory when Site Type is BANK");
+	    //     response.setStatusCode(400);
+	    //     return response;
+	    // }
 
 		if (repository.existsBySiteCodeIgnoreCaseAndSiteIdNot(
 				request.getSiteCode(), id)) {
@@ -227,8 +227,7 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 		entity.setContactPerson(request.getContactPerson());
 		entity.setEmail(request.getEmail());
 		entity.setPhone(request.getPhone());
-		entity.setIfsc(request.getIfsc());
-		entity.setSiteType(request.getSiteType());
+		entity.setGstNo(request.getGstNo());
 		entity.setAddress(request.getAddress());
 		entity.setCity(request.getCity());
 		entity.setDistrict(request.getDistrict());
@@ -261,14 +260,14 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 		logger.info("Saving Company Site with SiteCode: {}",
 				request.getSiteCode());
 		
-		if ("BANK".equalsIgnoreCase(request.getSiteType())
-		        && (request.getIfsc() == null || request.getIfsc().trim().isEmpty())) {
+		// if ("BANK".equalsIgnoreCase(request.getSiteType())
+		//         && (request.getIfsc() == null || request.getIfsc().trim().isEmpty())) {
 
-		    ResponseEntity response = new ResponseEntity();
-		    response.setMessage("IFSC is mandatory when Site Type is BANK");
-		    response.setStatusCode(400);
-		    return response;
-		}
+		//     ResponseEntity response = new ResponseEntity();
+		//     response.setMessage("IFSC is mandatory when Site Type is BANK");
+		//     response.setStatusCode(400);
+		//     return response;
+		// }
 
 		if (repository.existsBySiteCodeIgnoreCase(request.getSiteCode())) {
 			ResponseEntity response = new ResponseEntity();

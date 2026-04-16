@@ -7,13 +7,12 @@ public class CompSiteMasterResponse {
 	private Integer siteId;
 	private String siteName;
 	private String siteCode;
-	private String ifsc;
+	private String gstNo;
 	private Integer hierarchyLevelId;
 	private String levelName;
 	private String siteLongitude;
 	private String siteLatitude;
 	private String contactPerson;
-	private String siteType;
 	private String email;
 	private String phone;
 	private String address;
@@ -29,17 +28,17 @@ public class CompSiteMasterResponse {
 	private Integer modifiedBy;
 
 	/**
-	 * @return the ifsc
+	 * @return the gstNo
 	 */
-	public String getIfsc() {
-		return ifsc;
+	public String getGstNo() {
+		return gstNo;
 	}
 
 	/**
-	 * @param ifsc the ifsc to set
+	 * @param gstNo the gstNo to set
 	 */
-	public void setIfsc(String ifsc) {
-		this.ifsc = ifsc;
+	public void setGstNo(String gstNo) {
+		this.gstNo = gstNo;
 	}
 
 	public Integer getSiteId() {
@@ -214,14 +213,6 @@ public class CompSiteMasterResponse {
 	 */
 	public void setDistrict(String district) {
 		this.district = district;
-	}
-
-	public String getSiteType() {
-		return siteType;
-	}
-
-	public void setSiteType(String siteType) {
-		this.siteType = siteType;
 	}
 
 }
