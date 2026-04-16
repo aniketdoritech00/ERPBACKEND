@@ -11,11 +11,13 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.doritech.CustomerService.Entity.QuotationDetail;
@@ -34,7 +36,7 @@ import com.doritech.CustomerService.Response.QuotationDetailResponse;
 import com.doritech.CustomerService.Service.QuotationDetailService;
 import com.doritech.CustomerService.ValidationService.ValidationService;
 
-import jakarta.transaction.Transactional;
+import jakarta.validation.ConstraintViolationException;
 
 @Service
 public class QuotationDetailServiceImpl implements QuotationDetailService {
@@ -55,7 +57,8 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 		this.mapper = mapper;
 	}
 
-	@Transactional
+
+	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public ResponseEntity saveAndUpdateQuotationDetails(Integer quotationId, List<QuotationDetailRequest> requests) {
 
@@ -90,7 +93,6 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 			requests.sort(Comparator.comparing(r -> r == null || r.getParentItemId() == null ? 0 : 1));
 
 			Map<Integer, Integer> itemIdToDetailId = new HashMap<>();
-
 			int createCount = 0;
 			int updateCount = 0;
 			List<QuotationDetailResponse> resultList = new ArrayList<>();
@@ -104,9 +106,28 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 					continue;
 				}
 
-				logger.info("Processing record [{}] - quotationDetailId: {}, itemId: {}, siteId: {}, parentItemId: {}",
-						i, request.getQuotationDetailId(), request.getItemId(), request.getSiteId(),
-						request.getParentItemId());
+				logger.info(
+						"Processing record [{}] - quotationDetailId: {}, itemId: {}, siteId: {}, parentItemId: {}",
+						i, request.getQuotationDetailId(), request.getItemId(),
+						request.getSiteId(), request.getParentItemId());
+
+				if (request.getItemId() == null) {
+					logger.error("itemId is null at record [{}]", i);
+					response.setMessage("itemId cannot be null at index " + i);
+					response.setStatusCode(400);
+					response.setPayload(null);
+					TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+					return response;
+				}
+
+				if (request.getSiteId() == null) {
+					logger.error("siteId is null at record [{}]", i);
+					response.setMessage("siteId cannot be null at index " + i);
+					response.setStatusCode(400);
+					response.setPayload(null);
+					TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+					return response;
+				}
 
 				logger.info("Validating site with id {} for record [{}]", request.getSiteId(), i);
 				validationService.validateSiteExists(request.getSiteId());
@@ -123,17 +144,18 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 							&& repository.existsByItemId(request.getParentItemId());
 
 					if (!parentExistsInBatch && !parentExistsInDB) {
-						logger.error("Parent item not found with id {} for record [{}]", request.getParentItemId(), i);
-						response.setMessage(
-								"Parent item not found with id " + request.getParentItemId() + " at index " + i);
+						logger.error("Parent item not found with id {} for record [{}]",
+								request.getParentItemId(), i);
+						response.setMessage("Parent item not found with id "
+								+ request.getParentItemId() + " at index " + i);
 						response.setStatusCode(404);
 						response.setPayload(null);
 						TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 						return response;
 					}
 
-					logger.info("Parent item id {} validated successfully for record [{}]", request.getParentItemId(),
-							i);
+					logger.info("Parent item id {} validated successfully for record [{}]",
+							request.getParentItemId(), i);
 				}
 
 				QuotationDetail entity;
@@ -142,23 +164,31 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 
 					logger.info("No quotationDetailId found for record [{}], performing CREATE", i);
 
-					Integer resolvedParentDetailId = resolveParentDetailId(request.getParentItemId(), itemIdToDetailId);
+					Integer resolvedParentDetailId = resolveParentDetailId(
+							request.getParentItemId(), itemIdToDetailId);
 
 					logger.info(
-							"Checking duplicate for quotationId {}, itemId {}, siteId {}, resolvedParentDetailId {} at record [{}]",
-							quotationId, request.getItemId(), request.getSiteId(), resolvedParentDetailId, i);
+							"Checking duplicate for quotationId {}, itemId {}, siteId {},"
+									+ " resolvedParentDetailId {} at record [{}]",
+							quotationId, request.getItemId(), request.getSiteId(),
+							resolvedParentDetailId, i);
 
 					boolean isDuplicate = repository
-							.existsByQuotationMasterQuotationIdAndItemIdAndSiteIdAndParentItemId(quotationId,
-									request.getItemId(), request.getSiteId(), resolvedParentDetailId);
+							.existsByQuotationMasterQuotationIdAndItemIdAndSiteIdAndParentItemId(
+									quotationId, request.getItemId(),
+									request.getSiteId(), resolvedParentDetailId);
 
 					if (isDuplicate) {
 						logger.error(
-								"Duplicate record found for quotationId {}, itemId {}, siteId {}, parentDetailId {} at record [{}]",
-								quotationId, request.getItemId(), request.getSiteId(), resolvedParentDetailId, i);
-						response.setMessage("Record already exists for quotationId " + quotationId + ", itemId "
-								+ request.getItemId() + ", siteId " + request.getSiteId() + ", parentDetailId "
-								+ resolvedParentDetailId + " at index " + i);
+								"Duplicate record found for quotationId {}, itemId {}, siteId {},"
+										+ " parentDetailId {} at record [{}]",
+								quotationId, request.getItemId(), request.getSiteId(),
+								resolvedParentDetailId, i);
+						response.setMessage("Record already exists for quotationId " + quotationId
+								+ ", itemId " + request.getItemId()
+								+ ", siteId " + request.getSiteId()
+								+ ", parentDetailId " + resolvedParentDetailId
+								+ " at index " + i);
 						response.setStatusCode(409);
 						response.setPayload(null);
 						TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -187,31 +217,39 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 							request.getQuotationDetailId(), i);
 
 					entity = repository.findById(request.getQuotationDetailId()).orElseThrow(() -> {
-						logger.error("Quotation detail not found with id {}", request.getQuotationDetailId());
+						logger.error("Quotation detail not found with id {}",
+								request.getQuotationDetailId());
 						return new ResourceNotFoundException(
-								"Quotation detail not found with id " + request.getQuotationDetailId());
+								"Quotation detail not found with id "
+										+ request.getQuotationDetailId());
 					});
 
-					Integer resolvedParentDetailId = resolveParentDetailId(request.getParentItemId(), itemIdToDetailId);
+					Integer resolvedParentDetailId = resolveParentDetailId(
+							request.getParentItemId(), itemIdToDetailId);
 
 					logger.info(
-							"Checking duplicate for quotationId {}, itemId {}, siteId {}, resolvedParentDetailId {} excluding quotationDetailId {} at record [{}]",
-							quotationId, request.getItemId(), request.getSiteId(), resolvedParentDetailId,
-							request.getQuotationDetailId(), i);
+							"Checking duplicate for quotationId {}, itemId {}, siteId {},"
+									+ " resolvedParentDetailId {} excluding quotationDetailId {}"
+									+ " at record [{}]",
+							quotationId, request.getItemId(), request.getSiteId(),
+							resolvedParentDetailId, request.getQuotationDetailId(), i);
 
 					boolean isDuplicate = repository
 							.existsByQuotationMasterQuotationIdAndItemIdAndSiteIdAndParentItemIdAndQuotationDetailIdNot(
-									quotationId, request.getItemId(), request.getSiteId(), resolvedParentDetailId,
-									request.getQuotationDetailId());
+									quotationId, request.getItemId(), request.getSiteId(),
+									resolvedParentDetailId, request.getQuotationDetailId());
 
 					if (isDuplicate) {
 						logger.error(
-								"Duplicate record found for quotationId {}, itemId {}, siteId {}, parentDetailId {} excluding id {} at record [{}]",
-								quotationId, request.getItemId(), request.getSiteId(), resolvedParentDetailId,
-								request.getQuotationDetailId(), i);
-						response.setMessage("Record already exists for quotationId " + quotationId + ", itemId "
-								+ request.getItemId() + ", siteId " + request.getSiteId() + ", parentDetailId "
-								+ resolvedParentDetailId + " at index " + i);
+								"Duplicate record found for quotationId {}, itemId {}, siteId {},"
+										+ " parentDetailId {} excluding id {} at record [{}]",
+								quotationId, request.getItemId(), request.getSiteId(),
+								resolvedParentDetailId, request.getQuotationDetailId(), i);
+						response.setMessage("Record already exists for quotationId " + quotationId
+								+ ", itemId " + request.getItemId()
+								+ ", siteId " + request.getSiteId()
+								+ ", parentDetailId " + resolvedParentDetailId
+								+ " at index " + i);
 						response.setStatusCode(409);
 						response.setPayload(null);
 						TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -239,47 +277,94 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 						saved.getQuotationDetailId());
 			}
 
-			logger.info("Save/Update quotation details completed for quotationId {} | Created: {}, Updated: {}",
+			logger.info(
+					"Save/Update quotation details completed for quotationId {}"
+							+ " | Created: {}, Updated: {}",
 					quotationId, createCount, updateCount);
 
-			response.setMessage(
-					"Quotation details saved successfully | Created: " + createCount + ", Updated: " + updateCount);
+			response.setMessage("Quotation details saved successfully | Created: "
+					+ createCount + ", Updated: " + updateCount);
 			response.setStatusCode(200);
 			response.setPayload(resultList);
 
-		} catch (IllegalArgumentException e) {
-			logger.error("Validation error while saving quotation details for quotationId {}: {}", quotationId,
-					e.getMessage());
+		} catch (BadRequestException e) {
+			logger.error("Bad request while saving quotation details for quotationId {}: {}",
+					quotationId, e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(400);
 			response.setPayload(null);
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
+		} catch (IllegalArgumentException e) {
+			logger.error("Illegal argument while saving quotation details for quotationId {}: {}",
+					quotationId, e.getMessage());
+			response.setMessage("Invalid input: " + e.getMessage());
+			response.setStatusCode(400);
+			response.setPayload(null);
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
+		} catch (ConstraintViolationException e) {
+			logger.error(
+					"Bean validation failed while saving quotation details for quotationId {}: {}",
+					quotationId, e.getMessage());
+			response.setMessage("Validation failed: " + e.getMessage());
+			response.setStatusCode(400);
+			response.setPayload(null);
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
 		} catch (ResourceNotFoundException e) {
-			logger.error("Resource not found while saving quotation details for quotationId {}: {}", quotationId,
-					e.getMessage());
+			logger.error(
+					"Resource not found while saving quotation details for quotationId {}: {}",
+					quotationId, e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(404);
 			response.setPayload(null);
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
 		} catch (ExternalServiceException e) {
-			logger.error("External service error while saving quotation details for quotationId {}: {}", quotationId,
-					e.getMessage());
+			logger.error(
+					"External service error while saving quotation details for quotationId {}: {}",
+					quotationId, e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(502);
 			response.setPayload(null);
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
 		} catch (DataIntegrityViolationException e) {
-			logger.error("Data integrity violation while saving quotation details for quotationId {}: {}", quotationId,
-					e.getMessage());
+			logger.error(
+					"Data integrity violation while saving quotation details for quotationId {}: {}",
+					quotationId, e.getMessage());
 			response.setMessage(
-					"Invalid reference data: the provided item or site does not exist in the local database");
+					"Invalid reference data: the provided item or site does not exist"
+							+ " in the local database");
 			response.setStatusCode(409);
 			response.setPayload(null);
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
+		} catch (DataAccessException e) {
+			logger.error(
+					"Database error while saving quotation details for quotationId {}: {}",
+					quotationId, e.getMessage(), e);
+			response.setMessage("Database error: " + e.getMostSpecificCause().getMessage());
+			response.setStatusCode(500);
+			response.setPayload(null);
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
+		} catch (NullPointerException e) {
+			logger.error(
+					"Null pointer exception while saving quotation details for quotationId {}: {}",
+					quotationId, e.getMessage(), e);
+			response.setMessage(
+					"A required field is null. Please check the request payload.");
+			response.setStatusCode(400);
+			response.setPayload(null);
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
 		} catch (Exception e) {
-			logger.error("Unexpected error while saving quotation details for quotationId {}: {}", quotationId,
-					e.getMessage(), e);
-			response.setMessage("Unable to save quotation details");
+			logger.error(
+					"Unexpected error while saving quotation details for quotationId {}: {}",
+					quotationId, e.getMessage(), e);
+			response.setMessage("Unable to save quotation details: " + e.getMessage());
 			response.setStatusCode(500);
 			response.setPayload(null);
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -288,7 +373,9 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 		return response;
 	}
 
-	private Integer resolveParentDetailId(Integer parentItemId, Map<Integer, Integer> itemIdToDetailId) {
+
+	private Integer resolveParentDetailId(Integer parentItemId,
+			Map<Integer, Integer> itemIdToDetailId) {
 		if (parentItemId == null)
 			return null;
 		Integer resolvedId = itemIdToDetailId.get(parentItemId);
@@ -299,6 +386,7 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 			return parentEntity.getQuotationDetailId();
 		return null;
 	}
+
 
 	@Override
 	public ResponseEntity deleteQuotationDetails(List<Integer> ids) {
@@ -317,6 +405,15 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 				return response;
 			}
 
+			boolean hasNullId = ids.stream().anyMatch(id -> id == null);
+			if (hasNullId) {
+				logger.error("ids list contains null values");
+				response.setMessage("ids list must not contain null values");
+				response.setStatusCode(400);
+				response.setPayload(null);
+				return response;
+			}
+
 			List<QuotationDetail> entities = repository.findAllById(ids);
 
 			if (entities.isEmpty()) {
@@ -328,8 +425,10 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 			}
 
 			if (entities.size() != ids.size()) {
-				List<Integer> foundIds = entities.stream().map(QuotationDetail::getQuotationDetailId).toList();
-				List<Integer> notFoundIds = ids.stream().filter(id -> !foundIds.contains(id)).toList();
+				List<Integer> foundIds = entities.stream()
+						.map(QuotationDetail::getQuotationDetailId).toList();
+				List<Integer> notFoundIds = ids.stream()
+						.filter(id -> !foundIds.contains(id)).toList();
 				logger.warn("Some IDs not found and will be skipped: {}", notFoundIds);
 			}
 
@@ -341,16 +440,41 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 			response.setStatusCode(200);
 			response.setPayload(ids);
 
+		} catch (DataIntegrityViolationException e) {
+			logger.error(
+					"Data integrity violation while deleting quotation details for ids {}: {}",
+					ids, e.getMessage());
+			response.setMessage(
+					"Cannot delete: one or more records are referenced by other data");
+			response.setStatusCode(409);
+			response.setPayload(null);
+
+		} catch (DataAccessException e) {
+			logger.error("Database error while deleting quotation details for ids {}: {}",
+					ids, e.getMessage(), e);
+			response.setMessage("Database error: " + e.getMostSpecificCause().getMessage());
+			response.setStatusCode(500);
+			response.setPayload(null);
+
+		} catch (IllegalArgumentException e) {
+			logger.error("Illegal argument while deleting quotation details for ids {}: {}",
+					ids, e.getMessage());
+			response.setMessage("Invalid input: " + e.getMessage());
+			response.setStatusCode(400);
+			response.setPayload(null);
+
 		} catch (Exception e) {
-			logger.error("Unexpected error while bulk deleting quotation details for ids {}: {}", ids, e.getMessage(),
-					e);
-			response.setMessage("Unable to delete quotation details");
+			logger.error(
+					"Unexpected error while bulk deleting quotation details for ids {}: {}",
+					ids, e.getMessage(), e);
+			response.setMessage("Unable to delete quotation details: " + e.getMessage());
 			response.setStatusCode(500);
 			response.setPayload(null);
 		}
 
 		return response;
 	}
+
 
 	@Override
 	public ResponseEntity getQuotationDetailById(Integer id) {
@@ -369,34 +493,50 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 				return response;
 			}
 
+			if (id <= 0) {
+				logger.error("Quotation detail id must be a positive integer, received: {}", id);
+				response.setMessage("Quotation detail id must be a positive integer");
+				response.setStatusCode(400);
+				response.setPayload(null);
+				return response;
+			}
+
 			QuotationDetail entity = repository.findById(id).orElseThrow(() -> {
 				logger.error("Quotation detail not found with id {}", id);
-				return new ResourceNotFoundException("Quotation detail not found with id " + id);
+				return new ResourceNotFoundException(
+						"Quotation detail not found with id " + id);
 			});
 
 			QuotationDetailResponse detailResponse = mapper.toResponse(entity);
 
-			CompSiteResponse site = validationService.validateAndGetSite(entity.getSiteId(), "Quotation");
+			CompSiteResponse site = validationService.validateAndGetSite(
+					entity.getSiteId(), "Quotation");
 			ItemIDResponse item = validationService.validateAndGetItem(entity.getItemId());
 
-			logger.info("Fetched siteName: {} and itemName: {} for quotation detail id {}", site.getSiteName(),
-					item.getItemName(), id);
+			logger.info("Fetched siteName: {} and itemName: {} for quotation detail id {}",
+					site.getSiteName(), item.getItemName(), id);
 
 			detailResponse.setSiteName(site.getSiteName());
 			detailResponse.setItemName(item.getItemName());
 
 			if (entity.getParentItemId() != null) {
-				logger.info("Fetching parent entity for parentItemId (quotationDetailId) {} for quotation detail id {}",
+				logger.info(
+						"Fetching parent entity for parentItemId (quotationDetailId) {}"
+								+ " for quotation detail id {}",
 						entity.getParentItemId(), id);
 
-				QuotationDetail parentEntity = repository.findById(entity.getParentItemId()).orElse(null);
+				QuotationDetail parentEntity = repository
+						.findById(entity.getParentItemId()).orElse(null);
 
 				if (parentEntity != null) {
-					ItemIDResponse parentItem = validationService.validateAndGetItem(parentEntity.getItemId());
-					logger.info("Fetched parentItemName: {} for quotation detail id {}", parentItem.getItemName(), id);
+					ItemIDResponse parentItem = validationService
+							.validateAndGetItem(parentEntity.getItemId());
+					logger.info("Fetched parentItemName: {} for quotation detail id {}",
+							parentItem.getItemName(), id);
 					detailResponse.setParentItemName(parentItem.getItemName());
 				} else {
-					logger.warn("Parent entity not found for parentItemId {} for quotation detail id {}",
+					logger.warn(
+							"Parent entity not found for parentItemId {} for quotation detail id {}",
 							entity.getParentItemId(), id);
 					detailResponse.setParentItemName(null);
 				}
@@ -405,27 +545,34 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 				detailResponse.setParentItemName(null);
 			}
 
-			logger.info("Fetching children for quotationDetailId {}", entity.getQuotationDetailId());
+			logger.info("Fetching children for quotationDetailId {}",
+					entity.getQuotationDetailId());
 
-			List<QuotationDetail> childEntities = repository.findByQuotationMasterQuotationIdAndParentItemId(
-					entity.getQuotationMaster().getQuotationId(), entity.getQuotationDetailId());
+			List<QuotationDetail> childEntities = repository
+					.findByQuotationMasterQuotationIdAndParentItemId(
+							entity.getQuotationMaster().getQuotationId(),
+							entity.getQuotationDetailId());
 
 			if (childEntities != null && !childEntities.isEmpty()) {
 
-				logger.info("Found {} children for quotationDetailId {}", childEntities.size(),
-						entity.getQuotationDetailId());
+				logger.info("Found {} children for quotationDetailId {}",
+						childEntities.size(), entity.getQuotationDetailId());
 
 				List<QuotationDetailResponse> children = childEntities.stream().map(child -> {
 
 					QuotationDetailResponse childResponse = mapper.toResponse(child);
 
 					try {
-						CompSiteResponse childSite = validationService.validateAndGetSite(child.getSiteId(),
-								"Quotation");
-						ItemIDResponse childItem = validationService.validateAndGetItem(child.getItemId());
+						CompSiteResponse childSite = validationService
+								.validateAndGetSite(child.getSiteId(), "Quotation");
+						ItemIDResponse childItem = validationService
+								.validateAndGetItem(child.getItemId());
 
-						logger.info("Fetched siteName: {} and itemName: {} for child quotationDetailId {}",
-								childSite.getSiteName(), childItem.getItemName(), child.getQuotationDetailId());
+						logger.info(
+								"Fetched siteName: {} and itemName: {}"
+										+ " for child quotationDetailId {}",
+								childSite.getSiteName(), childItem.getItemName(),
+								child.getQuotationDetailId());
 
 						childResponse.setSiteName(childSite.getSiteName());
 						childResponse.setItemName(childItem.getItemName());
@@ -433,13 +580,15 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 						childResponse.setChildren(null);
 
 					} catch (ExternalServiceException e) {
-						logger.warn("External service error for child quotationDetailId {}: {}",
+						logger.warn(
+								"External service error for child quotationDetailId {}: {}",
 								child.getQuotationDetailId(), e.getMessage());
 						childResponse.setSiteName(null);
 						childResponse.setItemName(null);
 						childResponse.setParentItemName(null);
 					} catch (ResourceNotFoundException e) {
-						logger.warn("Site or item not found for child quotationDetailId {}: {}",
+						logger.warn(
+								"Site or item not found for child quotationDetailId {}: {}",
 								child.getQuotationDetailId(), e.getMessage());
 						childResponse.setSiteName(null);
 						childResponse.setItemName(null);
@@ -453,7 +602,8 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 				detailResponse.setChildren(children);
 
 			} else {
-				logger.info("No children found for quotationDetailId {}", entity.getQuotationDetailId());
+				logger.info("No children found for quotationDetailId {}",
+						entity.getQuotationDetailId());
 				detailResponse.setChildren(Collections.emptyList());
 			}
 
@@ -464,23 +614,55 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 			response.setPayload(detailResponse);
 
 		} catch (BadRequestException e) {
-			logger.error("Bad request while fetching quotation detail with id {}: {}", id, e.getMessage());
+			logger.error("Bad request while fetching quotation detail with id {}: {}",
+					id, e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(400);
 			response.setPayload(null);
+
+		} catch (IllegalArgumentException e) {
+			logger.error("Illegal argument while fetching quotation detail with id {}: {}",
+					id, e.getMessage());
+			response.setMessage("Invalid input: " + e.getMessage());
+			response.setStatusCode(400);
+			response.setPayload(null);
+
 		} catch (ResourceNotFoundException e) {
-			logger.error("Resource not found while fetching quotation detail with id {}: {}", id, e.getMessage());
+			logger.error(
+					"Resource not found while fetching quotation detail with id {}: {}",
+					id, e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(404);
 			response.setPayload(null);
+
 		} catch (ExternalServiceException e) {
-			logger.error("External service error while fetching quotation detail with id {}: {}", id, e.getMessage());
+			logger.error(
+					"External service error while fetching quotation detail with id {}: {}",
+					id, e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(502);
 			response.setPayload(null);
+
+		} catch (DataAccessException e) {
+			logger.error("Database error while fetching quotation detail with id {}: {}",
+					id, e.getMessage(), e);
+			response.setMessage("Database error: " + e.getMostSpecificCause().getMessage());
+			response.setStatusCode(500);
+			response.setPayload(null);
+
+		} catch (NullPointerException e) {
+			logger.error("Null pointer while fetching quotation detail with id {}: {}",
+					id, e.getMessage(), e);
+			response.setMessage(
+					"A required value is missing in the stored data. Contact support.");
+			response.setStatusCode(500);
+			response.setPayload(null);
+
 		} catch (Exception e) {
-			logger.error("Unexpected error while fetching quotation detail with id {}: {}", id, e.getMessage(), e);
-			response.setMessage("Unable to fetch quotation detail");
+			logger.error(
+					"Unexpected error while fetching quotation detail with id {}: {}",
+					id, e.getMessage(), e);
+			response.setMessage("Unable to fetch quotation detail: " + e.getMessage());
 			response.setStatusCode(500);
 			response.setPayload(null);
 		}
@@ -488,17 +670,34 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 		return response;
 	}
 
+
 	@Override
 	public ResponseEntity getAllQuotationDetails(int page, int size) {
 
-		logger.info("Fetch all quotation details service started - page: {}, size: {}", page, size);
+		logger.info("Fetch all quotation details service started - page: {}, size: {}",
+				page, size);
 
 		ResponseEntity response = new ResponseEntity();
 
 		try {
 
-			Pageable pageable = PageRequest.of(page, size);
+			if (page < 0) {
+				logger.error("Invalid page number: {}", page);
+				response.setMessage("page must be >= 0, received: " + page);
+				response.setStatusCode(400);
+				response.setPayload(null);
+				return response;
+			}
 
+			if (size <= 0) {
+				logger.error("Invalid page size: {}", size);
+				response.setMessage("size must be > 0, received: " + size);
+				response.setStatusCode(400);
+				response.setPayload(null);
+				return response;
+			}
+
+			Pageable pageable = PageRequest.of(page, size);
 			Page<QuotationDetail> parentPage = repository.findByParentItemIdIsNull(pageable);
 
 			if (parentPage == null || parentPage.isEmpty()) {
@@ -516,78 +715,97 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 				QuotationDetailResponse detailResponse = mapper.toResponse(entity);
 
 				try {
-					CompSiteResponse site = validationService.validateAndGetSite(entity.getSiteId(), "Quotation");
-					ItemIDResponse item = validationService.validateAndGetItem(entity.getItemId());
+					CompSiteResponse site = validationService.validateAndGetSite(
+							entity.getSiteId(), "Quotation");
+					ItemIDResponse item = validationService.validateAndGetItem(
+							entity.getItemId());
 
-					logger.info("Fetched siteName: {} and itemName: {} for quotationDetailId {}", site.getSiteName(),
-							item.getItemName(), entity.getQuotationDetailId());
+					logger.info(
+							"Fetched siteName: {} and itemName: {} for quotationDetailId {}",
+							site.getSiteName(), item.getItemName(),
+							entity.getQuotationDetailId());
 
 					detailResponse.setSiteName(site.getSiteName());
 					detailResponse.setItemName(item.getItemName());
 					detailResponse.setParentItemName(null);
 
-					logger.info("Fetching children for quotationDetailId {}", entity.getQuotationDetailId());
+					logger.info("Fetching children for quotationDetailId {}",
+							entity.getQuotationDetailId());
 
-					List<QuotationDetail> childEntities = repository.findByQuotationMasterQuotationIdAndParentItemId(
-							entity.getQuotationMaster().getQuotationId(), entity.getQuotationDetailId());
+					List<QuotationDetail> childEntities = repository
+							.findByQuotationMasterQuotationIdAndParentItemId(
+									entity.getQuotationMaster().getQuotationId(),
+									entity.getQuotationDetailId());
 
 					if (childEntities != null && !childEntities.isEmpty()) {
 
-						logger.info("Found {} children for quotationDetailId {}", childEntities.size(),
-								entity.getQuotationDetailId());
+						logger.info("Found {} children for quotationDetailId {}",
+								childEntities.size(), entity.getQuotationDetailId());
 
-						List<QuotationDetailResponse> children = childEntities.stream().map(child -> {
+						List<QuotationDetailResponse> children = childEntities.stream()
+								.map(child -> {
 
-							QuotationDetailResponse childResponse = mapper.toResponse(child);
+									QuotationDetailResponse childResponse = mapper
+											.toResponse(child);
 
-							try {
-								CompSiteResponse childSite = validationService.validateAndGetSite(child.getSiteId(),
-										"Quotation");
-								ItemIDResponse childItem = validationService.validateAndGetItem(child.getItemId());
+									try {
+										CompSiteResponse childSite = validationService
+												.validateAndGetSite(child.getSiteId(), "Quotation");
+										ItemIDResponse childItem = validationService
+												.validateAndGetItem(child.getItemId());
 
-								logger.info("Fetched siteName: {} and itemName: {} for child quotationDetailId {}",
-										childSite.getSiteName(), childItem.getItemName(), child.getQuotationDetailId());
+										logger.info(
+												"Fetched siteName: {} and itemName: {}"
+														+ " for child quotationDetailId {}",
+												childSite.getSiteName(),
+												childItem.getItemName(),
+												child.getQuotationDetailId());
 
-								childResponse.setSiteName(childSite.getSiteName());
-								childResponse.setItemName(childItem.getItemName());
-								childResponse.setParentItemName(item.getItemName());
-								childResponse.setChildren(null);
+										childResponse.setSiteName(childSite.getSiteName());
+										childResponse.setItemName(childItem.getItemName());
+										childResponse.setParentItemName(item.getItemName());
+										childResponse.setChildren(null);
 
-							} catch (ExternalServiceException e) {
-								logger.warn("External service error for child quotationDetailId {}: {}",
-										child.getQuotationDetailId(), e.getMessage());
-								childResponse.setSiteName(null);
-								childResponse.setItemName(null);
-								childResponse.setParentItemName(null);
-							} catch (ResourceNotFoundException e) {
-								logger.warn("Site or item not found for child quotationDetailId {}: {}",
-										child.getQuotationDetailId(), e.getMessage());
-								childResponse.setSiteName(null);
-								childResponse.setItemName(null);
-								childResponse.setParentItemName(null);
-							}
+									} catch (ExternalServiceException e) {
+										logger.warn(
+												"External service error for child"
+														+ " quotationDetailId {}: {}",
+												child.getQuotationDetailId(), e.getMessage());
+										childResponse.setSiteName(null);
+										childResponse.setItemName(null);
+										childResponse.setParentItemName(null);
+									} catch (ResourceNotFoundException e) {
+										logger.warn(
+												"Site or item not found for child"
+														+ " quotationDetailId {}: {}",
+												child.getQuotationDetailId(), e.getMessage());
+										childResponse.setSiteName(null);
+										childResponse.setItemName(null);
+										childResponse.setParentItemName(null);
+									}
 
-							return childResponse;
+									return childResponse;
 
-						}).toList();
+								}).toList();
 
 						detailResponse.setChildren(children);
 
 					} else {
-						logger.info("No children found for quotationDetailId {}", entity.getQuotationDetailId());
+						logger.info("No children found for quotationDetailId {}",
+								entity.getQuotationDetailId());
 						detailResponse.setChildren(Collections.emptyList());
 					}
 
 				} catch (ExternalServiceException e) {
-					logger.warn("External service error for quotationDetailId {}: {}", entity.getQuotationDetailId(),
-							e.getMessage());
+					logger.warn("External service error for quotationDetailId {}: {}",
+							entity.getQuotationDetailId(), e.getMessage());
 					detailResponse.setSiteName(null);
 					detailResponse.setItemName(null);
 					detailResponse.setParentItemName(null);
 					detailResponse.setChildren(Collections.emptyList());
 				} catch (ResourceNotFoundException e) {
-					logger.warn("Site or item not found for quotationDetailId {}: {}", entity.getQuotationDetailId(),
-							e.getMessage());
+					logger.warn("Site or item not found for quotationDetailId {}: {}",
+							entity.getQuotationDetailId(), e.getMessage());
 					detailResponse.setSiteName(null);
 					detailResponse.setItemName(null);
 					detailResponse.setParentItemName(null);
@@ -605,21 +823,46 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 			payload.put("totalPages", parentPage.getTotalPages());
 			payload.put("pageSize", parentPage.getSize());
 
-			logger.info("Fetched total {} quotation details - page {}/{}", parentPage.getTotalElements(), page + 1,
-					parentPage.getTotalPages());
+			logger.info("Fetched total {} quotation details - page {}/{}",
+					parentPage.getTotalElements(), page + 1, parentPage.getTotalPages());
 
 			response.setMessage("Quotation details fetched successfully");
 			response.setStatusCode(200);
 			response.setPayload(payload);
 
+		} catch (IllegalArgumentException e) {
+			logger.error("Illegal argument while fetching all quotation details: {}",
+					e.getMessage());
+			response.setMessage("Invalid pagination parameters: " + e.getMessage());
+			response.setStatusCode(400);
+			response.setPayload(null);
+
 		} catch (ExternalServiceException e) {
-			logger.error("External service error while fetching all quotation details: {}", e.getMessage());
+			logger.error("External service error while fetching all quotation details: {}",
+					e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(502);
 			response.setPayload(null);
+
+		} catch (DataAccessException e) {
+			logger.error("Database error while fetching all quotation details: {}",
+					e.getMessage(), e);
+			response.setMessage("Database error: " + e.getMostSpecificCause().getMessage());
+			response.setStatusCode(500);
+			response.setPayload(null);
+
+		} catch (NullPointerException e) {
+			logger.error("Null pointer while fetching all quotation details: {}",
+					e.getMessage(), e);
+			response.setMessage(
+					"A required value is missing in the stored data. Contact support.");
+			response.setStatusCode(500);
+			response.setPayload(null);
+
 		} catch (Exception e) {
-			logger.error("Unexpected error while fetching all quotation details: {}", e.getMessage(), e);
-			response.setMessage("Unable to fetch quotation details");
+			logger.error("Unexpected error while fetching all quotation details: {}",
+					e.getMessage(), e);
+			response.setMessage("Unable to fetch quotation details: " + e.getMessage());
 			response.setStatusCode(500);
 			response.setPayload(null);
 		}
@@ -627,10 +870,12 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 		return response;
 	}
 
+
 	@Override
 	public ResponseEntity getByQuotationId(Integer quotationId) {
 
-		logger.info("Fetch quotation details by quotationId service started for quotationId {}", quotationId);
+		logger.info("Fetch quotation details by quotationId service started for quotationId {}",
+				quotationId);
 
 		ResponseEntity response = new ResponseEntity();
 
@@ -639,6 +884,14 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 			if (quotationId == null) {
 				logger.error("Quotation id cannot be null");
 				response.setMessage("Quotation id cannot be null");
+				response.setStatusCode(400);
+				response.setPayload(null);
+				return response;
+			}
+
+			if (quotationId <= 0) {
+				logger.error("Quotation id must be a positive integer, received: {}", quotationId);
+				response.setMessage("Quotation id must be a positive integer");
 				response.setStatusCode(400);
 				response.setPayload(null);
 				return response;
@@ -658,91 +911,111 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 
 			if (parentEntities == null || parentEntities.isEmpty()) {
 				logger.info("No quotation details found for quotationId {}", quotationId);
-				response.setMessage("No quotation details available for quotationId " + quotationId);
+				response.setMessage(
+						"No quotation details available for quotationId " + quotationId);
 				response.setStatusCode(200);
 				response.setPayload(Collections.emptyList());
 				return response;
 			}
 
-			logger.info("Found {} parent records for quotationId {}", parentEntities.size(), quotationId);
+			logger.info("Found {} parent records for quotationId {}", parentEntities.size(),
+					quotationId);
 
 			List<QuotationDetailResponse> list = parentEntities.stream().map(entity -> {
 
 				QuotationDetailResponse detailResponse = mapper.toResponse(entity);
 
 				try {
-					CompSiteResponse site = validationService.validateAndGetSite(entity.getSiteId(), "Quotation");
-					ItemIDResponse item = validationService.validateAndGetItem(entity.getItemId());
+					CompSiteResponse site = validationService.validateAndGetSite(
+							entity.getSiteId(), "Quotation");
+					ItemIDResponse item = validationService.validateAndGetItem(
+							entity.getItemId());
 
-					logger.info("Fetched siteName: {} and itemName: {} for quotationDetailId {}", site.getSiteName(),
-							item.getItemName(), entity.getQuotationDetailId());
+					logger.info(
+							"Fetched siteName: {} and itemName: {} for quotationDetailId {}",
+							site.getSiteName(), item.getItemName(),
+							entity.getQuotationDetailId());
 
 					detailResponse.setSiteName(site.getSiteName());
 					detailResponse.setItemName(item.getItemName());
 					detailResponse.setParentItemName(null);
 
-					logger.info("Fetching children for quotationDetailId {}", entity.getQuotationDetailId());
+					logger.info("Fetching children for quotationDetailId {}",
+							entity.getQuotationDetailId());
 
-					List<QuotationDetail> childEntities = repository.findByQuotationMasterQuotationIdAndParentItemId(
-							quotationId, entity.getQuotationDetailId());
+					List<QuotationDetail> childEntities = repository
+							.findByQuotationMasterQuotationIdAndParentItemId(
+									quotationId, entity.getQuotationDetailId());
 
 					if (childEntities != null && !childEntities.isEmpty()) {
 
-						logger.info("Found {} children for quotationDetailId {}", childEntities.size(),
-								entity.getQuotationDetailId());
+						logger.info("Found {} children for quotationDetailId {}",
+								childEntities.size(), entity.getQuotationDetailId());
 
-						List<QuotationDetailResponse> children = childEntities.stream().map(child -> {
+						List<QuotationDetailResponse> children = childEntities.stream()
+								.map(child -> {
 
-							QuotationDetailResponse childResponse = mapper.toResponse(child);
+									QuotationDetailResponse childResponse = mapper
+											.toResponse(child);
 
-							try {
-								CompSiteResponse childSite = validationService.validateAndGetSite(child.getSiteId(),
-										"Quotation");
-								ItemIDResponse childItem = validationService.validateAndGetItem(child.getItemId());
+									try {
+										CompSiteResponse childSite = validationService
+												.validateAndGetSite(child.getSiteId(), "Quotation");
+										ItemIDResponse childItem = validationService
+												.validateAndGetItem(child.getItemId());
 
-								logger.info("Fetched siteName: {} and itemName: {} for child quotationDetailId {}",
-										childSite.getSiteName(), childItem.getItemName(), child.getQuotationDetailId());
+										logger.info(
+												"Fetched siteName: {} and itemName: {}"
+														+ " for child quotationDetailId {}",
+												childSite.getSiteName(),
+												childItem.getItemName(),
+												child.getQuotationDetailId());
 
-								childResponse.setSiteName(childSite.getSiteName());
-								childResponse.setItemName(childItem.getItemName());
-								childResponse.setParentItemName(item.getItemName());
-								childResponse.setChildren(null);
+										childResponse.setSiteName(childSite.getSiteName());
+										childResponse.setItemName(childItem.getItemName());
+										childResponse.setParentItemName(item.getItemName());
+										childResponse.setChildren(null);
 
-							} catch (ExternalServiceException e) {
-								logger.warn("External service error for child quotationDetailId {}: {}",
-										child.getQuotationDetailId(), e.getMessage());
-								childResponse.setSiteName(null);
-								childResponse.setItemName(null);
-								childResponse.setParentItemName(null);
-							} catch (ResourceNotFoundException e) {
-								logger.warn("Site or item not found for child quotationDetailId {}: {}",
-										child.getQuotationDetailId(), e.getMessage());
-								childResponse.setSiteName(null);
-								childResponse.setItemName(null);
-								childResponse.setParentItemName(null);
-							}
+									} catch (ExternalServiceException e) {
+										logger.warn(
+												"External service error for child"
+														+ " quotationDetailId {}: {}",
+												child.getQuotationDetailId(), e.getMessage());
+										childResponse.setSiteName(null);
+										childResponse.setItemName(null);
+										childResponse.setParentItemName(null);
+									} catch (ResourceNotFoundException e) {
+										logger.warn(
+												"Site or item not found for child"
+														+ " quotationDetailId {}: {}",
+												child.getQuotationDetailId(), e.getMessage());
+										childResponse.setSiteName(null);
+										childResponse.setItemName(null);
+										childResponse.setParentItemName(null);
+									}
 
-							return childResponse;
+									return childResponse;
 
-						}).toList();
+								}).toList();
 
 						detailResponse.setChildren(children);
 
 					} else {
-						logger.info("No children found for quotationDetailId {}", entity.getQuotationDetailId());
+						logger.info("No children found for quotationDetailId {}",
+								entity.getQuotationDetailId());
 						detailResponse.setChildren(Collections.emptyList());
 					}
 
 				} catch (ExternalServiceException e) {
-					logger.warn("External service error for quotationDetailId {}: {}", entity.getQuotationDetailId(),
-							e.getMessage());
+					logger.warn("External service error for quotationDetailId {}: {}",
+							entity.getQuotationDetailId(), e.getMessage());
 					detailResponse.setSiteName(null);
 					detailResponse.setItemName(null);
 					detailResponse.setParentItemName(null);
 					detailResponse.setChildren(Collections.emptyList());
 				} catch (ResourceNotFoundException e) {
-					logger.warn("Site or item not found for quotationDetailId {}: {}", entity.getQuotationDetailId(),
-							e.getMessage());
+					logger.warn("Site or item not found for quotationDetailId {}: {}",
+							entity.getQuotationDetailId(), e.getMessage());
 					detailResponse.setSiteName(null);
 					detailResponse.setItemName(null);
 					detailResponse.setParentItemName(null);
@@ -753,22 +1026,51 @@ public class QuotationDetailServiceImpl implements QuotationDetailService {
 
 			}).toList();
 
-			logger.info("Fetched {} parent records with children for quotationId {}", list.size(), quotationId);
+			logger.info("Fetched {} parent records with children for quotationId {}",
+					list.size(), quotationId);
 
 			response.setMessage("Quotation details fetched successfully");
 			response.setStatusCode(200);
 			response.setPayload(list);
 
+		} catch (IllegalArgumentException e) {
+			logger.error(
+					"Illegal argument while fetching quotation details for quotationId {}: {}",
+					quotationId, e.getMessage());
+			response.setMessage("Invalid input: " + e.getMessage());
+			response.setStatusCode(400);
+			response.setPayload(null);
+
 		} catch (ExternalServiceException e) {
-			logger.error("External service error while fetching quotation details for quotationId {}: {}", quotationId,
-					e.getMessage());
+			logger.error(
+					"External service error while fetching quotation details for quotationId {}: {}",
+					quotationId, e.getMessage());
 			response.setMessage(e.getMessage());
 			response.setStatusCode(502);
 			response.setPayload(null);
+
+		} catch (DataAccessException e) {
+			logger.error(
+					"Database error while fetching quotation details for quotationId {}: {}",
+					quotationId, e.getMessage(), e);
+			response.setMessage("Database error: " + e.getMostSpecificCause().getMessage());
+			response.setStatusCode(500);
+			response.setPayload(null);
+
+		} catch (NullPointerException e) {
+			logger.error(
+					"Null pointer while fetching quotation details for quotationId {}: {}",
+					quotationId, e.getMessage(), e);
+			response.setMessage(
+					"A required value is missing in the stored data. Contact support.");
+			response.setStatusCode(500);
+			response.setPayload(null);
+
 		} catch (Exception e) {
-			logger.error("Unexpected error while fetching quotation details for quotationId {}: {}", quotationId,
-					e.getMessage(), e);
-			response.setMessage("Unable to fetch quotation details");
+			logger.error(
+					"Unexpected error while fetching quotation details for quotationId {}: {}",
+					quotationId, e.getMessage(), e);
+			response.setMessage("Unable to fetch quotation details: " + e.getMessage());
 			response.setStatusCode(500);
 			response.setPayload(null);
 		}

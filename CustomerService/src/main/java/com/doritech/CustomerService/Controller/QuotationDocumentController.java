@@ -29,74 +29,53 @@ import jakarta.validation.Valid;
 @Validated
 public class QuotationDocumentController {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(QuotationDocumentController.class);
+    private static final Logger logger = LoggerFactory.getLogger(QuotationDocumentController.class);
 
-	private final QuotationDocumentService service;
+    private final QuotationDocumentService service;
 
-	public QuotationDocumentController(QuotationDocumentService service) {
-		this.service = service;
-	}
+    public QuotationDocumentController(QuotationDocumentService service) {
+        this.service = service;
+    }
 
-	@PostMapping(value = "/save-update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity saveUpdateDocument(
-			@RequestHeader("X-User-Id") String userId,
-			@RequestPart("data") @Valid List<@Valid QuotationDocumentRequest> requests,
-			@RequestPart("files") List<MultipartFile> files) {
+    @PostMapping(value = "/save-update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity saveUpdateDocument(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestPart("data") @Valid List<@Valid QuotationDocumentRequest> requests,
+            @RequestPart("files") List<MultipartFile> files) {
 
-		int userIdInt = Integer.parseInt(userId);
-		requests.forEach(r -> {
-			r.setCreatedBy(userIdInt);
-			r.setModifiedBy(userIdInt);
-		});
+        int userIdInt = Integer.parseInt(userId);
+        requests.forEach(r -> {
+            r.setCreatedBy(userIdInt);
+            r.setModifiedBy(userIdInt);
+        });
 
-		return service.saveUpdateDocument(requests, files);
-	}
+        logger.info("API called: saveUpdateDocument by user {}", userIdInt);
+        return service.saveUpdateDocument(requests, files);
+    }
 
-	@GetMapping("/getByDocumentId/{id}")
-	public ResponseEntity getById(@PathVariable Integer id) {
-		logger.info("API called: getByDocumentId for id {}", id);
-		try {
-			return service.getById(id);
-		} catch (Exception e) {
-			logger.error("Error in getByDocumentId API for id {}", id, e);
-			throw e;
-		}
-	}
+    @GetMapping("/getByDocumentId/{id}")
+    public ResponseEntity getById(@PathVariable Integer id) {
+        logger.info("API called: getByDocumentId for id {}", id);
+        return service.getById(id);
+    }
 
-	@GetMapping("/getAllDocument")
-	public ResponseEntity getAll(@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size) {
-		logger.info("API called: getAllDocument page {} size {}", page, size);
-		try {
-			return service.getAllDocument(page, size);
-		} catch (Exception e) {
-			logger.error("Error in getAllDocument API", e);
-			throw e;
-		}
-	}
+    @GetMapping("/getAllDocument")
+    public ResponseEntity getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("API called: getAllDocument page {} size {}", page, size);
+        return service.getAllDocument(page, size);
+    }
 
-	@GetMapping("/getByQuotationId/{quotationId}")
-	public ResponseEntity getByQuotationId(@PathVariable Integer quotationId) {
-		logger.info("API called: getByQuotationId for quotationId {}",
-				quotationId);
-		try {
-			return service.getByQuotationId(quotationId);
-		} catch (Exception e) {
-			logger.error("Error in getByQuotationId API for quotationId {}",
-					quotationId, e);
-			throw e;
-		}
-	}
+    @GetMapping("/getByQuotationId/{quotationId}")
+    public ResponseEntity getByQuotationId(@PathVariable Integer quotationId) {
+        logger.info("API called: getByQuotationId for quotationId {}", quotationId);
+        return service.getByQuotationId(quotationId);
+    }
 
-	@DeleteMapping("/delete-multiple")
-	public ResponseEntity deleteMultiple(@RequestBody List<Integer> ids) {
-		logger.info("API called: deleteMultiple with ids {}", ids);
-		try {
-			return service.deleteMultiple(ids);
-		} catch (Exception e) {
-			logger.error("Error in deleteMultiple API", e);
-			throw e;
-		}
-	}
+    @DeleteMapping("/delete-multiple")
+    public ResponseEntity deleteMultiple(@RequestBody List<Integer> ids) {
+        logger.info("API called: deleteMultiple with ids {}", ids);
+        return service.deleteMultiple(ids);
+    }
 }

@@ -23,7 +23,6 @@ import com.doritech.CustomerService.Entity.ContractItemMapping;
 import com.doritech.CustomerService.Entity.ContractMaster;
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Exception.BadRequestException;
-import com.doritech.CustomerService.Exception.DatabaseOperationException;
 import com.doritech.CustomerService.Exception.DuplicateResourceException;
 import com.doritech.CustomerService.Exception.ResourceNotFoundException;
 import com.doritech.CustomerService.Mapper.ContractMapper;
@@ -73,85 +72,70 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 			throw new BadRequestException("Customer ID cannot be null");
 		}
 
-		try {
+		if (!customerRepository.existsById(request.getCustomerId())) {
+			logger.error("Customer not found with id {}", request.getCustomerId());
+			throw new ResourceNotFoundException("Customer not found with id : " + request.getCustomerId());
+		}
 
-			boolean customerExists = customerRepository.existsById(request.getCustomerId());
-
-			if (!customerExists) {
-				logger.error("Customer not found with id {}", request.getCustomerId());
-				throw new ResourceNotFoundException("Customer not found with id : " + request.getCustomerId());
+		if (request.getContractStartDate() != null && request.getContractEndDate() != null) {
+			if (request.getContractEndDate().isBefore(request.getContractStartDate())) {
+				logger.error("Contract end date {} cannot be before start date {}", request.getContractEndDate(),
+						request.getContractStartDate());
+				throw new BadRequestException("Contract end date cannot be before start date");
 			}
+		}
 
-			if (request.getContractStartDate() != null && request.getContractEndDate() != null) {
-				if (request.getContractEndDate().isBefore(request.getContractStartDate())) {
-					logger.error("Contract end date {} cannot be before start date {}", request.getContractEndDate(),
-							request.getContractStartDate());
-					throw new BadRequestException("Contract end date cannot be before start date");
-				}
-			}
+		ContractMaster contract;
 
-			ContractMaster contract;
+		if (id != null && contractRepository.existsById(id)) {
 
-			if (id != null && contractRepository.existsById(id)) {
+			logger.info("Updating contract with id {}", id);
 
-				logger.info("Updating contract with id {}", id);
+			ContractMaster existingContract = contractRepository.findById(id).orElseThrow(() -> {
+				logger.error("Contract not found for id {}", id);
+				return new ResourceNotFoundException("Contract not found");
+			});
 
-				ContractMaster existingContract = contractRepository.findById(id).orElseThrow(() -> {
-					logger.error("Contract not found for id {}", id);
-					return new ResourceNotFoundException("Contract not found");
-				});
-
-				if (!existingContract.getContractNo().equals(request.getContractNo())
-						&& contractRepository.existsByContractNo(request.getContractNo())) {
-					logger.error("Duplicate contract number {}", request.getContractNo());
-					throw new DuplicateResourceException("Contract number already exists");
-				}
-
-				contract = ContractMapper.toEntity(request);
-
-				contract.setContractId(existingContract.getContractId());
-				contract.setCreatedBy(existingContract.getCreatedBy());
-				contract.setCreatedOn(existingContract.getCreatedOn());
-				contract.setModifiedBy(request.getModifiedBy());
-				contract.setModifiedOn(LocalDateTime.now());
-
-				contractRepository.save(contract);
-
-				logger.info("Contract updated successfully with id {}", id);
-
-				return new ResponseEntity("Contract updated successfully", 200, ContractMapper.toResponse(contract));
-			}
-
-			logger.info("Creating new contract");
-
-			if (contractRepository.existsByContractNo(request.getContractNo())) {
+			if (!existingContract.getContractNo().equals(request.getContractNo())
+					&& contractRepository.existsByContractNo(request.getContractNo())) {
 				logger.error("Duplicate contract number {}", request.getContractNo());
 				throw new DuplicateResourceException("Contract number already exists");
 			}
 
 			contract = ContractMapper.toEntity(request);
 
-			contract.setCreatedBy(request.getCreatedBy());
-			contract.setCreatedOn(LocalDateTime.now());
-			contract.setModifiedBy(null);
-			contract.setModifiedOn(null);
+			contract.setContractId(existingContract.getContractId());
+			contract.setCreatedBy(existingContract.getCreatedBy());
+			contract.setCreatedOn(existingContract.getCreatedOn());
+			contract.setModifiedBy(request.getModifiedBy());
+			contract.setModifiedOn(LocalDateTime.now());
 
 			contractRepository.save(contract);
 
-			logger.info("Contract created successfully with id {}", contract.getContractId());
+			logger.info("Contract updated successfully with id {}", id);
 
-			return new ResponseEntity("Contract created successfully", 200, ContractMapper.toResponse(contract));
-
-		} catch (BadRequestException | DuplicateResourceException | ResourceNotFoundException ex) {
-
-			logger.error("Validation error in saveOrUpdate contract: {}", ex.getMessage());
-			throw ex;
-
-		} catch (Exception ex) {
-
-			logger.error("Unexpected error in saveOrUpdate contract", ex);
-			throw new DatabaseOperationException("Failed to save or update contract");
+			return new ResponseEntity("Contract updated successfully", 200, ContractMapper.toResponse(contract));
 		}
+
+		logger.info("Creating new contract");
+
+		if (contractRepository.existsByContractNo(request.getContractNo())) {
+			logger.error("Duplicate contract number {}", request.getContractNo());
+			throw new DuplicateResourceException("Contract number already exists");
+		}
+
+		contract = ContractMapper.toEntity(request);
+
+		contract.setCreatedBy(request.getCreatedBy());
+		contract.setCreatedOn(LocalDateTime.now());
+		contract.setModifiedBy(null);
+		contract.setModifiedOn(null);
+
+		contractRepository.save(contract);
+
+		logger.info("Contract created successfully with id {}", contract.getContractId());
+
+		return new ResponseEntity("Contract created successfully", 200, ContractMapper.toResponse(contract));
 	}
 
 	@Override
@@ -189,30 +173,22 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 			size = 10;
 		}
 
-		try {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("contractId").descending());
 
-			Pageable pageable = PageRequest.of(page, size, Sort.by("contractId").descending());
+		Page<ContractMaster> contractPage = contractRepository.findAll(pageable);
 
-			Page<ContractMaster> contractPage = contractRepository.findAll(pageable);
+		List<ContractMasterResponse> response = contractPage.getContent().stream().map(ContractMapper::toResponse)
+				.toList();
 
-			List<ContractMasterResponse> response = contractPage.getContent().stream().map(ContractMapper::toResponse)
-					.toList();
+		Map<String, Object> result = new HashMap<>();
+		result.put("contracts", response);
+		result.put("currentPage", contractPage.getNumber());
+		result.put("totalItems", contractPage.getTotalElements());
+		result.put("totalPages", contractPage.getTotalPages());
 
-			Map<String, Object> result = new HashMap<>();
-			result.put("contracts", response);
-			result.put("currentPage", contractPage.getNumber());
-			result.put("totalItems", contractPage.getTotalElements());
-			result.put("totalPages", contractPage.getTotalPages());
+		logger.info("Fetched {} contracts", response.size());
 
-			logger.info("Fetched {} contracts", response.size());
-
-			return new ResponseEntity("Success", 200, result);
-
-		} catch (Exception ex) {
-
-			logger.error("Error while fetching contracts", ex);
-			throw new DatabaseOperationException("Failed to fetch contracts");
-		}
+		return new ResponseEntity("Success", 200, result);
 	}
 
 	@Override
@@ -226,45 +202,37 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 			throw new BadRequestException("Contract IDs list cannot be null or empty");
 		}
 
-		try {
-			List<Integer> notFoundIds = new ArrayList<>();
-			List<Integer> deactivatedIds = new ArrayList<>();
+		List<Integer> notFoundIds = new ArrayList<>();
+		List<Integer> deactivatedIds = new ArrayList<>();
 
-			for (Integer id : ids) {
-				Optional<ContractMaster> contractOpt = contractRepository.findById(id);
+		for (Integer id : ids) {
+			Optional<ContractMaster> contractOpt = contractRepository.findById(id);
 
-				if (contractOpt.isEmpty()) {
-					logger.warn("Contract not found for id: {}", id);
-					notFoundIds.add(id);
-					continue;
-				}
-
-				ContractMaster contract = contractOpt.get();
-				contract.setIsActive("N");
-				contract.setModifiedOn(LocalDateTime.now());
-				contractRepository.save(contract);
-				deactivatedIds.add(id);
+			if (contractOpt.isEmpty()) {
+				logger.warn("Contract not found for id: {}", id);
+				notFoundIds.add(id);
+				continue;
 			}
 
-			logger.info("Contracts deactivated: {}, Not found: {}", deactivatedIds, notFoundIds);
-
-			if (!notFoundIds.isEmpty() && !deactivatedIds.isEmpty()) {
-				String message = "Partially deactivated. Success: " + deactivatedIds + ", Not found: " + notFoundIds;
-				return new ResponseEntity(message, 207, null);
-			}
-
-			if (deactivatedIds.isEmpty()) {
-				throw new ResourceNotFoundException("No contracts found for given IDs: " + notFoundIds);
-			}
-
-			return new ResponseEntity("Contract(s) deactivated successfully", 200, null);
-
-		} catch (ResourceNotFoundException ex) {
-			throw ex;
-		} catch (Exception ex) {
-			logger.error("Error while deactivating contracts", ex);
-			throw new DatabaseOperationException("Failed to deactivate contracts");
+			ContractMaster contract = contractOpt.get();
+			contract.setIsActive("N");
+			contract.setModifiedOn(LocalDateTime.now());
+			contractRepository.save(contract);
+			deactivatedIds.add(id);
 		}
+
+		logger.info("Contracts deactivated: {}, Not found: {}", deactivatedIds, notFoundIds);
+
+		if (!notFoundIds.isEmpty() && !deactivatedIds.isEmpty()) {
+			String message = "Partially deactivated. Success: " + deactivatedIds + ", Not found: " + notFoundIds;
+			return new ResponseEntity(message, 207, null);
+		}
+
+		if (deactivatedIds.isEmpty()) {
+			throw new ResourceNotFoundException("No contracts found for given IDs: " + notFoundIds);
+		}
+
+		return new ResponseEntity("Contract(s) deactivated successfully", 200, null);
 	}
 
 	@Override
@@ -277,31 +245,19 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 			throw new BadRequestException("At least one filter parameter must be provided");
 		}
 
-		try {
+		List<ContractMaster> contracts = contractRepository
+				.findAll(ContractSpecification.filterContracts(contractNo, customerId, contractType, isActive));
 
-			List<ContractMaster> contracts = contractRepository
-					.findAll(ContractSpecification.filterContracts(contractNo, customerId, contractType, isActive));
-
-			if (contracts.isEmpty()) {
-				logger.warn("No contracts found for given filters");
-				throw new ResourceNotFoundException("No contracts found");
-			}
-
-			List<ContractMasterResponse> response = contracts.stream().map(ContractMapper::toResponse).toList();
-
-			logger.info("Filtered contracts fetched {}", response.size());
-
-			return new ResponseEntity("Contracts fetched successfully", 200, response);
-
-		} catch (ResourceNotFoundException | BadRequestException ex) {
-
-			throw ex;
-
-		} catch (Exception ex) {
-
-			logger.error("Error while filtering contracts", ex);
-			throw new DatabaseOperationException("Failed to filter contracts");
+		if (contracts.isEmpty()) {
+			logger.warn("No contracts found for given filters");
+			throw new ResourceNotFoundException("No contracts found");
 		}
+
+		List<ContractMasterResponse> response = contracts.stream().map(ContractMapper::toResponse).toList();
+
+		logger.info("Filtered contracts fetched {}", response.size());
+
+		return new ResponseEntity("Contracts fetched successfully", 200, response);
 	}
 
 	@Override
@@ -310,33 +266,25 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		logger.info("Fetching active contract IDs and names");
 
-		try {
-			List<ContractMaster> contracts = contractRepository.getActiveContracts();
+		List<ContractMaster> contracts = contractRepository.getActiveContracts();
 
-			if (contracts == null || contracts.isEmpty()) {
-				logger.warn("No active contracts found");
-				throw new ResourceNotFoundException("No active contracts found");
-			}
-
-			List<ContractMasterResponse> simplified = contracts.stream()
-					.filter(c -> "Y".equalsIgnoreCase(c.getIsActive())).map(c -> {
-						ContractMasterResponse temp = new ContractMasterResponse();
-						temp.setContractId(c.getContractId());
-						temp.setContractName(c.getContractName());
-						temp.setContractNo(c.getContractNo());
-						return temp;
-					}).toList();
-
-			logger.info("Fetched {} active contracts", simplified.size());
-
-			return new ResponseEntity("Contracts fetched successfully", 200, simplified);
-
-		} catch (ResourceNotFoundException ex) {
-			throw ex;
-		} catch (Exception e) {
-			logger.error("Error fetching contracts", e);
-			throw new DatabaseOperationException("Failed to fetch active contracts");
+		if (contracts == null || contracts.isEmpty()) {
+			logger.warn("No active contracts found");
+			throw new ResourceNotFoundException("No active contracts found");
 		}
+
+		List<ContractMasterResponse> simplified = contracts.stream().filter(c -> "Y".equalsIgnoreCase(c.getIsActive()))
+				.map(c -> {
+					ContractMasterResponse temp = new ContractMasterResponse();
+					temp.setContractId(c.getContractId());
+					temp.setContractName(c.getContractName());
+					temp.setContractNo(c.getContractNo());
+					return temp;
+				}).toList();
+
+		logger.info("Fetched {} active contracts", simplified.size());
+
+		return new ResponseEntity("Contracts fetched successfully", 200, simplified);
 	}
 
 	@Override
@@ -350,112 +298,105 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 			throw new BadRequestException("Contract type cannot be null or empty");
 		}
 
-		try {
+		List<ContractMaster> contractList = contractRepository.findAvailableContracts(type, "PENDING");
 
-			List<ContractMaster> contractList = contractRepository.findAvailableContracts(type, "PENDING");
-
-			if (contractList == null || contractList.isEmpty()) {
-				logger.warn("No contracts found for type: {}", type);
-				throw new ResourceNotFoundException("No contracts found for given type");
-			}
-
-			List<ItemIDResponse> itemIDResponses = validationService.getAllItems();
-
-			List<ParamResponseDTO> categoryParamResponseDTOs = validationService.getParamByCodeAndSerial("Item",
-					"Category");
-
-			List<ParamResponseDTO> typeParamResponseDTOs = validationService.getParamByCodeAndSerial("CONTRACT",
-					"CONTRACT_TYPE");
-
-			Map<Integer, String> itemIdToCategoryMap = itemIDResponses.stream()
-					.collect(Collectors.toMap(ItemIDResponse::getItemId, ItemIDResponse::getCategory, (a, b) -> a
-
-					));
-
-			Map<String, String> categoryToParamMap = categoryParamResponseDTOs.stream()
-					.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
-
-			Map<String, String> typeToParamMap = typeParamResponseDTOs.stream()
-					.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
-
-			List<ContractMasterResponse> responseList = new ArrayList<>();
-
-			for (ContractMaster contract : contractList) {
-
-				ContractMasterResponse response = new ContractMasterResponse();
-
-				response.setContractId(contract.getContractId());
-				response.setContractNo(contract.getContractNo());
-				response.setContractName(contract.getContractName());
-				response.setCustomerId(contract.getCustomer().getCustomerId());
-				response.setCustomerName(contract.getCustomer().getCustomerName());
-
-				response.setZoneId(contract.getCustomer().getHierarchyLevelId());
-
-				HierarchyLevelResponseDTO responseDTO = validationService
-						.validateAndGetHierarchyLevel(contract.getCustomer().getHierarchyLevelId());
-				response.setZoneName(responseDTO.getLevelName());
-
-				List<CompanySiteMappingResponse> companySiteMappingResponses = validationService
-						.getAllCompSiteMappingByCompId(contract.getCustomer().getCompId());
-
-				response.setSiteId(companySiteMappingResponses.get(0).getSiteId());
-
-				CompSiteResponse siteResponse = validationService
-						.validateAndGetSite(companySiteMappingResponses.get(0).getSiteId(), "AB");
-
-				response.setSiteName(siteResponse.getSiteName());
-
-				response.setIfsc(contract.getCustomer().getIfsc());
-
-				response.setDistrict(siteResponse.getDistrict());
-
-				List<ContractItemMapping> contractItemMappings = contractItemMappingRepository
-						.findByContract_ContractId(contract.getContractId());
-
-				List<String> productTypes = contractItemMappings.stream().map(itemMapping -> {
-					Integer itemId = itemMapping.getItemId();
-
-					String category = itemIdToCategoryMap.get(itemId);
-
-					if (category == null) {
-						return null;
-					}
-
-					return categoryToParamMap.get(category);
-				}).filter(Objects::nonNull).toList();
-
-				response.setProductTypes(productTypes);
-
-				response.setContractStartDate(contract.getContractStartDate());
-				response.setContractEndDate(contract.getContractEndDate());
-				response.setContractStatus(contract.getContractStatus());
-				String paramType = typeToParamMap.get(contract.getContractType());
-				response.setContractType(paramType);
-				response.setBillingFrequency(contract.getBillingFrequency());
-				response.setAmcType(contract.getAmcType());
-				response.setTermCondition(contract.getTermCondition());
-				response.setPaymentTerms(contract.getPaymentTerms());
-				response.setIsActive(contract.getIsActive());
-				response.setCreatedOn(contract.getCreatedOn());
-				response.setModifiedOn(contract.getModifiedOn());
-				response.setCreatedBy(contract.getCreatedBy());
-				response.setModifiedBy(contract.getModifiedBy());
-
-				responseList.add(response);
-			}
-
-			logger.info("Successfully fetched {} contracts for type: {}", responseList.size(), type);
-
-			return new ResponseEntity("Contracts fetched successfully", 200, responseList);
-
-		} catch (ResourceNotFoundException ex) {
-			throw ex;
-
-		} catch (Exception ex) {
-			logger.error("Error while fetching contracts by type: {}", type, ex);
-			throw new DatabaseOperationException("Failed to fetch contracts by type");
+		if (contractList == null || contractList.isEmpty()) {
+			logger.warn("No contracts found for type: {}", type);
+			throw new ResourceNotFoundException("No contracts found for given type");
 		}
+
+		List<ItemIDResponse> itemIDResponses = validationService.getAllItems();
+
+		List<ParamResponseDTO> categoryParamResponseDTOs = validationService.getParamByCodeAndSerial("Item",
+				"Category");
+
+		List<ParamResponseDTO> typeParamResponseDTOs = validationService.getParamByCodeAndSerial("CONTRACT",
+				"CONTRACT_TYPE");
+
+		Map<Integer, String> itemIdToCategoryMap = itemIDResponses.stream()
+				.collect(Collectors.toMap(ItemIDResponse::getItemId, ItemIDResponse::getCategory, (a, b) -> a));
+
+		Map<String, String> categoryToParamMap = categoryParamResponseDTOs.stream()
+				.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
+
+		Map<String, String> typeToParamMap = typeParamResponseDTOs.stream()
+				.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
+
+		List<ContractMasterResponse> responseList = new ArrayList<>();
+
+		for (ContractMaster contract : contractList) {
+
+			ContractMasterResponse response = new ContractMasterResponse();
+
+			response.setContractId(contract.getContractId());
+			response.setContractNo(contract.getContractNo());
+			response.setContractName(contract.getContractName());
+			response.setCustomerId(contract.getCustomer().getCustomerId());
+			response.setCustomerName(contract.getCustomer().getCustomerName());
+
+			response.setZoneId(contract.getCustomer().getHierarchyLevelId());
+
+			HierarchyLevelResponseDTO responseDTO = validationService
+					.validateAndGetHierarchyLevel(contract.getCustomer().getHierarchyLevelId());
+			response.setZoneName(responseDTO.getLevelName());
+
+			response.setIfsc(contract.getCustomer().getIfsc());
+
+			if (companySiteMappingResponses == null || companySiteMappingResponses.isEmpty()) {
+				logger.error("No company-site mapping found for compId: {}", contract.getCustomer().getCompId());
+				throw new ResourceNotFoundException(
+						"No company-site mapping found for compId: " + contract.getCustomer().getCompId());
+			}
+
+			response.setSiteId(companySiteMappingResponses.get(0).getSiteId());
+
+			CompSiteResponse siteResponse = validationService
+					.validateAndGetSite(companySiteMappingResponses.get(0).getSiteId(), "AB");
+
+			response.setSiteName(siteResponse.getSiteName());
+
+			response.setIfsc(siteResponse.getIfsc());
+
+			response.setDistrict(siteResponse.getDistrict());
+
+			List<ContractItemMapping> contractItemMappings = contractItemMappingRepository
+					.findByContract_ContractId(contract.getContractId());
+
+			List<String> productTypes = contractItemMappings.stream().map(itemMapping -> {
+				Integer itemId = itemMapping.getItemId();
+
+				String category = itemIdToCategoryMap.get(itemId);
+
+				if (category == null) {
+					return null;
+				}
+
+				return categoryToParamMap.get(category);
+			}).filter(Objects::nonNull).toList();
+
+			response.setProductTypes(productTypes);
+
+			response.setContractStartDate(contract.getContractStartDate());
+			response.setContractEndDate(contract.getContractEndDate());
+			response.setContractStatus(contract.getContractStatus());
+			String paramType = typeToParamMap.get(contract.getContractType());
+			response.setContractType(paramType);
+			response.setBillingFrequency(contract.getBillingFrequency());
+			response.setAmcType(contract.getAmcType());
+			response.setTermCondition(contract.getTermCondition());
+			response.setPaymentTerms(contract.getPaymentTerms());
+			response.setIsActive(contract.getIsActive());
+			response.setCreatedOn(contract.getCreatedOn());
+			response.setModifiedOn(contract.getModifiedOn());
+			response.setCreatedBy(contract.getCreatedBy());
+			response.setModifiedBy(contract.getModifiedBy());
+
+			responseList.add(response);
+		}
+
+		logger.info("Successfully fetched {} contracts for type: {}", responseList.size(), type);
+
+		return new ResponseEntity("Contracts fetched successfully", 200, responseList);
 	}
 
 	@Override
@@ -464,31 +405,23 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		logger.info("Fetching active contract IDs and names");
 
-		try {
-			List<ContractMaster> contracts = contractRepository.getActiveContracts();
+		List<ContractMaster> contracts = contractRepository.getActiveContracts();
 
-			if (contracts == null || contracts.isEmpty()) {
-				logger.warn("No active contracts found");
-				throw new ResourceNotFoundException("No active contracts found");
-			}
-
-			List<ContractMasterResponse> simplified = contracts.stream().map(c -> {
-				ContractMasterResponse temp = new ContractMasterResponse();
-				temp.setContractId(c.getContractId());
-				temp.setContractName(c.getContractName());
-				temp.setContractNo(c.getContractNo());
-				return temp;
-			}).toList();
-
-			logger.info("Fetched {} active contracts", simplified.size());
-
-			return new ResponseEntity("Contracts fetched successfully", 200, simplified);
-
-		} catch (ResourceNotFoundException ex) {
-			throw ex;
-		} catch (Exception e) {
-			logger.error("Error fetching contracts", e);
-			throw new DatabaseOperationException("Failed to fetch active contracts");
+		if (contracts == null || contracts.isEmpty()) {
+			logger.warn("No active contracts found");
+			throw new ResourceNotFoundException("No active contracts found");
 		}
+
+		List<ContractMasterResponse> simplified = contracts.stream().map(c -> {
+			ContractMasterResponse temp = new ContractMasterResponse();
+			temp.setContractId(c.getContractId());
+			temp.setContractName(c.getContractName());
+			temp.setContractNo(c.getContractNo());
+			return temp;
+		}).toList();
+
+		logger.info("Fetched {} active contracts", simplified.size());
+
+		return new ResponseEntity("Contracts fetched successfully", 200, simplified);
 	}
 }
