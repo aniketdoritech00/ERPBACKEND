@@ -406,7 +406,7 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 				response.setSiteName(siteResponse.getSiteName());
 
-				response.setIfsc(siteResponse.getIfsc());
+				response.setIfsc(contract.getCustomer().getIfsc());
 
 				response.setDistrict(siteResponse.getDistrict());
 

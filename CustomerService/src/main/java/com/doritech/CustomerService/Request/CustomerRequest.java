@@ -2,6 +2,7 @@ package com.doritech.CustomerService.Request;
 
 import java.util.List;
 
+import jakarta.persistence.Column;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -28,6 +29,8 @@ public class CustomerRequest {
 
 	@NotNull(message = "{customer.compId.notnull}")
 	private Integer compId;
+
+	private String ifsc;
 
 	@Size(max = 500, message = "{customer.address.size}")
 	private String address;
@@ -66,6 +69,8 @@ public class CustomerRequest {
 
 	@Valid
 	private List<CustomerContactRequest> contacts;
+
+	
 
 	/**
 	 * @return the district
@@ -225,5 +230,13 @@ public class CustomerRequest {
 	public void setCustomerId(Integer customerId) {
 		this.customerId = customerId;
 	}
+
+    public String getIfsc() {
+        return ifsc;
+    }
+
+    public void setIfsc(String ifsc) {
+        this.ifsc = ifsc;
+    }
 
 }
