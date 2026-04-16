@@ -37,6 +37,9 @@ public class CustomerMasterEntity {
 	@Column(name = "comp_id", nullable = false)
 	private Integer compId;
 
+	@Column(name = "ifsc", length = 50)
+	private String ifsc;
+
 	@Column(name = "address", length = 500)
 	private String address;
 
@@ -92,6 +95,8 @@ public class CustomerMasterEntity {
 	protected void onUpdate() {
 		modifiedOn = LocalDateTime.now();
 	}
+
+	
 
 	public Integer getCustomerId() {
 		return customerId;
@@ -260,6 +265,14 @@ public class CustomerMasterEntity {
 	public void setDistrict(String district) {
 		this.district = district;
 	}
+
+    public String getIfsc() {
+        return ifsc;
+    }
+
+    public void setIfsc(String ifsc) {
+        this.ifsc = ifsc;
+    }
 	
 
 }

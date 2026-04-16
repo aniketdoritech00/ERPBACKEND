@@ -556,15 +556,21 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 				logger.warn("Contract is null for mappingId {}", mapping.getMappingId());
 			}
 
-			try {
-				Integer siteId = mapping.getSiteId();
-				if (siteId != null) {
-					if (siteCache.containsKey(siteId)) {
-						CompSiteResponse site = siteCache.get(siteId);
-						res.setSiteName(site.getSiteName());
-						res.setSiteCode(site.getSiteCode());
-						res.setSiteDistrictName(site.getDistrict());
-						res.setIfsc(site.getIfsc());
+				try {
+					Integer siteId = mapping.getSiteId();
+					if (siteId != null) {
+						if (siteCache.containsKey(siteId)) {
+							CompSiteResponse site = siteCache.get(siteId);
+							res.setSiteName(site.getSiteName());
+							res.setSiteCode(site.getSiteCode());
+							res.setSiteDistrictName(site.getDistrict());
+						} else {
+							CompSiteResponse site = validationService.validateAndGetSite(siteId, "Source");
+							siteCache.put(siteId, site);
+							res.setSiteName(site.getSiteName());
+							res.setSiteCode(site.getSiteCode());
+							res.setSiteDistrictName(site.getDistrict());
+						}
 					} else {
 						CompSiteResponse site = validationService.validateAndGetSite(siteId, "Source");
 						siteCache.put(siteId, site);
@@ -605,9 +611,9 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 				} else {
 					res.setCustomerName("Unknown Customer");
 				}
-			} catch (Exception ex) {
-				logger.error("Customer fetch failed for mappingId {}", mapping.getMappingId(), ex);
-				res.setCustomerName("Unknown Customer");
+
+				res.setIfsc(mapping.getContract().getCustomer().getIfsc());
+				response.add(res);
 			}
 
 			response.add(res);

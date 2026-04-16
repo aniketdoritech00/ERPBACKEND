@@ -340,8 +340,7 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 					.validateAndGetHierarchyLevel(contract.getCustomer().getHierarchyLevelId());
 			response.setZoneName(responseDTO.getLevelName());
 
-			List<CompanySiteMappingResponse> companySiteMappingResponses = validationService
-					.getAllCompSiteMappingByCompId(contract.getCustomer().getCompId());
+			response.setIfsc(contract.getCustomer().getIfsc());
 
 			if (companySiteMappingResponses == null || companySiteMappingResponses.isEmpty()) {
 				logger.error("No company-site mapping found for compId: {}", contract.getCustomer().getCompId());

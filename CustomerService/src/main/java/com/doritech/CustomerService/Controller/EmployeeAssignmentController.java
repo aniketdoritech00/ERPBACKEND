@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +22,7 @@ import com.doritech.CustomerService.Service.EmployeeAssignmentService;
 import com.doritech.CustomerService.ValidationService.ValidationService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/customer/api/employeeAssignment")
@@ -36,7 +36,7 @@ public class EmployeeAssignmentController {
 
 	@PostMapping("/saveEmployeeAssignment")
 	public ResponseEntity saveEmployeeAssignment(
-			@RequestBody EmployeeAssignmentRequest request,
+			@Valid @RequestBody EmployeeAssignmentRequest request,
 			@RequestHeader("X-User-Id") String userId,
 			
 			HttpServletRequest httpServletRequest) throws BadRequestException {
@@ -65,7 +65,7 @@ public class EmployeeAssignmentController {
 
 	@PostMapping("/saveBulkEmployeeAssignment")
 	public ResponseEntity saveBulkEmployeeAssignment(
-			@RequestBody List<EmployeeAssignmentRequest> requests,
+			@Valid @RequestBody List<EmployeeAssignmentRequest> requests,
 			@RequestHeader("X-User-Id") String userId,
 			HttpServletRequest httpServletRequest) {
 		Integer userIdInt = Integer.parseInt(userId);
@@ -105,8 +105,6 @@ public class EmployeeAssignmentController {
 				HttpStatus.OK.value(), assignmentService.getEmployeeAssignments(
 						userResponse.getSourceId(), page, size, sortBy, sortDir));
 	}
-
-	
 
 	@GetMapping("/customer-details")
 	public ResponseEntity getCustomerDetails(
