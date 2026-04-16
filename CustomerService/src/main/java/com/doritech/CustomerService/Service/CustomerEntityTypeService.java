@@ -9,7 +9,7 @@ public interface CustomerEntityTypeService {
 
     ResponseEntity getCustomerEntityTypeByCustomerId(Integer customerId);
 
-	ResponseEntity getAllCustomerEntityTypes();
+	ResponseEntity getAllCustomerEntityTypes(int page, int size);
 
 	ResponseEntity getCustomerEntityTypesByCustomerId(Integer customerId);
 }
