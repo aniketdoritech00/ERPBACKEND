@@ -30,6 +30,7 @@ import com.doritech.CustomerService.Entity.CustomerEmployeeAllocation;
 import com.doritech.CustomerService.Entity.CustomerMasterEntity;
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Exception.BadRequestException;
+import com.doritech.CustomerService.Exception.DatabaseOperationException;
 import com.doritech.CustomerService.Exception.ResourceNotFoundException;
 import com.doritech.CustomerService.Mapper.ContractEntityMappingMapper;
 import com.doritech.CustomerService.Repository.ContractEntityMappingRepository;
@@ -473,88 +474,105 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		return new ResponseEntity("Success", 200, payload);
 	}
 
-	@Override
+		@Override
 	@Transactional(readOnly = true)
 	public ResponseEntity getAllContractEntityMappings(String contractType, int page, int size) {
 
 		logger.info("getAllContractEntityMappings API hit with page {} and size {}", page, size);
 
 		if (contractType == null) {
+			logger.error("Contract type cannot be null");
 			throw new BadRequestException("Contract type cannot be null");
 		}
 
-		Pageable pageable = PageRequest.of(page, size, Sort.by("mappingId").descending());
-		Page<ContractEntityMapping> pageResult = repository.findAvailableContracts(contractType, "Pending", pageable);
+		try {
 
-		List<ContractEntityMapping> mappings = pageResult.getContent();
+			Pageable pageable = PageRequest.of(page, size, Sort.by("mappingId").descending());
 
-		Map<Integer, CompSiteResponse> siteCache = new HashMap<>();
-		Map<Integer, CustomerMasterEntity> customerCache = new HashMap<>();
+			Page<ContractEntityMapping> pageResult = repository.findAvailableContracts(contractType, "Pending",
+					pageable);
 
-		List<ContractEntityMappingResponse> response = new ArrayList<>();
+			List<ContractEntityMapping> mappings = pageResult.getContent();
 
-		List<ItemIDResponse> itemIDResponses = validationService.getAllItems();
-		List<ParamResponseDTO> categoryParamResponseDTOs = validationService.getParamByCodeAndSerial("Item", "Category");
-		List<ParamResponseDTO> typeParamResponseDTOs = validationService.getParamByCodeAndSerial("CONTRACT", "CONTRACT_TYPE");
+			Map<Integer, CompSiteResponse> siteCache = new HashMap<>();
+			Map<Integer, CustomerMasterEntity> customerCache = new HashMap<>();
 
-		Map<Integer, String> itemIdToCategoryMap = itemIDResponses.stream()
-				.collect(Collectors.toMap(ItemIDResponse::getItemId, ItemIDResponse::getCategory, (a, b) -> a));
+			List<ContractEntityMappingResponse> response = new ArrayList<>();
 
-		Map<String, String> categoryToParamMap = categoryParamResponseDTOs.stream()
-				.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
+			List<ItemIDResponse> itemIDResponses = validationService.getAllItems();
 
-		Map<String, String> typeToParamMap = typeParamResponseDTOs.stream()
-				.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
+			List<ParamResponseDTO> categoryParamResponseDTOs = validationService.getParamByCodeAndSerial("Item",
+					"Category");
 
-		for (ContractEntityMapping mapping : mappings) {
+			List<ParamResponseDTO> typeParamResponseDTOs = validationService.getParamByCodeAndSerial("CONTRACT",
+					"CONTRACT_TYPE");
 
-			ContractEntityMappingResponse res = mapper.toResponse(mapping);
+			Map<Integer, String> itemIdToCategoryMap = itemIDResponses.stream()
+					.collect(Collectors.toMap(ItemIDResponse::getItemId, ItemIDResponse::getCategory, (a, b) -> a
 
-			String paramType = typeToParamMap.get(mapping.getContract().getContractType());
-			res.setContractType(paramType);
-			res.setMinNoVisits(mapping.getMinNoVisits());
+					));
 
-			HierarchyLevelResponseDTO responseDTO = validationService
-					.validateAndGetHierarchyLevel(mapping.getCustomer().getHierarchyLevelId());
-			res.setZoneName(responseDTO.getLevelName());
+			Map<String, String> categoryToParamMap = categoryParamResponseDTOs.stream()
+					.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
 
-			List<ContractItemMapping> contractItemMappings = contractItemMappingRepository
-					.findByContract_ContractId(mapping.getContract().getContractId());
+			Map<String, String> typeToParamMap = typeParamResponseDTOs.stream()
+					.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
 
-			List<String> productTypes = contractItemMappings.stream().map(itemMapping -> {
-				Integer itemId = itemMapping.getItemId();
-				String category = itemIdToCategoryMap.get(itemId);
-				if (category == null) {
-					return null;
+			for (ContractEntityMapping mapping : mappings) {
+
+				ContractEntityMappingResponse res = mapper.toResponse(mapping);
+
+				String paramType = typeToParamMap.get(mapping.getContract().getContractType());
+				res.setContractType(paramType);
+				res.setMinNoVisits(mapping.getMinNoVisits());
+
+				HierarchyLevelResponseDTO responseDTO = validationService
+						.validateAndGetHierarchyLevel(mapping.getCustomer().getHierarchyLevelId());
+				res.setZoneName(responseDTO.getLevelName());
+
+				List<ContractItemMapping> contractItemMappings = contractItemMappingRepository
+						.findByContract_ContractId(mapping.getContract().getContractId());
+
+				List<String> productTypes = contractItemMappings.stream().map(itemMapping -> {
+					Integer itemId = itemMapping.getItemId();
+
+					String category = itemIdToCategoryMap.get(itemId);
+
+					if (category == null) {
+						return null;
+					}
+
+					return categoryToParamMap.get(category);
+				}).filter(Objects::nonNull).distinct().toList();
+
+				res.setProductList(productTypes);
+
+				Optional<CustomerEmployeeAllocation> employeeAllocation = customerEmployeeAllocationRepository
+						.findByCustomerCustomerIdAndIsActive(mapping.getCustomer().getCustomerId(), "Y");
+
+				if (employeeAllocation.isPresent()) {
+					res.setFaId(employeeAllocation.get().getEmployeeId());
+					EmployeeDTO employeeDTO = validationService
+							.validateEmployeeExists(employeeAllocation.get().getEmployeeId());
+					res.setFaName(employeeDTO.getEmployeeName());
 				}
-				return categoryToParamMap.get(category);
-			}).filter(Objects::nonNull).distinct().toList();
 
-			res.setProductList(productTypes);
+				if (mapping.getContract() != null) {
+					String contractName = mapping.getContract().getContractName();
+					if (contractName != null && !contractName.trim().isEmpty()) {
+						res.setContractId(mapping.getContract().getContractId());
+						res.setContractName(contractName);
+						res.setContractNo(mapping.getContract().getContractNo());
+						res.setContractStartDate(mapping.getContract().getContractStartDate());
+						res.setContractEndDate(mapping.getContract().getContractEndDate());
 
-			Optional<CustomerEmployeeAllocation> employeeAllocation = customerEmployeeAllocationRepository
-					.findByCustomerCustomerIdAndIsActive(mapping.getCustomer().getCustomerId(), "Y");
-
-			if (employeeAllocation.isPresent()) {
-				res.setFaId(employeeAllocation.get().getEmployeeId());
-				EmployeeDTO employeeDTO = validationService.validateEmployeeExists(employeeAllocation.get().getEmployeeId());
-				res.setFaName(employeeDTO.getEmployeeName());
-			}
-
-			if (mapping.getContract() != null) {
-				String contractName = mapping.getContract().getContractName();
-				if (contractName != null && !contractName.trim().isEmpty()) {
-					res.setContractId(mapping.getContract().getContractId());
-					res.setContractName(contractName);
-					res.setContractNo(mapping.getContract().getContractNo());
-					res.setContractStartDate(mapping.getContract().getContractStartDate());
-					res.setContractEndDate(mapping.getContract().getContractEndDate());
+					} else {
+						logger.warn("Contract name is null/empty for contractId {}",
+								mapping.getContract().getContractId());
+					}
 				} else {
-					logger.warn("Contract name is null/empty for contractId {}", mapping.getContract().getContractId());
+					logger.warn("Contract is null for mappingId {}", mapping.getMappingId());
 				}
-			} else {
-				logger.warn("Contract is null for mappingId {}", mapping.getMappingId());
-			}
 
 				try {
 					Integer siteId = mapping.getSiteId();
@@ -572,43 +590,39 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 							res.setSiteDistrictName(site.getDistrict());
 						}
 					} else {
-						CompSiteResponse site = validationService.validateAndGetSite(siteId, "Source");
-						siteCache.put(siteId, site);
-						res.setSiteName(site.getSiteName());
-						res.setSiteCode(site.getSiteCode());
-						res.setSiteDistrictName(site.getDistrict());
-						res.setIfsc(site.getIfsc());
+						res.setSiteName("Unknown Site");
 					}
-				} else {
+				} catch (Exception ex) {
+					logger.warn("Site fetch failed for siteId {}", mapping.getSiteId());
 					res.setSiteName("Unknown Site");
 				}
-			} catch (Exception ex) {
-				logger.warn("Site fetch failed for siteId {}", mapping.getSiteId());
-				res.setSiteName("Unknown Site");
-			}
 
-			try {
-				if (mapping.getCustomer() != null) {
-					Integer customerId = mapping.getCustomer().getCustomerId();
-					if (customerId != null) {
-						if (customerCache.containsKey(customerId)) {
-							CustomerMasterEntity customer = customerCache.get(customerId);
-							res.setCustomerName(customer.getCustomerName());
-							res.setCustomerCode(customer.getCustomerCode());
-						} else {
-							CustomerMasterEntity customer = customerRepository.findById(customerId).orElse(null);
-							if (customer != null) {
-								customerCache.put(customerId, customer);
+				try {
+					if (mapping.getCustomer() != null) {
+						Integer customerId = mapping.getCustomer().getCustomerId();
+						if (customerId != null) {
+							if (customerCache.containsKey(customerId)) {
+								CustomerMasterEntity customer = customerCache.get(customerId);
 								res.setCustomerName(customer.getCustomerName());
 								res.setCustomerCode(customer.getCustomerCode());
 							} else {
-								res.setCustomerName("Unknown Customer");
+								CustomerMasterEntity customer = customerRepository.findById(customerId).orElse(null);
+								if (customer != null) {
+									customerCache.put(customerId, customer);
+									res.setCustomerName(customer.getCustomerName());
+									res.setCustomerCode(customer.getCustomerCode());
+								} else {
+									res.setCustomerName("Unknown Customer");
+								}
 							}
+						} else {
+							res.setCustomerName("Unknown Customer");
 						}
 					} else {
 						res.setCustomerName("Unknown Customer");
 					}
-				} else {
+				} catch (Exception ex) {
+					logger.error("Customer fetch failed for mappingId {}", mapping.getMappingId(), ex);
 					res.setCustomerName("Unknown Customer");
 				}
 
@@ -616,22 +630,31 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 				response.add(res);
 			}
 
-			response.add(res);
+			logger.info("Total mappings fetched in this page {}: {}", pageResult.getNumber(), response.size());
+
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("data", response);
+			payload.put("currentPage", pageResult.getNumber());
+			payload.put("pageSize", pageResult.getSize());
+			payload.put("totalItems", pageResult.getTotalElements());
+			payload.put("totalPages", pageResult.getTotalPages());
+			payload.put("isLast", pageResult.isLast());
+
+			return new ResponseEntity("Success", 200, payload);
+
+		} catch (BadRequestException ex) {
+			logger.warn("Validation error while fetching mappings {}", ex.getMessage());
+			throw ex;
+		} catch (DatabaseOperationException ex) {
+			logger.error("DatabaseOperationException while fetching mappings {}", ex.getMessage());
+			throw ex;
+		} catch (Exception ex) {
+			logger.error("Unexpected error while fetching mappings", ex);
+			throw new DatabaseOperationException("Failed to fetch mappings");
 		}
-
-		logger.info("Total mappings fetched in this page {}: {}", pageResult.getNumber(), response.size());
-
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("data", response);
-		payload.put("currentPage", pageResult.getNumber());
-		payload.put("pageSize", pageResult.getSize());
-		payload.put("totalItems", pageResult.getTotalElements());
-		payload.put("totalPages", pageResult.getTotalPages());
-		payload.put("isLast", pageResult.isLast());
-
-		return new ResponseEntity("Success", 200, payload);
 	}
 
+	
 	@Override
 	@Transactional
 	public ResponseEntity deactivateMapping(Integer id) {
