@@ -25,7 +25,7 @@ public class ItemMasterEntity {
 	private Integer itemId;
 
 	@NotBlank(message = "{item.type.required}")
-	@Column(name = "item_type", nullable = false, length = 1)
+	@Column(name = "item_type", nullable = false, length = 4)
 	private String itemType;
 
 	@NotBlank(message = "Item name is required")
@@ -42,10 +42,10 @@ public class ItemMasterEntity {
 	@Column(name = "vendor_id")
 	private Integer vendorId;
 
-	@Column(name = "category", length = 2)
+	@Column(name = "category", length = 5)
 	private String category;
 
-	@Column(name = "unit_of_measure", length = 2)
+	@Column(name = "unit_of_measure", length = 4)
 	private String unitOfMeasure;
 
 	@Column(name = "base_price", precision = 10, scale = 2)
