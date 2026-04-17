@@ -14,7 +14,7 @@ import jakarta.validation.constraints.Size;
 public class ItemMasterRequestDTO {
 
 	@NotBlank(message = "{item.type.required}", groups = OnCreate.class)
-	@Size(max = 2, message = "Category max length is 2", groups = OnCreate.class)
+	@Size(max = 4, message = "Item Type length is 4", groups = OnCreate.class)
 	private String itemType;
 
 	@NotBlank(message = "{item.name.required}", groups = OnCreate.class)
@@ -29,7 +29,7 @@ public class ItemMasterRequestDTO {
 	private Integer vendorId;
 	@Size(max = 5, message = "Category max length is 5", groups = OnCreate.class)
 	private String category;
-	@Size(max = 2, message = "Unit of measure must not exceed 2 characters", groups = OnCreate.class)
+	@Size(max = 4, message = "Unit of measure must not exceed 4 characters", groups = OnCreate.class)
 	private String unitOfMeasure;
 	private BigDecimal basePrice;
 
