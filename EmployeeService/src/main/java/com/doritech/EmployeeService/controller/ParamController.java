@@ -62,8 +62,8 @@ public class ParamController {
 		return new ResponseEntity("Saved Successfully", HttpStatus.CREATED.value(), response);
 	}
 
-	@PutMapping("/updateParam/{id}")
-	public ResponseEntity updateParam(@PathVariable Integer id, @RequestBody ParamRequestDTO dto,
+	@PutMapping("/updateMultipleParam")
+	public ResponseEntity updateParam(@Valid @RequestBody List<ParamRequestDTO> paramList,
 			@RequestHeader("X-User-Id") String userId, HttpServletRequest request) {
 
 		System.out.println("User id is: " + userId);
@@ -72,7 +72,7 @@ public class ParamController {
 		ApiResponse<Object> response = new ApiResponse<>();
 		response.setSuccess(true);
 		response.setMessage("Param updated successfully");
-		response.setData(service.update(id, dto));
+		response.setData(service.updateMultipleParam(paramList));
 		response.setStatusCode(HttpStatus.OK.value());
 		response.setPath(request.getRequestURI());
 
@@ -88,6 +88,21 @@ public class ParamController {
 		response.setSuccess(true);
 		response.setMessage("Param fetched successfully");
 		response.setData(service.getById(id));
+		response.setStatusCode(HttpStatus.OK.value());
+		response.setPath(request.getRequestURI());
+
+		return new ResponseEntity("Fetched Successfully", HttpStatus.OK.value(), response);
+	}
+
+	@GetMapping("/getAllParams")
+	public ResponseEntity getAllParams(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, HttpServletRequest request) {
+
+		System.out.println("Request URI: " + request.getRequestURI());
+
+		ApiResponse<Object> response = new ApiResponse<>();
+		response.setSuccess(true);
+		response.setMessage("Params fetched successfully");
+		response.setData(service.getAllParams(page, size));
 		response.setStatusCode(HttpStatus.OK.value());
 		response.setPath(request.getRequestURI());
 

@@ -2,6 +2,7 @@ package com.doritech.CustomerService.Response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ContractItemMappingResponse {
 
@@ -26,6 +27,11 @@ public class ContractItemMappingResponse {
 	private Integer modifiedBy;
 	private String itemName;
 	private String itemCode;
+
+	List<ContractItemPackageResponse> packages;
+
+	
+	
 
 	public Integer getContractMappingId() {
 		return contractMappingId;
@@ -186,5 +192,13 @@ public class ContractItemMappingResponse {
 	public void setContractName(String contractName) {
 		this.contractName = contractName;
 	}
+
+    public List<ContractItemPackageResponse> getPackages() {
+        return packages;
+    }
+
+    public void setPackages(List<ContractItemPackageResponse> packages) {
+        this.packages = packages;
+    }
 
 }

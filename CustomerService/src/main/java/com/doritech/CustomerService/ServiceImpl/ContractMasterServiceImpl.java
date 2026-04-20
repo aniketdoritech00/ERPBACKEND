@@ -19,27 +19,49 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.doritech.CustomerService.Entity.ContractDocuments;
+import com.doritech.CustomerService.Entity.ContractEntityMapping;
 import com.doritech.CustomerService.Entity.ContractItemMapping;
+import com.doritech.CustomerService.Entity.ContractItemPackage;
 import com.doritech.CustomerService.Entity.ContractMaster;
+import com.doritech.CustomerService.Entity.QuotationDetail;
+import com.doritech.CustomerService.Entity.QuotationDocument;
+import com.doritech.CustomerService.Entity.QuotationMaster;
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Exception.DatabaseOperationException;
 import com.doritech.CustomerService.Exception.DuplicateResourceException;
 import com.doritech.CustomerService.Exception.ResourceNotFoundException;
 import com.doritech.CustomerService.Mapper.ContractMapper;
+import com.doritech.CustomerService.Repository.ContractDocumentRepository;
+import com.doritech.CustomerService.Repository.ContractEntityMappingRepository;
 import com.doritech.CustomerService.Repository.ContractItemMappingRepository;
+import com.doritech.CustomerService.Repository.ContractItemPackageRepository;
 import com.doritech.CustomerService.Repository.ContractMasterRepository;
 import com.doritech.CustomerService.Repository.CustomerMasterRepository;
+import com.doritech.CustomerService.Repository.QuotationDetailRepository;
+import com.doritech.CustomerService.Repository.QuotationDocumentRepository;
+import com.doritech.CustomerService.Repository.QuotationMasterRepository;
 import com.doritech.CustomerService.Request.ContractMasterRequest;
 import com.doritech.CustomerService.Response.CompSiteResponse;
 import com.doritech.CustomerService.Response.CompanySiteMappingResponse;
+import com.doritech.CustomerService.Response.ContractDocumentResponse;
+import com.doritech.CustomerService.Response.ContractEntityMappingResponse;
+import com.doritech.CustomerService.Response.ContractFullResponseDTO;
+import com.doritech.CustomerService.Response.ContractItemMappingResponse;
+import com.doritech.CustomerService.Response.ContractItemPackageResponse;
 import com.doritech.CustomerService.Response.ContractMasterResponse;
 import com.doritech.CustomerService.Response.HierarchyLevelResponseDTO;
 import com.doritech.CustomerService.Response.ItemIDResponse;
 import com.doritech.CustomerService.Response.ParamResponseDTO;
+import com.doritech.CustomerService.Response.QuotationDetailResponse;
+import com.doritech.CustomerService.Response.QuotationDocumentResponse;
+import com.doritech.CustomerService.Response.QuotationMasterResponse;
 import com.doritech.CustomerService.Service.ContractMasterService;
 import com.doritech.CustomerService.Specification.ContractSpecification;
 import com.doritech.CustomerService.ValidationService.ValidationService;
+
+import feign.Contract;
 
 @Service
 public class ContractMasterServiceImpl implements ContractMasterService {
@@ -52,7 +74,25 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 	private CustomerMasterRepository customerRepository;
 
 	@Autowired
+	private ContractEntityMappingRepository contractEntityMappingRepository;
+
+	@Autowired
 	private ContractItemMappingRepository contractItemMappingRepository;
+
+	@Autowired
+	private ContractDocumentRepository contractDocumentRepository;
+
+	@Autowired
+	private QuotationMasterRepository quotationMasterRepository;
+
+	@Autowired
+	private ContractItemPackageRepository contractItemPackageRepository;
+
+	@Autowired
+	private QuotationDetailRepository quotationDetailRepository;
+
+	@Autowired
+	private QuotationDocumentRepository quotationDocumentRepository;
 
 	@Autowired
 	private ValidationService validationService;
@@ -431,4 +471,231 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		return new ResponseEntity("Contracts fetched successfully", 200, simplified);
 	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ResponseEntity getFullContractDetails(Integer contractId) {
+
+		logger.info("Get Contract By ID API called {}", contractId);
+
+		if (contractId == null) {
+			logger.error("Contract ID is null");
+			throw new BadRequestException("Contract ID cannot be null");
+		}
+
+		ContractMaster contract = contractRepository.findById(contractId).orElseThrow(() -> {
+			logger.error("Contract not found for id {}", contractId);
+			return new ResourceNotFoundException("Contract not found");
+		});
+
+		ContractFullResponseDTO response = new ContractFullResponseDTO();
+		response.setContractId(contract.getContractId());
+		response.setContractNo(contract.getContractNo());
+		response.setContractName(contract.getContractName());
+		response.setCustomerId(contract.getCustomer().getCustomerId());
+		response.setCustomerName(contract.getCustomer().getCustomerName());
+
+		// ================= CONTRACT =================
+		response.setContractStartDate(contract.getContractStartDate());
+		response.setContractEndDate(contract.getContractEndDate());
+		response.setContractStatus(contract.getContractStatus());
+		response.setContractType(contract.getContractType());
+		response.setBillingFrequency(contract.getBillingFrequency());
+		response.setAmcType(contract.getAmcType());
+		response.setTermCondition(contract.getTermCondition());
+		response.setPaymentTerms(contract.getPaymentTerms());
+		response.setIsActive(contract.getIsActive());
+
+		List<ContractEntityMapping> entityMappings = contractEntityMappingRepository
+				.findByContractContractId(contract.getContractId());
+
+		List<ContractEntityMappingResponse> entityMappingsResponse = entityMappings.stream().map(mapping -> {
+
+			ContractEntityMappingResponse dto = new ContractEntityMappingResponse();
+
+			dto.setMappingId(mapping.getMappingId());
+			dto.setCustomerId(mapping.getCustomer().getCustomerId());
+			dto.setCustomerName(mapping.getCustomer().getCustomerName());
+			dto.setCustomerCode(mapping.getCustomer().getCustomerCode());
+
+			dto.setSiteId(mapping.getSiteId());
+
+			// 👉 fetch site name (IMPORTANT)
+			CompSiteResponse site = validationService.validateAndGetSite(mapping.getSiteId(), "AB");
+			dto.setSiteName(site != null ? site.getSiteName() : null);
+			dto.setSiteCode(site != null ? site.getSiteCode() : null);
+
+			dto.setMinNoVisits(mapping.getMinNoVisits());
+			dto.setVisitsFrequency(mapping.getVisitsFrequency());
+			dto.setVisitsPaid(mapping.getVisitsPaid());
+			dto.setIsActive(mapping.getIsActive());
+
+			return dto;
+
+		}).toList();
+
+		response.setEntityMappings(entityMappingsResponse);
+
+		List<ContractItemMapping> itemMappings = contractItemMappingRepository
+				.findByContract_ContractId(contract.getContractId());
+
+		List<ContractItemMappingResponse> itemMappingsResponse = itemMappings.stream().map(mapping -> {
+
+			ContractItemMappingResponse dto = new ContractItemMappingResponse();
+
+			dto.setContractMappingId(mapping.getContractMappingId());
+			dto.setItemId(mapping.getItemId());
+
+			// 👉 fetch item name
+			ItemIDResponse itemResponse = validationService.validateAndGetItem(mapping.getItemId());
+			dto.setItemName(itemResponse != null ? itemResponse.getItemName() : null);
+
+			dto.setQuantity(mapping.getQuantity());
+			dto.setUnitPrice(mapping.getUnitPrice());
+			dto.setMandatoryQuotation(mapping.getMandatoryQuotation());
+			dto.setWarrantyPeriod(mapping.getWarrantyPeriod());
+			dto.setAmcRate(mapping.getAmcRate());
+			dto.setBuyBackItemId(mapping.getBuyBackItemId());
+			dto.setBuyBackUnitPrice(mapping.getBuyBackUnitPrice());
+			dto.setApprovalRequired(mapping.getApprovalRequired());
+			dto.setIsActive(mapping.getIsActive());
+
+			// // ================= PACKAGES =================
+			List<ContractItemPackage> packages = contractItemPackageRepository
+					.findByContractItemMapping_ContractMappingId(
+							mapping.getContractMappingId());
+
+			List<ContractItemPackageResponse> packageResponses = packages.stream().map(p -> {
+
+				ContractItemPackageResponse pr = new ContractItemPackageResponse();
+				pr.setPackageId(p.getPackageId());
+				pr.setMappedItemId(p.getMappedItemId());
+
+				ItemIDResponse itemMappedResponse2 = validationService.validateAndGetItem(p.getMappedItemId());
+				pr.setMappedItemName(itemMappedResponse2 != null ? itemMappedResponse2.getItemName() : null);
+
+				//pr.setMappingItemId(p.getContractItemMapping().getItemId());
+
+				ItemIDResponse itemMappedResponse = validationService.validateAndGetItem(p.getContractItemMapping().getItemId());
+				pr.setMappingItemName(itemMappedResponse != null ? itemMappedResponse.getItemName() : null);
+
+				pr.setIsActive(p.getIsActive());
+
+				return pr;
+
+			}).toList();
+
+			dto.setPackages(packageResponses);
+
+			return dto;
+
+		}).toList();
+
+		response.setItemMappings(itemMappingsResponse);
+
+		List<ContractDocuments> documents = contractDocumentRepository.findByContractId(contract.getContractId());
+
+		List<ContractDocumentResponse> documentsResponse = documents.stream().map(doc -> {
+
+			ContractDocumentResponse dto = new ContractDocumentResponse();
+
+			dto.setDocumentId(doc.getDocumentId());
+			dto.setDocumentName(doc.getDocumentName());
+			dto.setDocumentType(doc.getDocumentType());
+			// dto.setDocument(doc.getDocument());
+			dto.setUploadDate(doc.getUploadDate());
+			dto.setIsActive(doc.getIsActive());
+
+			return dto;
+
+		}).toList();
+
+		response.setDocuments(documentsResponse);
+
+		List<QuotationMaster> quotations = quotationMasterRepository
+				.findByContract_ContractId(contract.getContractId());
+
+		List<QuotationMasterResponse> quotationsResponse = quotations.stream().map(q -> {
+
+			QuotationMasterResponse qdto = new QuotationMasterResponse();
+
+			qdto.setQuotationId(q.getQuotationId());
+			qdto.setQuotationCode(q.getQuotationCode());
+			qdto.setQuotationDate(q.getQuotationDate());
+			qdto.setStatus(q.getStatus());
+			qdto.setPoNo(q.getPoNo());
+			qdto.setSalesOrderNo(q.getSalesOrderNo());
+			qdto.setCommunicationMode(q.getCommunicationMode());
+			qdto.setRemarks(q.getRemarks());
+			qdto.setIsActive(q.getIsActive());
+			qdto.setCreatedBy(q.getCreatedBy());
+
+			// // // ========= DETAILS =========
+			List<QuotationDetail> details = quotationDetailRepository
+					.findByQuotationMaster_QuotationId(q.getQuotationId());
+
+			List<QuotationDetailResponse> detailResponses = details.stream().map(d -> {
+
+				QuotationDetailResponse dto = new QuotationDetailResponse();
+
+				dto.setQuotationDetailId(d.getQuotationDetailId());
+				dto.setItemId(d.getItemId());
+
+				ItemIDResponse itemMappedResponse = validationService.validateAndGetItem(d.getItemId());
+				dto.setItemName(itemMappedResponse != null ? itemMappedResponse.getItemName() : null);
+
+				dto.setParentItemId(d.getParentItemId());
+
+				if (d.getParentItemId() != null) {
+					ItemIDResponse parentItemResponse = validationService.validateAndGetItem(d.getParentItemId());
+					dto.setParentItemName(parentItemResponse != null ? parentItemResponse.getItemName() : null);
+				}
+
+				dto.setItemPrice(Double.parseDouble(d.getItemPrice().toString()));
+				dto.setGstRate(Double.parseDouble(d.getGstRate().toString()));
+				dto.setQty(d.getQty());
+				dto.setSiteId(d.getSiteId());
+
+				CompSiteResponse siteResponse = validationService.validateAndGetSite(d.getSiteId(), "AB");
+				dto.setSiteName(siteResponse != null ? siteResponse.getSiteName() : null);
+
+				dto.setIsActive(d.getIsActive());
+
+				return dto;
+
+			}).toList();
+
+			qdto.setItems(detailResponses);
+
+			// // ========= DOCUMENTS =========
+			List<QuotationDocument> docs = quotationDocumentRepository
+					.findByQuotationMasterQuotationId(q.getQuotationId());
+
+			List<QuotationDocumentResponse> docResponses = docs.stream().map(d -> {
+
+				QuotationDocumentResponse dto = new QuotationDocumentResponse();
+
+				dto.setQuotationDocumentId(d.getQuotationDocumentId());
+				dto.setDocumentType(d.getDocumentType());
+				dto.setDocumentSource(d.getDocumentSource());
+				dto.setDocumentDate(d.getDocumentDate());
+				dto.setDocument(d.getDocument());
+				dto.setIsActive(d.getIsActive());
+
+				return dto;
+
+			}).toList();
+
+			qdto.setDocuments(docResponses);
+
+			return qdto;
+
+		}).toList();
+
+		response.setQuotations(quotationsResponse);
+		logger.info("Contract fetched successfully {}", contractId);
+
+		return new ResponseEntity("Success", 200, response);
+	}
+
 }

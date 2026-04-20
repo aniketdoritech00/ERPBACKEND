@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Size;
 
 public class ParamRequestDTO {
 
+	private Integer paramId;
+
 	@NotBlank(message = "{param.code.requrired}")
 	@Size(max = 50, message = "{param.code.size}")
 	private String code;
@@ -23,6 +25,8 @@ public class ParamRequestDTO {
 	private String desp4;
 
 	private String desp5;
+
+	
 
 	/**
 	 * @return the serialNo
@@ -143,5 +147,13 @@ public class ParamRequestDTO {
 	public void setDesp3(String desp3) {
 		this.desp3 = desp3;
 	}
+
+    public Integer getParamId() {
+        return paramId;
+    }
+
+    public void setParamId(Integer paramId) {
+        this.paramId = paramId;
+    }
 
 }
