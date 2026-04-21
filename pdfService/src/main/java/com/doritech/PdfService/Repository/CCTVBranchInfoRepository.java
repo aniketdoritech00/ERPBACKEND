@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.doritech.PdfService.Entity.CCTVBranchInfo;
 
+import feign.Param;
 import jakarta.transaction.Transactional;
 
 @Repository
@@ -23,4 +24,16 @@ public interface CCTVBranchInfoRepository extends JpaRepository<CCTVBranchInfo, 
 	@Transactional
 	@Query(value = "UPDATE employee_assignment SET status = 'Completed' WHERE assignment_id = :assignmentId", nativeQuery = true)
 	int updateAssignmentStatusToCompleted(Integer assignmentId);
+
+	@Query(value = """
+			SELECT COUNT(*)
+			FROM employee_assignment
+			WHERE mapping_id = (
+			    SELECT mapping_id FROM employee_assignment WHERE assignment_id = :assignmentId
+			)
+			AND site_id = (
+			    SELECT site_id FROM employee_assignment WHERE assignment_id = :assignmentId
+			)
+			""", nativeQuery = true)
+	Integer countByAssignmentId(@Param("assignmentId") Integer assignmentId);
 }

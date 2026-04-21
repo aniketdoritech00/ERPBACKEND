@@ -42,6 +42,7 @@ import com.doritech.CustomerService.Repository.CustomerMasterRepository;
 import com.doritech.CustomerService.Request.ContractEntityMappingRequest;
 import com.doritech.CustomerService.Response.CompSiteResponse;
 import com.doritech.CustomerService.Response.ContractEntityMappingResponse;
+import com.doritech.CustomerService.Response.CustomerResponse;
 import com.doritech.CustomerService.Response.EmployeeDTO;
 import com.doritech.CustomerService.Response.HierarchyLevelResponseDTO;
 import com.doritech.CustomerService.Response.ItemIDResponse;
@@ -296,8 +297,8 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 			throw new BadRequestException("Request body cannot be null");
 		}
 
-		ContractEntityMapping mapping = repository.findById(id).orElseThrow(
-				() -> new ResourceNotFoundException("Mapping not found with id " + id));
+		ContractEntityMapping mapping = repository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Mapping not found with id " + id));
 
 		ContractMaster contract = contractRepository.findById(request.getContractId()).orElseThrow(
 				() -> new ResourceNotFoundException("Contract not found with id " + request.getContractId()));
@@ -335,8 +336,8 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 			throw new BadRequestException("Mapping id cannot be null");
 		}
 
-		ContractEntityMapping mapping = repository.findById(id).orElseThrow(
-				() -> new ResourceNotFoundException("Mapping not found with id " + id));
+		ContractEntityMapping mapping = repository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Mapping not found with id " + id));
 
 		ContractEntityMappingResponse response = mapper.toResponse(mapping);
 
@@ -474,7 +475,7 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		return new ResponseEntity("Success", 200, payload);
 	}
 
-		@Override
+	@Override
 	@Transactional(readOnly = true)
 	public ResponseEntity getAllContractEntityMappings(String contractType, int page, int size) {
 
@@ -654,7 +655,6 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		}
 	}
 
-	
 	@Override
 	@Transactional
 	public ResponseEntity deactivateMapping(Integer id) {
@@ -665,8 +665,8 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 			throw new BadRequestException("Mapping id cannot be null");
 		}
 
-		ContractEntityMapping mapping = repository.findById(id).orElseThrow(
-				() -> new ResourceNotFoundException("Mapping not found with id " + id));
+		ContractEntityMapping mapping = repository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Mapping not found with id " + id));
 
 		mapping.setIsActive("N");
 		mapping.setModifiedOn(LocalDateTime.now());
@@ -775,5 +775,56 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		logger.info("Bulk mappings deactivated successfully for ids {}", ids);
 
 		return new ResponseEntity("Mappings deactivated successfully", 200, null);
+	}
+
+	@Override
+	public ResponseEntity getCustomerNameAndCodeByContractID(Integer contractId) {
+
+		logger.info("Fetching customer details for contractId: {}", contractId);
+
+		if (contractId == null) {
+			logger.error("contractId is null");
+			throw new BadRequestException("contractId cannot be null");
+		}
+
+		List<ContractEntityMapping> contractEntityMappings = repository.findByContractContractId(contractId);
+
+		if (contractEntityMappings == null || contractEntityMappings.isEmpty()) {
+			logger.error("No ContractEntityMapping found for contractId: {}", contractId);
+			throw new ResourceNotFoundException("No mapping found for given contractId");
+		}
+
+		List<Integer> customerIds = contractEntityMappings.stream().map(m -> m.getCustomer().getCustomerId()).distinct()
+				.collect(Collectors.toList());
+
+		if (customerIds.isEmpty()) {
+			logger.error("CustomerIds list is empty for contractId: {}", contractId);
+			throw new ResourceNotFoundException("No customerIds found");
+		}
+
+		List<CustomerMasterEntity> customers = customerRepository.findAllById(customerIds);
+
+		if (customers == null || customers.isEmpty()) {
+			logger.error("No customers found for customerIds: {}", customerIds);
+			throw new ResourceNotFoundException("No customers found");
+		}
+
+		List<CustomerResponse> payload = customers.stream()
+				.filter(c -> c != null && "Y".equalsIgnoreCase(c.getIsActive())).map(c -> {
+					CustomerResponse r = new CustomerResponse();
+					r.setCustomerId(c.getCustomerId());
+					r.setCustomerName(c.getCustomerName());
+					r.setCustomerCode(c.getCustomerCode());
+					return r;
+				}).collect(Collectors.toList());
+
+		ResponseEntity response = new ResponseEntity();
+		response.setMessage("Success");
+		response.setStatusCode(200);
+		response.setPayload(payload);
+
+		logger.info("Successfully fetched {} customers for contractId: {}", payload.size(), contractId);
+
+		return response;
 	}
 }

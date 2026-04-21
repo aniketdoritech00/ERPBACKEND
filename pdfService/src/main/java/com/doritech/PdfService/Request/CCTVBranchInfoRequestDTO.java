@@ -59,7 +59,7 @@ public class CCTVBranchInfoRequestDTO {
 	private String customerName;
 	private String district;
 	private Integer minNoVisits;
-	
+
 	private Integer customerId;
 	private String estimateNo;
 	private LocalDate estimateDate;
@@ -75,6 +75,7 @@ public class CCTVBranchInfoRequestDTO {
 	@NotBlank(message = "productType is required")
 	private String productType;
 	private String status;
+	private Integer noOfVisit;
 
 	@NotBlank(message = "scheduleVisitId is required")
 	private Integer scheduleVisitId;
@@ -497,6 +498,14 @@ public class CCTVBranchInfoRequestDTO {
 
 	public void setCustomerCode(String customerCode) {
 		this.customerCode = customerCode;
+	}
+
+	public Integer getNoOfVisit() {
+		return noOfVisit;
+	}
+
+	public void setNoOfVisit(Integer noOfVisit) {
+		this.noOfVisit = noOfVisit;
 	}
 
 }

@@ -59,6 +59,7 @@ public class CCTVBranchInfoResponseDTO {
 	private Integer scheduleVisitId;
 	private Integer minNoVisits;
 	private Integer customerId;
+	private Integer noOfVisit;
 
 	private CCTVProductDetailDTO cctvProductDetail;
 	private List<CCTVHddStatusDTO> cctvHddStatus;
@@ -490,6 +491,14 @@ public class CCTVBranchInfoResponseDTO {
 
 	public void setCustomerId(Integer customerId) {
 		this.customerId = customerId;
+	}
+
+	public Integer getNoOfVisit() {
+		return noOfVisit;
+	}
+
+	public void setNoOfVisit(Integer noOfVisit) {
+		this.noOfVisit = noOfVisit;
 	}
 
 }

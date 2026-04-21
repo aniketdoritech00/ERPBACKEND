@@ -1917,6 +1917,26 @@ public class CCTVBranchInfoService {
 			entity.setProductType(dto.getProductType());
 			entity.setStatus(dto.getStatus());
 
+			if (dto != null && dto.getScheduleVisitId() != null && entity != null) {
+
+				Integer assignmentId = dto.getScheduleVisitId();
+
+				if (assignmentId <= 0) {
+					throw new IllegalArgumentException("Invalid Assignment Id");
+				}
+
+				Integer count = cctvBranchInfoRepository.countByAssignmentId(assignmentId);
+
+				if (count == null) {
+					throw new RuntimeException("Count not found for assignmentId: " + assignmentId);
+				}
+
+				entity.setNoOfVisit(count);
+
+			} else {
+				throw new IllegalArgumentException("Invalid input: DTO or ScheduleVisitId or Entity is null");
+			}
+
 			if (dto.getCctvProductDetail() != null) {
 				try {
 					CCTVProductDetail productDetail = new CCTVProductDetail();
@@ -2096,7 +2116,7 @@ public class CCTVBranchInfoService {
 			dto.setCustomerRemarks(entity.getCustomerRemarks());
 			dto.setProductType(entity.getProductType());
 			dto.setStatus(entity.getStatus());
-
+			dto.setNoOfVisit(entity.getNoOfVisit());
 			if (customerDetailsPayload != null) {
 				dto.setBranchName(customerDetailsPayload.getCustomerName());
 				dto.setBranchAddress(customerDetailsPayload.getAddress());
@@ -2312,6 +2332,7 @@ public class CCTVBranchInfoService {
 			dto.setCustomerRemarks(entity.getCustomerRemarks());
 			dto.setProductType(entity.getProductType());
 			dto.setStatus(entity.getStatus());
+			dto.setNoOfVisit(entity.getNoOfVisit());
 
 			if (customerDetailsPayload != null) {
 				dto.setBranchName(customerDetailsPayload.getCustomerName());
@@ -2471,6 +2492,7 @@ public class CCTVBranchInfoService {
 			dto.setCustomerRemarks(entity.getCustomerRemarks());
 			dto.setProductType(entity.getProductType());
 			dto.setStatus(entity.getStatus());
+			dto.setNoOfVisit(entity.getNoOfVisit());
 
 			if (entity.getCctvProductDetail() != null) {
 				CCTVProductDetailDTO pdto = new CCTVProductDetailDTO();

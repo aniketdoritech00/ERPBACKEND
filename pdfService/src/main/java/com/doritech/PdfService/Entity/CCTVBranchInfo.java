@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,6 +19,24 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
+@JsonPropertyOrder({ "id", "inspectionDate", "serviceReportNumber", "customerId", "customerName", "fieldAssociateName",
+		"concernedPersonName", "concernedPersonPhone", "concernedPersonDesignation", "cctvWorkingStatus",
+		"totalHddSlots", "hddInstalledQty", "totalCapacityTb", "totalFreeSpaceTb", "productType", "status",
+		"scheduleVisitId", "noOfVisit", "faRemarks", "customerRemarks",
+
+		"estimateNo", "estimateDate", "estimateAmount", "estimateProductDetails",
+
+		"billToBeRaised", "billNo", "billDate", "isInvoicePaymentFollowed", "paymentRemarks",
+
+		"isAcSupplyUninterrupted", "isSystemOnUps", "areAllCamerasFunctional", "isRecordingAvailable",
+		"isOperationExplainedAndUnderstood", "isMotionDetectionSet", "isSystemCleaned", "isPasswordChanged",
+
+		"pdfFilePath",
+
+		"cctvProductDetail", "cctvHddStatus", "cctvCameraStatus", "cctvMaterials", "cctvStaffMembers",
+		"cctvProductInstalledStatuses", "cctvBranchDocuments",
+
+		"createdAt", "updatedAt", "createdBy", "modifiedBy" })
 @Entity
 @Table(name = "cctv_branch_info")
 public class CCTVBranchInfo {
@@ -74,6 +94,8 @@ public class CCTVBranchInfo {
 	private Boolean billToBeRaised;
 	private String billNo;
 	private LocalDate billDate;
+
+	private Integer noOfVisit;
 
 	private Boolean isInvoicePaymentFollowed;
 
@@ -540,6 +562,14 @@ public class CCTVBranchInfo {
 
 	public void setCustomerId(Integer customerId) {
 		this.customerId = customerId;
+	}
+
+	public Integer getNoOfVisit() {
+		return noOfVisit;
+	}
+
+	public void setNoOfVisit(Integer noOfVisit) {
+		this.noOfVisit = noOfVisit;
 	}
 
 }
