@@ -13,6 +13,9 @@ public class ContractItemMappingRequest {
     @NotNull(message = "{contract.id.required}")
     private Integer contractId;
 
+    @NotNull(message = "{contract.entitymapping.id.required}")
+    private Integer entityMappingId;
+
     @NotNull(message = "{item.id.required}")
     private Integer itemId;
 
@@ -46,6 +49,8 @@ public class ContractItemMappingRequest {
     private Integer createdBy;
 
     private Integer modifiedBy;
+
+    
 
     public Integer getContractMappingId() { return contractMappingId; }
     public void setContractMappingId(Integer contractMappingId) { this.contractMappingId = contractMappingId; }
@@ -88,4 +93,10 @@ public class ContractItemMappingRequest {
 
     public Integer getModifiedBy() { return modifiedBy; }
     public void setModifiedBy(Integer modifiedBy) { this.modifiedBy = modifiedBy; }
+    public Integer getEntityMappingId() {
+        return entityMappingId;
+    }
+    public void setEntityMappingId(Integer entityMappingId) {
+        this.entityMappingId = entityMappingId;
+    }
 }

@@ -35,4 +35,7 @@ public interface EmployeeMasterRepository extends JpaRepository<EmployeeMaster, 
 	Set<String> findExistingEmployeeCodes(@Param("codes") List<String> codes);
 
 	List<EmployeeMaster> findByCompany_IdAndIsActive(Integer compId, String string);
+
+    @Query("SELECT e FROM EmployeeMaster e JOIN FETCH e.site WHERE e.employeeId = :id")
+    Optional<EmployeeMaster> findByIdWithSite(@Param("id") Integer id);
 }

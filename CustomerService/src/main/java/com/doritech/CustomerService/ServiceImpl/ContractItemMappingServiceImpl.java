@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +22,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.doritech.CustomerService.Entity.ContractCustomerItemMapping;
+import com.doritech.CustomerService.Entity.ContractEntityMapping;
 import com.doritech.CustomerService.Entity.ContractItemMapping;
 import com.doritech.CustomerService.Entity.ContractItemPackage;
 import com.doritech.CustomerService.Entity.ContractMaster;
@@ -29,6 +32,8 @@ import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Exception.ExternalServiceException;
 import com.doritech.CustomerService.Exception.ResourceNotFoundException;
 import com.doritech.CustomerService.Mapper.ContractItemMappingMapper;
+import com.doritech.CustomerService.Repository.ContractCustomerItemMaapingRepository;
+import com.doritech.CustomerService.Repository.ContractEntityMappingRepository;
 import com.doritech.CustomerService.Repository.ContractItemMappingRepository;
 import com.doritech.CustomerService.Repository.ContractItemPackageRepository;
 import com.doritech.CustomerService.Repository.ContractMasterRepository;
@@ -59,8 +64,141 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 	@Autowired
 	private ContractItemPackageRepository contractItemPackageRepository;
 
+	@Autowired
+	private ContractCustomerItemMaapingRepository contractCustomerItemMaapingRepository;
+
+	@Autowired
+	private ContractEntityMappingRepository contractEntityMappingRepository;
+
 	@Value("${item.service.url}")
 	private String itemServiceUrl;
+
+	// @Override
+	// @Transactional
+	// public ResponseEntity
+	// saveOrUpdateItemMapping(List<ContractItemMappingRequest> requests) {
+
+	// logger.info("SaveOrUpdate ContractItemMapping API started for {} requests",
+	// requests.size());
+
+	// if (requests == null || requests.isEmpty()) {
+	// logger.error("Request list cannot be empty");
+	// throw new BadRequestException("Request list cannot be empty");
+	// }
+
+	// List<ContractItemMappingResponse> responseList = new ArrayList<>();
+	// Set<String> uniqueCheck = new HashSet<>();
+
+	// for (ContractItemMappingRequest request : requests) {
+
+	// logger.info("Processing request — mappingId: {}, contractId: {}, itemId: {}",
+	// request.getContractMappingId(), request.getContractId(),
+	// request.getItemId());
+
+	// ContractMaster contract =
+	// contractRepository.findById(request.getContractId()).orElseThrow(() -> {
+	// logger.error("Contract not found with id {}", request.getContractId());
+	// return new ResourceNotFoundException("Contract not found with id : " +
+	// request.getContractId());
+	// });
+
+	// logger.info("Validating item with id {}", request.getItemId());
+	// validationService.validateItemExists(request.getItemId());
+
+	// if (request.getContractMappingId() != null) {
+
+	// logger.info("Updating existing mapping with id {}",
+	// request.getContractMappingId());
+
+	// ContractItemMapping entity =
+	// repository.findById(request.getContractMappingId()).orElseThrow(() -> {
+	// logger.error("ContractItemMapping not found with id {}",
+	// request.getContractMappingId());
+	// return new ResourceNotFoundException(
+	// "ContractItemMapping not found with id : " + request.getContractMappingId());
+	// });
+
+	// boolean exists =
+	// repository.existsByContract_ContractIdAndItemId(request.getContractId(),
+	// request.getItemId());
+
+	// if (exists && !entity.getItemId().equals(request.getItemId())) {
+	// logger.error("Duplicate item mapping found for contractId {} and itemId {}",
+	// request.getContractId(), request.getItemId());
+	// throw new BadRequestException("Item already added for this contract
+	// (contractId: "
+	// + request.getContractId() + ", itemId: " + request.getItemId() + ")");
+	// }
+
+	// entity.setContract(contract);
+	// entity.setItemId(request.getItemId());
+	// entity.setUnitPrice(request.getUnitPrice());
+	// if (request.getBuyBackUnitPrice() != null) {
+	// entity.setBuyBackItemId(request.getItemId());
+	// entity.setBuyBackUnitPrice(request.getBuyBackUnitPrice());
+	// }
+	// entity.setQuantity(request.getQuantity());
+	// entity.setWarrantyPeriod(request.getWarrantyPeriod());
+	// entity.setAmcRate(request.getAmcRate());
+	// entity.setMandatoryQuotation(request.getMandatoryQuotation());
+	// entity.setApprovalRequired(request.getApprovalRequired());
+	// entity.setIsActive(request.getIsActive());
+	// entity.setModifiedBy(request.getModifiedBy());
+	// entity.setModifiedOn(LocalDateTime.now());
+
+	// ContractItemMapping updated = repository.save(entity);
+
+	// logger.info("Mapping updated successfully with id {}",
+	// updated.getContractMappingId());
+	// responseList.add(mapper.toResponse(updated));
+
+	// } else {
+
+	// logger.info("Creating new mapping for contractId {} and itemId {}",
+	// request.getContractId(),
+	// request.getItemId());
+
+	// String key = request.getContractId() + "-" + request.getItemId();
+	// if (!uniqueCheck.add(key)) {
+	// logger.error("Duplicate item in request for contractId {} and itemId {}",
+	// request.getContractId(), request.getItemId());
+	// throw new BadRequestException("Duplicate item in request for contractId: "
+	// + request.getContractId() + ", itemId: " + request.getItemId());
+	// }
+
+	// boolean exists =
+	// repository.existsByContract_ContractIdAndItemId(request.getContractId(),
+	// request.getItemId());
+
+	// if (exists) {
+	// logger.error("Item already mapped for contractId {} and itemId {}",
+	// request.getContractId(),
+	// request.getItemId());
+	// throw new BadRequestException("Item already added for this contract
+	// (contractId: "
+	// + request.getContractId() + ", itemId: " + request.getItemId() + ")");
+	// }
+
+	// ContractItemMapping entity = mapper.toEntity(request);
+	// entity.setContract(contract);
+	// entity.setCreatedBy(request.getCreatedBy());
+	// entity.setCreatedOn(LocalDateTime.now());
+	// entity.setModifiedBy(null);
+	// entity.setModifiedOn(null);
+
+	// ContractItemMapping saved = repository.save(entity);
+
+	// logger.info("Mapping created successfully with id {}",
+	// saved.getContractMappingId());
+	// responseList.add(mapper.toResponse(saved));
+	// }
+	// }
+
+	// logger.info("Total mappings processed successfully: {}",
+	// responseList.size());
+	// return new ResponseEntity("Contract Item Mapping saved/updated successfully",
+	// 200, responseList);
+	// }
 
 	@Override
 	@Transactional
@@ -85,6 +223,10 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 				logger.error("Contract not found with id {}", request.getContractId());
 				return new ResourceNotFoundException("Contract not found with id : " + request.getContractId());
 			});
+
+			ContractEntityMapping entityMapping = contractEntityMappingRepository.findById(request.getEntityMappingId())
+					.orElseThrow(() -> new ResourceNotFoundException(
+							"ContractEntityMapping not found with id : " + request.getEntityMappingId()));
 
 			logger.info("Validating item with id {}", request.getItemId());
 			validationService.validateItemExists(request.getItemId());
@@ -127,6 +269,9 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 
 				ContractItemMapping updated = repository.save(entity);
 
+				// 👉 SAVE IN CUSTOMER ITEM MAPPING
+				saveCustomerItemMapping(entityMapping, updated, request);
+				
 				logger.info("Mapping updated successfully with id {}", updated.getContractMappingId());
 				responseList.add(mapper.toResponse(updated));
 
@@ -162,6 +307,9 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 
 				ContractItemMapping saved = repository.save(entity);
 
+				// 👉 SAVE IN CUSTOMER ITEM MAPPING
+				saveCustomerItemMapping(entityMapping, saved, request);
+
 				logger.info("Mapping created successfully with id {}", saved.getContractMappingId());
 				responseList.add(mapper.toResponse(saved));
 			}
@@ -169,6 +317,33 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 
 		logger.info("Total mappings processed successfully: {}", responseList.size());
 		return new ResponseEntity("Contract Item Mapping saved/updated successfully", 200, responseList);
+	}
+
+	// 👉 HELPER METHOD TO SAVE/UPDATE CUSTOMER ITEM MAPPING
+	private void saveCustomerItemMapping(ContractEntityMapping entityMapping,
+			ContractItemMapping itemMapping,
+			ContractItemMappingRequest request) {
+
+		Optional<ContractCustomerItemMapping> existing = contractCustomerItemMaapingRepository
+				.findByContractEntityMapping_MappingIdAndContractItemMapping_ContractMappingId(
+						entityMapping.getMappingId(),
+						itemMapping.getContractMappingId());
+
+		ContractCustomerItemMapping mapping;
+
+		if (existing.isPresent()) {
+			// 🔁 UPDATE
+			mapping = existing.get();
+			mapping.setQuantity(request.getQuantity());
+		} else {
+			// 🆕 CREATE
+			mapping = new ContractCustomerItemMapping();
+			mapping.setContractEntityMapping(entityMapping);
+			mapping.setContractItemMapping(itemMapping);
+			mapping.setQuantity(request.getQuantity());
+		}
+
+		contractCustomerItemMaapingRepository.save(mapping);
 	}
 
 	@Override
@@ -491,7 +666,8 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 				});
 
 		Integer contractMappingId = mapping.getContractMappingId();
-		logger.info("Found contractMappingId {} for contractId {} and itemId {}", contractMappingId, contractId, itemId);
+		logger.info("Found contractMappingId {} for contractId {} and itemId {}", contractMappingId, contractId,
+				itemId);
 
 		List<ContractItemPackage> packages = contractItemPackageRepository
 				.findByContractItemMapping_ContractMappingId(contractMappingId);

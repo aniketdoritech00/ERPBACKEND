@@ -19,10 +19,12 @@ import org.springframework.stereotype.Service;
 import com.doritech.EmployeeService.Mapper.CompSiteMasterMapper;
 import com.doritech.EmployeeService.Specification.SiteSpecification;
 import com.doritech.EmployeeService.entity.CompSiteMasterEntity;
+import com.doritech.EmployeeService.entity.EmployeeMaster;
 import com.doritech.EmployeeService.entity.HierarchyLevelEntity;
 import com.doritech.EmployeeService.entity.ResponseEntity;
 import com.doritech.EmployeeService.exception.ResourceNotFoundException;
 import com.doritech.EmployeeService.repository.CompSiteMasterRepository;
+import com.doritech.EmployeeService.repository.EmployeeMasterRepository;
 import com.doritech.EmployeeService.repository.HierarchyLevelRepository;
 import com.doritech.EmployeeService.request.CompSiteMasterRequest;
 import com.doritech.EmployeeService.response.CompSiteMasterResponse;
@@ -42,6 +44,9 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 
 	@Autowired
 	private HierarchyLevelRepository hierarchyLevelRepository;
+
+	@Autowired
+	private EmployeeMasterRepository employeeRepository;
 
 	@Autowired
 	private AuditService auditService;
@@ -459,4 +464,18 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 
 		return response;
 	}
+
+	@Override
+	 public ResponseEntity getSiteByEmployeeId(Integer employeeId) {
+        EmployeeMaster employee = employeeRepository.findByIdWithSite(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        CompSiteMasterEntity site = employee.getSite();
+
+        return new ResponseEntity(
+                "Site fetched successfully",
+                200,
+                site
+        );
+    }
 }
