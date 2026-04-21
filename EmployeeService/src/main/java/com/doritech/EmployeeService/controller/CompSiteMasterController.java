@@ -145,4 +145,9 @@ public class CompSiteMasterController {
     public ResponseEntity getSiteByEmployeeId(@PathVariable("id") Integer id) {
         return compSiteMasterService.getSiteByEmployeeId(id);
     }
+
+	@GetMapping("/getSiteByUserId/{id}")
+    public ResponseEntity getSiteByUserId(@PathVariable("id") Integer id) {
+        return compSiteMasterService.getSiteByUserId(id);
+    }
 }

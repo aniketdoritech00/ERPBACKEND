@@ -22,10 +22,13 @@ import com.doritech.EmployeeService.entity.CompSiteMasterEntity;
 import com.doritech.EmployeeService.entity.EmployeeMaster;
 import com.doritech.EmployeeService.entity.HierarchyLevelEntity;
 import com.doritech.EmployeeService.entity.ResponseEntity;
+import com.doritech.EmployeeService.entity.UserMaster;
+import com.doritech.EmployeeService.exception.BusinessException;
 import com.doritech.EmployeeService.exception.ResourceNotFoundException;
 import com.doritech.EmployeeService.repository.CompSiteMasterRepository;
 import com.doritech.EmployeeService.repository.EmployeeMasterRepository;
 import com.doritech.EmployeeService.repository.HierarchyLevelRepository;
+import com.doritech.EmployeeService.repository.UserMasterRepository;
 import com.doritech.EmployeeService.request.CompSiteMasterRequest;
 import com.doritech.EmployeeService.response.CompSiteMasterResponse;
 import com.doritech.EmployeeService.response.PageResponse;
@@ -47,6 +50,9 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 
 	@Autowired
 	private EmployeeMasterRepository employeeRepository;
+
+	@Autowired
+	private UserMasterRepository userRepository;
 
 	@Autowired
 	private AuditService auditService;
@@ -468,7 +474,24 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 	@Override
 	 public ResponseEntity getSiteByEmployeeId(Integer employeeId) {
         EmployeeMaster employee = employeeRepository.findByIdWithSite(employeeId)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElseThrow(() -> new BusinessException("Employee not found"));
+
+        CompSiteMasterEntity site = employee.getSite();
+
+        return new ResponseEntity(
+                "Site fetched successfully",
+                200,
+                site
+        );
+    }
+
+	@Override
+	 public ResponseEntity getSiteByUserId(Integer userId) {
+        UserMaster user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+		EmployeeMaster employee = employeeRepository.findByIdWithSite(user.getSourceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
 
         CompSiteMasterEntity site = employee.getSite();
 
