@@ -30,5 +30,7 @@ public interface CompSiteMasterService {
 
 	ResponseEntity getSiteByEmployeeId(Integer employeeId);
 
+	ResponseEntity getSiteByUserId(Integer userId);
+
 	public ResponseEntity getAllSitesForFeign();
 }
