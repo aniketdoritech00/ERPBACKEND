@@ -21,6 +21,8 @@ public interface ContractItemMappingService {
 
 	ResponseEntity getItemByContractId(Integer contractId);
 
+	//ResponseEntity saveOrUpdateItemMapping(List<ContractItemMappingRequest> requests);
+
 	ResponseEntity saveOrUpdateItemMapping(List<ContractItemMappingRequest> requests);
 
 	ResponseEntity getPackageItemsByContractAndItem(Integer contractId, Integer itemId);

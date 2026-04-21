@@ -28,8 +28,7 @@ public interface CompSiteMasterService {
 
 	ResponseEntity getSiteDistrict(Integer siteId);
 
-	ResponseEntity getAllSitesForFeign();
+	ResponseEntity getSiteByEmployeeId(Integer employeeId);
 
-	
-
+	public ResponseEntity getAllSitesForFeign();
 }

@@ -30,6 +30,23 @@ public class ContractItemMappingController {
 	@Autowired
 	private ContractItemMappingService service;
 
+	// @PostMapping("/saveOrUpdateContractItem")
+	// public ResponseEntity saveOrUpdate(
+	// 		@Valid @RequestBody List<ContractItemMappingRequest> requests,
+	// 		@RequestHeader("X-User-Id") String userId) {
+
+	// 	logger.info("SaveOrUpdate ContractItemMapping API hit for {} requests by user {}", requests.size(), userId);
+
+	// 	Integer user = Integer.parseInt(userId);
+
+	// 	for (ContractItemMappingRequest req : requests) {
+	// 		req.setCreatedBy(user);
+	// 		req.setModifiedBy(user);
+	// 	}
+
+	// 	return service.saveOrUpdateItemMapping(requests);
+	// }
+
 	@PostMapping("/saveOrUpdateContractItem")
 	public ResponseEntity saveOrUpdate(
 			@Valid @RequestBody List<ContractItemMappingRequest> requests,
