@@ -2,17 +2,29 @@ package com.doritech.EmployeeService.serviceImp;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.doritech.EmployeeService.entity.ParamEntity;
+import com.doritech.EmployeeService.exception.ApiResponse;
+import com.doritech.EmployeeService.exception.BusinessException;
 import com.doritech.EmployeeService.exception.ResourceNotFoundException;
 import com.doritech.EmployeeService.repository.ParamRepository;
 import com.doritech.EmployeeService.request.ParamRequestDTO;
+import com.doritech.EmployeeService.response.PageResponse;
+import com.doritech.EmployeeService.response.PageResponseDTO;
 import com.doritech.EmployeeService.response.ParamResponseDTO;
 import com.doritech.EmployeeService.service.ParamService;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class ParamServiceImpl implements ParamService {
@@ -100,10 +112,80 @@ public class ParamServiceImpl implements ParamService {
 	}
 
 	@Override
+	@Transactional
+	public List<ParamResponseDTO> updateMultipleParam(List<ParamRequestDTO> paramList) {
+
+		if (paramList == null || paramList.isEmpty()) {
+			throw new BusinessException("Param list cannot be null or empty");
+		}
+
+		List<Integer> ids = paramList.stream()
+				.map(ParamRequestDTO::getParamId)
+				.peek(id -> {
+					if (id == null) {
+						throw new BusinessException("Param Id is required for all records");
+					}
+				})
+				.toList();
+
+		List<ParamEntity> entities = repository.findAllById(ids);
+
+		if (entities.size() != ids.size()) {
+			throw new ResourceNotFoundException("Some Param IDs not found");
+		}
+
+		Map<Integer, ParamEntity> entityMap = entities.stream()
+				.collect(Collectors.toMap(ParamEntity::getParamId, Function.identity()));
+
+		List<ParamEntity> updatedList = new ArrayList<>();
+
+		for (ParamRequestDTO req : paramList) {
+
+			ParamEntity entity = entityMap.get(req.getParamId());
+
+			entity.setCode(req.getCode());
+			entity.setSerial(req.getSerial());
+			entity.setDesp1(req.getDesp1());
+			entity.setDesp2(req.getDesp2());
+			entity.setDesp3(req.getDesp3());
+			entity.setDesp4(req.getDesp4());
+			entity.setDesp5(req.getDesp5());
+			entity.setSerialNo(req.getSerialNo());
+
+			updatedList.add(entity);
+		}
+
+		List<ParamEntity> savedEntities = repository.saveAll(updatedList);
+
+		return savedEntities.stream()
+				.map(this::mapToDTO)
+				.toList();
+	}
+
+	@Override
 	public ParamResponseDTO getById(Integer id) {
 		ParamEntity entity = repository.findById(id).orElseThrow(
 				() -> new ResourceNotFoundException("Param not found"));
 		return mapToDTO(entity);
+	}
+
+	@Override
+	public PageResponse<ParamResponseDTO> getAllParams(int page, int size) {
+
+		Page<ParamEntity> params = repository.findAll(PageRequest.of(page, size));
+
+		List<ParamResponseDTO> dtoList = params.getContent()
+				.stream()
+				.map(this::mapToDTO)
+				.toList();
+
+		return new PageResponse<>(
+				dtoList,
+				params.getNumber(),
+				params.getSize(),
+				params.getTotalElements(),
+				params.getTotalPages(),
+				params.isLast());
 	}
 
 	@Override

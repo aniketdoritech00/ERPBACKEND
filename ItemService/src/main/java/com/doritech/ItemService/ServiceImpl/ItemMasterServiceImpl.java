@@ -53,16 +53,16 @@ public class ItemMasterServiceImpl implements ItemMasterService {
 	public ItemMasterResponseDTO updateItem(Integer id,
 			ItemMasterRequestDTO dto) {
 
-		if (dto.getItemType() != null && dto.getItemType().length() > 1) {
-			throw new BusinessException("Item Type must be only 1 character (e.g., B, S)");
+		if (dto.getItemType() != null && dto.getItemType().length() > 4) {
+			throw new BusinessException("Item Type must be only 4 characters (e.g., B, I)");
 		}
 
-		if (dto.getCategory() != null && dto.getCategory().length() > 2) {
-			throw new BusinessException("Category must be max 2 characters (e.g., HW)");
+		if (dto.getCategory() != null && dto.getCategory().length() > 5) {
+			throw new BusinessException("Category must be max 5 characters (e.g., SAS, FAS)");
 		}
 
-		if (dto.getUnitOfMeasure() != null && dto.getUnitOfMeasure().length() > 2) {
-			throw new BusinessException("Unit of Measure must be max 2 characters (e.g., PC)");
+		if (dto.getUnitOfMeasure() != null && dto.getUnitOfMeasure().length() > 4) {
+			throw new BusinessException("Unit of Measure must be max 4 characters (e.g., PC, KG)");
 		}
 
 		ItemMasterEntity entity = repo.findById(id)

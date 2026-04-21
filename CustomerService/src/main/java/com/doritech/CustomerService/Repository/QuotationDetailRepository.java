@@ -27,4 +27,6 @@ public interface QuotationDetailRepository extends JpaRepository<QuotationDetail
 	QuotationDetail findByItemId(Integer parentItemId);
 
 	Page<QuotationDetail> findByParentItemIdIsNull(Pageable pageable);
+
+	List<QuotationDetail> findByQuotationMaster_QuotationId(Integer quotationId);
 }

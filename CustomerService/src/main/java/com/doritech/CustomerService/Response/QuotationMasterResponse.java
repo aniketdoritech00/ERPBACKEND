@@ -1,6 +1,7 @@
 package com.doritech.CustomerService.Response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class QuotationMasterResponse {
 
@@ -34,6 +35,14 @@ public class QuotationMasterResponse {
 	private Integer createdBy;
 
 	private Integer modifiedBy;
+
+	List<QuotationDetailResponse> items;
+
+	List<QuotationDocumentResponse> documents;
+
+	
+
+	
 
 	public Integer getQuotationId() {
 		return quotationId;
@@ -185,6 +194,22 @@ public class QuotationMasterResponse {
 
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;
+	}
+
+	public List<QuotationDetailResponse> getItems() {
+		return items;
+	}
+
+	public void setItems(List<QuotationDetailResponse> items) {
+		this.items = items;
+	}
+
+	public List<QuotationDocumentResponse> getDocuments() {
+		return documents;
+	}
+
+	public void setDocuments(List<QuotationDocumentResponse> documents) {
+		this.documents = documents;
 	}
 
 }
