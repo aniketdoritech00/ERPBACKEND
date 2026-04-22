@@ -224,9 +224,12 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 				return new ResourceNotFoundException("Contract not found with id : " + request.getContractId());
 			});
 
-			ContractEntityMapping entityMapping = contractEntityMappingRepository.findById(request.getEntityMappingId())
-					.orElseThrow(() -> new ResourceNotFoundException(
-							"ContractEntityMapping not found with id : " + request.getEntityMappingId()));
+			List<ContractEntityMapping> entityMappings = contractEntityMappingRepository
+					.findAllById(request.getEntityMappingId());
+
+			if (entityMappings.size() != request.getEntityMappingId().size()) {
+				throw new ResourceNotFoundException("Some ContractEntityMappings not found");
+			}
 
 			logger.info("Validating item with id {}", request.getItemId());
 			validationService.validateItemExists(request.getItemId());
@@ -270,8 +273,10 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 				ContractItemMapping updated = repository.save(entity);
 
 				// 👉 SAVE IN CUSTOMER ITEM MAPPING
-				saveCustomerItemMapping(entityMapping, updated, request);
-				
+				for (ContractEntityMapping entityMapping : entityMappings) {
+					saveCustomerItemMapping(entityMapping, updated, request);
+				}
+
 				logger.info("Mapping updated successfully with id {}", updated.getContractMappingId());
 				responseList.add(mapper.toResponse(updated));
 
@@ -308,7 +313,9 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 				ContractItemMapping saved = repository.save(entity);
 
 				// 👉 SAVE IN CUSTOMER ITEM MAPPING
-				saveCustomerItemMapping(entityMapping, saved, request);
+				for (ContractEntityMapping entityMapping : entityMappings) {
+					saveCustomerItemMapping(entityMapping, saved, request);
+				}
 
 				logger.info("Mapping created successfully with id {}", saved.getContractMappingId());
 				responseList.add(mapper.toResponse(saved));
