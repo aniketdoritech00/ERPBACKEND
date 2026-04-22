@@ -3,13 +3,14 @@ package com.doritech.CustomerService.Response;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import jakarta.persistence.Column;
 
 public class CustomerResponse {
 
 	private Integer customerId;
 	private String customerName;
 	private String customerCode;
+		private Integer mappingId;
+
 	private Integer orgId;
 	private Integer compId;
 	private String ifsc;
@@ -283,5 +284,13 @@ public class CustomerResponse {
     public void setIfsc(String ifsc) {
         this.ifsc = ifsc;
     }
+
+	public Integer getMappingId() {
+		return mappingId;
+	}
+
+	public void setMappingId(Integer mappingId) {
+		this.mappingId = mappingId;
+	}
 
 }

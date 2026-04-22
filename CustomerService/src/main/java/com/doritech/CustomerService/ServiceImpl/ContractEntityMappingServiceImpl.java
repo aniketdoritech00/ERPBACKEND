@@ -776,8 +776,7 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 		return new ResponseEntity("Mappings deactivated successfully", 200, null);
 	}
-
-	@Override
+@Override
 	public ResponseEntity getCustomerNameAndCodeByContractID(Integer contractId) {
 
 		logger.info("Fetching customer details for contractId: {}", contractId);
@@ -794,30 +793,45 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 			throw new ResourceNotFoundException("No mapping found for given contractId");
 		}
 
-		List<Integer> customerIds = contractEntityMappings.stream().map(m -> m.getCustomer().getCustomerId()).distinct()
-				.collect(Collectors.toList());
+		List<ContractEntityMappingResponse> customerMapping =
+		        contractEntityMappings.stream()
+		                .map(m -> {
+		                    ContractEntityMappingResponse result = new ContractEntityMappingResponse();
 
-		if (customerIds.isEmpty()) {
+		                    result.setMappingId(m.getMappingId());
+		                    result.setCustomerId(m.getCustomer().getCustomerId());
+
+		                    return result;
+		                })
+		                .collect(Collectors.toList());
+		
+
+		if (customerMapping.isEmpty()) {
 			logger.error("CustomerIds list is empty for contractId: {}", contractId);
 			throw new ResourceNotFoundException("No customerIds found");
 		}
 
-		List<CustomerMasterEntity> customers = customerRepository.findAllById(customerIds);
+		List<CustomerResponse> payload = contractEntityMappings.stream()
+		        .filter(m -> m != null && m.getCustomer() != null)
+		        .map(m -> {
+		            CustomerMasterEntity c = m.getCustomer();
 
-		if (customers == null || customers.isEmpty()) {
-			logger.error("No customers found for customerIds: {}", customerIds);
-			throw new ResourceNotFoundException("No customers found");
-		}
+		            if (!"Y".equalsIgnoreCase(c.getIsActive())) {
+		                return null;
+		            }
 
-		List<CustomerResponse> payload = customers.stream()
-				.filter(c -> c != null && "Y".equalsIgnoreCase(c.getIsActive())).map(c -> {
-					CustomerResponse r = new CustomerResponse();
-					r.setCustomerId(c.getCustomerId());
-					r.setCustomerName(c.getCustomerName());
-					r.setCustomerCode(c.getCustomerCode());
-					return r;
-				}).collect(Collectors.toList());
+		            CustomerResponse r = new CustomerResponse();
+		            r.setCustomerId(c.getCustomerId());
+		            r.setCustomerName(c.getCustomerName());
+		            r.setCustomerCode(c.getCustomerCode());
 
+		            r.setMappingId(m.getMappingId());
+
+		            return r;
+		        })
+		        .filter(Objects::nonNull)
+		        .collect(Collectors.toList());
+		
 		ResponseEntity response = new ResponseEntity();
 		response.setMessage("Success");
 		response.setStatusCode(200);
