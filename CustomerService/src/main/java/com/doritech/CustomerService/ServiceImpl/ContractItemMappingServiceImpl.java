@@ -335,12 +335,14 @@ public class ContractItemMappingServiceImpl implements ContractItemMappingServic
 			// 🔁 UPDATE
 			mapping = existing.get();
 			mapping.setQuantity(request.getQuantity());
+			mapping.setModifiedBy(request.getModifiedBy());
 		} else {
 			// 🆕 CREATE
 			mapping = new ContractCustomerItemMapping();
 			mapping.setContractEntityMapping(entityMapping);
 			mapping.setContractItemMapping(itemMapping);
 			mapping.setQuantity(request.getQuantity());
+			mapping.setCreatedBy(request.getCreatedBy());
 		}
 
 		contractCustomerItemMaapingRepository.save(mapping);
