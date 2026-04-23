@@ -662,4 +662,34 @@ public class CustomerServiceImpl implements CustomerService {
 		response.setPayload(customer);
 		return response;
 	}
+
+
+
+	@Override
+	@Transactional(readOnly = true)
+	public ResponseEntity getAllCustomerNamesForFilter() {
+
+		logger.info("Get All Customer Names API called");
+
+		List<CustomerMasterEntity> customers = customerRepo.findAll();
+
+		if (customers.isEmpty()) {
+			logger.warn("No customers found in getAllCustomerNames");
+			throw new ResourceNotFoundException("No Customers Found");
+		}
+
+		List<CustomerResponse> responseList = customers.stream()
+				.map(c -> {
+					CustomerResponse res = new CustomerResponse();
+					res.setCustomerId(c.getCustomerId());
+					res.setCustomerName(c.getCustomerName());
+					res.setCustomerCode(c.getCustomerCode());
+					return res;
+				}).toList();
+
+		logger.info("Total customers fetched: {}", responseList.size());
+
+		return new ResponseEntity("Success", 200, responseList);
+	}
+
 }
