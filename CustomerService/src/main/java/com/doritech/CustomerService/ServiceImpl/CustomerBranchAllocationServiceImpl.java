@@ -111,6 +111,7 @@ public class CustomerBranchAllocationServiceImpl implements CustomerBranchAlloca
 		response.setSiteId(allocation.getSiteId());
 		CompSiteResponse site = validationService.validateAndGetSite(allocation.getSiteId(), "Customer");
 		response.setSiteName(site.getSiteName());
+		response.setSiteCode(site.getSiteCode());
 		response.setFromDate(allocation.getFromDate());
 		response.setIsActive(allocation.getIsActive());
 		response.setCreatedOn(allocation.getCreatedOn());

@@ -1,17 +1,22 @@
 package com.doritech.CustomerService.ServiceImpl;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.doritech.CustomerService.Entity.CustomerEntityTypeEntity;
+import com.doritech.CustomerService.Entity.CustomerMasterEntity;
 import com.doritech.CustomerService.Entity.ResponseEntity;
-import com.doritech.CustomerService.Exception.InternalServerException;
 import com.doritech.CustomerService.Exception.ResourceNotFoundException;
 import com.doritech.CustomerService.Repository.CustomerEntityTypeRepository;
 import com.doritech.CustomerService.Repository.CustomerMasterRepository;
@@ -28,12 +33,12 @@ public class CustomerEntityTypeServiceImpl implements CustomerEntityTypeService 
 
 	private final CustomerEntityTypeRepository repository;
 
+	@Autowired
+	private CustomerMasterRepository customerMasterRepository;
+
 	public CustomerEntityTypeServiceImpl(CustomerEntityTypeRepository repository) {
 		this.repository = repository;
 	}
-
-	@Autowired
-	private CustomerMasterRepository customerMasterRepository;
 
 	@Override
 	@Transactional
@@ -41,115 +46,106 @@ public class CustomerEntityTypeServiceImpl implements CustomerEntityTypeService 
 
 		logger.info("Save/Update Customer Entity Type API called");
 
-		try {
+		boolean customerExists = customerMasterRepository.existsById(request.getCustomerId());
 
-			boolean customerExists = customerMasterRepository.existsById(request.getCustomerId());
+		if (!customerExists) {
+			logger.error("Customer ID not found : {}", request.getCustomerId());
+			throw new ResourceNotFoundException("Customer ID does not exist");
+		}
 
-			if (!customerExists) {
-				logger.error("Customer ID not found : {}", request.getCustomerId());
-				throw new ResourceNotFoundException("Customer ID does not exist");
-			}
+		CustomerEntityTypeEntity entity;
 
-			CustomerEntityTypeEntity entity;
+		if (request.getCustEntityId() != null) {
 
-			if (request.getCustEntityId() != null) {
+			entity = repository.findById(request.getCustEntityId())
+					.orElseThrow(() -> new ResourceNotFoundException("Customer Entity Type ID not found"));
 
-				entity = repository.findById(request.getCustEntityId())
-						.orElseThrow(() -> new ResourceNotFoundException("Customer Entity Type ID not found"));
+			entity.setEntityType(request.getEntityType());
+			entity.setIsActive(request.getIsActive());
+			entity.setModifiedBy(request.getCreatedBy());
+			entity.setModifiedOn(LocalDateTime.now());
 
-				entity.setEntityType(request.getEntityType());
-				entity.setIsActive(request.getIsActive());
+			repository.save(entity);
 
-				entity.setModifiedBy(request.getCreatedBy());
-				entity.setModifiedOn(LocalDateTime.now());
+			logger.info("Customer Entity Type updated successfully");
 
-				repository.save(entity);
+			return new ResponseEntity("Customer Entity Type Updated Successfully", 200, entity);
 
-				logger.info("Customer Entity Type updated successfully");
+		} else {
 
-				return new ResponseEntity("Customer Entity Type Updated Successfully", 200, entity);
+			entity = new CustomerEntityTypeEntity();
 
-			} else {
+			entity.setCustomerId(request.getCustomerId());
+			entity.setEntityType(request.getEntityType());
+			entity.setIsActive(request.getIsActive());
+			entity.setCreatedBy(request.getCreatedBy());
+			entity.setCreatedOn(LocalDateTime.now());
 
-				entity = new CustomerEntityTypeEntity();
+			repository.save(entity);
 
-				entity.setCustomerId(request.getCustomerId());
-				entity.setEntityType(request.getEntityType());
-				entity.setIsActive(request.getIsActive());
+			logger.info("Customer Entity Type saved successfully");
 
-				entity.setCreatedBy(request.getCreatedBy());
-				entity.setCreatedOn(LocalDateTime.now());
-
-				repository.save(entity);
-
-				logger.info("Customer Entity Type saved successfully");
-
-				return new ResponseEntity("Customer Entity Type Saved Successfully", 200, entity);
-			}
-
-		} catch (ResourceNotFoundException ex) {
-			logger.error("Resource not found", ex);
-			throw ex;
-
-		} catch (Exception ex) {
-			logger.error("Error while saving/updating Customer Entity Type", ex);
-			throw new InternalServerException("Something went wrong while processing Customer Entity Type");
+			return new ResponseEntity("Customer Entity Type Saved Successfully", 200, entity);
 		}
 	}
 
 	@Override
-	@Transactional
-	public ResponseEntity getAllCustomerEntityTypes() {
+	public ResponseEntity getAllCustomerEntityTypes(int page, int size) {
 
-		logger.info("Get All Customer Entity Types API called");
+		logger.info("Get All Customer Entity Types API called | page: {}, size: {}", page, size);
 
-		try {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("custEntityId").descending());
 
-			List<CustomerEntityTypeEntity> entityList = repository.findAll();
+		Page<CustomerEntityTypeEntity> entityPage = repository.findAll(pageable);
 
-			if (entityList.isEmpty()) {
-				logger.warn("No Customer Entity Types found");
-				return new ResponseEntity("No Customer Entity Types Found", 404, null);
-			}
-
-			List<CustomerEntityTypeResponse> responseList = new ArrayList<>();
-
-			for (CustomerEntityTypeEntity entity : entityList) {
-
-				CustomerEntityTypeResponse response = new CustomerEntityTypeResponse();
-
-				response.setCustEntityId(entity.getCustEntityId());
-				response.setCustomerId(entity.getCustomerId());
-				response.setEntityType(entity.getEntityType());
-				response.setIsActive(entity.getIsActive());
-			//	response.setCreatedBy(entity.getCreatedBy());
-				//response.setCreatedOn(entity.getCreatedOn());
-				//response.setModifiedBy(entity.getModifiedBy());
-				//response.setModifiedOn(entity.getModifiedOn());
-
-				responseList.add(response);
-			}
-
-			logger.info("Customer Entity Types fetched successfully");
-
-			return new ResponseEntity("Success", 200, responseList);
-
-		} catch (Exception ex) {
-
-			logger.error("Error while fetching Customer Entity Types", ex);
-			throw new InternalServerException("Something went wrong while fetching Customer Entity Types");
+		if (entityPage.isEmpty()) {
+			logger.warn("No Customer Entity Types found");
+			throw new ResourceNotFoundException("No Customer Entity Types Found");
 		}
+
+		List<CustomerEntityTypeResponse> responseList = entityPage.getContent().stream().map(entity -> {
+
+			CustomerEntityTypeResponse response = new CustomerEntityTypeResponse();
+
+			response.setCustEntityId(entity.getCustEntityId());
+			response.setCustomerId(entity.getCustomerId());
+
+			if (entity.getCustomerId() != null) {
+				CustomerMasterEntity customerMasterEntity = customerMasterRepository
+						.findByCustomerId(entity.getCustomerId());
+				response.setCustomerName(customerMasterEntity.getCustomerName());
+				response.setCustomerCode(customerMasterEntity.getCustomerCode());
+			}
+
+			response.setEntityType(entity.getEntityType());
+			response.setIsActive(entity.getIsActive());
+
+			return response;
+
+		}).toList();
+
+		Map<String, Object> pagination = new HashMap<>();
+		pagination.put("content", responseList);
+		pagination.put("currentPage", entityPage.getNumber());
+		pagination.put("totalItems", entityPage.getTotalElements());
+		pagination.put("totalPages", entityPage.getTotalPages());
+		pagination.put("pageSize", entityPage.getSize());
+
+		logger.info("Customer Entity Types fetched successfully");
+
+		return new ResponseEntity("Success", 200, pagination);
 	}
 
 	@Override
 	public ResponseEntity getCustomerEntityTypeByCustomerId(Integer customerId) {
 
-		logger.info("Get Customer Entity Types {}", customerId);
+		logger.info("Get Customer Entity Types by customerId: {}", customerId);
 
 		List<CustomerEntityTypeEntity> list = repository.findByCustomerId(customerId);
 
-		if (list.isEmpty())
+		if (list.isEmpty()) {
 			throw new ResourceNotFoundException("Customer Entity Type Not Found");
+		}
 
 		List<CustomerEntityTypeResponse> response = list.stream().map(e -> {
 
@@ -166,44 +162,34 @@ public class CustomerEntityTypeServiceImpl implements CustomerEntityTypeService 
 
 		return new ResponseEntity("Success", 200, response);
 	}
-	
+
 	@Override
-	@Transactional
 	public ResponseEntity getCustomerEntityTypesByCustomerId(Integer customerId) {
 
-	    logger.info("Get Customer Entity Types by CustomerId API called");
+		logger.info("Get Customer Entity Types by CustomerId API called");
 
-	    try {
+		List<CustomerEntityTypeEntity> entityList = repository.findByCustomerId(customerId);
 
-	        List<CustomerEntityTypeEntity> entityList = repository.findByCustomerId(customerId);
+		if (entityList.isEmpty()) {
+			logger.warn("No Customer Entity Types found for customerId: {}", customerId);
+			throw new ResourceNotFoundException("No Entity Types Found for CustomerId: " + customerId);
+		}
 
-	        if (entityList.isEmpty()) {
-	            logger.warn("No Customer Entity Types found for customerId: {}", customerId);
-	            return new ResponseEntity("No Entity Types Found for CustomerId: " + customerId, 404, null);
-	        }
+		List<CustomerEntityTypeResponse> responseList = entityList.stream().map(entity -> {
 
-	        List<CustomerEntityTypeResponse> responseList = new ArrayList<>();
+			CustomerEntityTypeResponse response = new CustomerEntityTypeResponse();
 
-	        for (CustomerEntityTypeEntity entity : entityList) {
+			response.setCustEntityId(entity.getCustEntityId());
+			response.setCustomerId(entity.getCustomerId());
+			response.setEntityType(entity.getEntityType());
+			response.setIsActive(entity.getIsActive());
 
-	            CustomerEntityTypeResponse response = new CustomerEntityTypeResponse();
+			return response;
 
-	            response.setCustEntityId(entity.getCustEntityId());
-	            response.setCustomerId(entity.getCustomerId());
-	            response.setEntityType(entity.getEntityType());
-	            response.setIsActive(entity.getIsActive());
+		}).toList();
 
-	            responseList.add(response);
-	        }
+		logger.info("Customer Entity Types fetched successfully for customerId: {}", customerId);
 
-	        logger.info("Customer Entity Types fetched successfully for customerId: {}", customerId);
-
-	        return new ResponseEntity("Success", 200, responseList);
-
-	    } catch (Exception ex) {
-
-	        logger.error("Error while fetching Customer Entity Types", ex);
-	        throw new InternalServerException("Something went wrong while fetching Customer Entity Types");
-	    }
+		return new ResponseEntity("Success", 200, responseList);
 	}
 }

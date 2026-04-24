@@ -19,11 +19,16 @@ import org.springframework.stereotype.Service;
 import com.doritech.EmployeeService.Mapper.CompSiteMasterMapper;
 import com.doritech.EmployeeService.Specification.SiteSpecification;
 import com.doritech.EmployeeService.entity.CompSiteMasterEntity;
+import com.doritech.EmployeeService.entity.EmployeeMaster;
 import com.doritech.EmployeeService.entity.HierarchyLevelEntity;
 import com.doritech.EmployeeService.entity.ResponseEntity;
+import com.doritech.EmployeeService.entity.UserMaster;
+import com.doritech.EmployeeService.exception.BusinessException;
 import com.doritech.EmployeeService.exception.ResourceNotFoundException;
 import com.doritech.EmployeeService.repository.CompSiteMasterRepository;
+import com.doritech.EmployeeService.repository.EmployeeMasterRepository;
 import com.doritech.EmployeeService.repository.HierarchyLevelRepository;
+import com.doritech.EmployeeService.repository.UserMasterRepository;
 import com.doritech.EmployeeService.request.CompSiteMasterRequest;
 import com.doritech.EmployeeService.response.CompSiteMasterResponse;
 import com.doritech.EmployeeService.response.PageResponse;
@@ -42,6 +47,12 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 
 	@Autowired
 	private HierarchyLevelRepository hierarchyLevelRepository;
+
+	@Autowired
+	private EmployeeMasterRepository employeeRepository;
+
+	@Autowired
+	private UserMasterRepository userRepository;
 
 	@Autowired
 	private AuditService auditService;
@@ -196,13 +207,13 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 				.orElseThrow(() -> new ResourceNotFoundException(
 						"Company Site not found with id: " + id));
 		
-		if ("BANK".equalsIgnoreCase(request.getSiteType())
-	            && (request.getIfsc() == null || request.getIfsc().trim().isEmpty())) {
+		// if ("BANK".equalsIgnoreCase(request.getSiteType())
+	    //         && (request.getIfsc() == null || request.getIfsc().trim().isEmpty())) {
 
-	        response.setMessage("IFSC is mandatory when Site Type is BANK");
-	        response.setStatusCode(400);
-	        return response;
-	    }
+	    //     response.setMessage("IFSC is mandatory when Site Type is BANK");
+	    //     response.setStatusCode(400);
+	    //     return response;
+	    // }
 
 		if (repository.existsBySiteCodeIgnoreCaseAndSiteIdNot(
 				request.getSiteCode(), id)) {
@@ -227,8 +238,7 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 		entity.setContactPerson(request.getContactPerson());
 		entity.setEmail(request.getEmail());
 		entity.setPhone(request.getPhone());
-		entity.setIfsc(request.getIfsc());
-		entity.setSiteType(request.getSiteType());
+		entity.setGstNo(request.getGstNo());
 		entity.setAddress(request.getAddress());
 		entity.setCity(request.getCity());
 		entity.setDistrict(request.getDistrict());
@@ -261,14 +271,14 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 		logger.info("Saving Company Site with SiteCode: {}",
 				request.getSiteCode());
 		
-		if ("BANK".equalsIgnoreCase(request.getSiteType())
-		        && (request.getIfsc() == null || request.getIfsc().trim().isEmpty())) {
+		// if ("BANK".equalsIgnoreCase(request.getSiteType())
+		//         && (request.getIfsc() == null || request.getIfsc().trim().isEmpty())) {
 
-		    ResponseEntity response = new ResponseEntity();
-		    response.setMessage("IFSC is mandatory when Site Type is BANK");
-		    response.setStatusCode(400);
-		    return response;
-		}
+		//     ResponseEntity response = new ResponseEntity();
+		//     response.setMessage("IFSC is mandatory when Site Type is BANK");
+		//     response.setStatusCode(400);
+		//     return response;
+		// }
 
 		if (repository.existsBySiteCodeIgnoreCase(request.getSiteCode())) {
 			ResponseEntity response = new ResponseEntity();
@@ -460,4 +470,35 @@ public class CompSiteMasterServiceImpl implements CompSiteMasterService {
 
 		return response;
 	}
+
+	@Override
+	 public ResponseEntity getSiteByEmployeeId(Integer employeeId) {
+        EmployeeMaster employee = employeeRepository.findByIdWithSite(employeeId)
+                .orElseThrow(() -> new BusinessException("Employee not found"));
+
+        CompSiteMasterEntity site = employee.getSite();
+
+        return new ResponseEntity(
+                "Site fetched successfully",
+                200,
+                site
+        );
+    }
+
+	@Override
+	 public ResponseEntity getSiteByUserId(Integer userId) {
+        UserMaster user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+		EmployeeMaster employee = employeeRepository.findByIdWithSite(user.getSourceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+
+        CompSiteMasterEntity site = employee.getSite();
+
+        return new ResponseEntity(
+                "Site fetched successfully",
+                200,
+                site
+        );
+    }
 }

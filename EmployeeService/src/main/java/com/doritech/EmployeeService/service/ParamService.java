@@ -3,6 +3,7 @@ package com.doritech.EmployeeService.service;
 import java.util.List;
 
 import com.doritech.EmployeeService.request.ParamRequestDTO;
+import com.doritech.EmployeeService.response.PageResponse;
 import com.doritech.EmployeeService.response.ParamResponseDTO;
 
 public interface ParamService {
@@ -12,7 +13,11 @@ public interface ParamService {
 
 	ParamResponseDTO update(Integer id, ParamRequestDTO dto);
 
+	List<ParamResponseDTO> updateMultipleParam(List<ParamRequestDTO> paramList);
+
 	ParamResponseDTO getById(Integer id);
+
+	PageResponse<ParamResponseDTO> getAllParams(int page, int size);
 
 	List<ParamResponseDTO> getByCode(String code);
 

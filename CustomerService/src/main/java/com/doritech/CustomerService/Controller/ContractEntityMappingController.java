@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
+import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Request.ContractEntityMappingRequest;
 import com.doritech.CustomerService.Service.ContractEntityMappingService;
 
@@ -25,23 +26,28 @@ import jakarta.validation.Valid;
 @RequestMapping("/customer/api/contract-entity-mapping")
 public class ContractEntityMappingController {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(ContractEntityMappingController.class);
+	private static final Logger logger = LoggerFactory.getLogger(ContractEntityMappingController.class);
 
 	@Autowired
 	private ContractEntityMappingService service;
 
 	@PostMapping("/saveOrUpdateContractEntity")
-	public ResponseEntity saveOrUpdateMappings(
-			@Valid @RequestBody List<ContractEntityMappingRequest> requests,
+	public ResponseEntity saveOrUpdateMappings(@Valid @RequestBody List<ContractEntityMappingRequest> requests,
 			@RequestHeader("X-User-Id") String userId) {
 
-		logger.info("SaveOrUpdate Mapping API hit for {} mappings by user: {}",
-				requests.size(), userId);
+		logger.info("SaveOrUpdate Mapping API hit for {} mappings by user: {}", requests.size(), userId);
 
-		Integer user = Integer.parseInt(userId);
+		if (userId == null || userId.isBlank()) {
+			throw new BadRequestException("X-User-Id header cannot be blank");
+		}
 
-		// set createdBy & modifiedBy for each request
+		Integer user;
+		try {
+			user = Integer.parseInt(userId.trim());
+		} catch (NumberFormatException ex) {
+			throw new BadRequestException("X-User-Id must be a valid integer, received: " + userId);
+		}
+
 		for (ContractEntityMappingRequest req : requests) {
 			req.setCreatedBy(user);
 			req.setModifiedBy(user);
@@ -51,55 +57,54 @@ public class ContractEntityMappingController {
 	}
 
 	@GetMapping("/getContractEntity/{id}")
-	public ResponseEntity getMapping(@PathVariable Integer id,
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity getMapping(@PathVariable Integer id, @RequestHeader("X-User-Id") String userId) {
 
-		logger.info("getContractEntity Mapping API hit by user: {}", userId);
+		logger.info("getContractEntity Mapping API hit for id {} by user: {}", id, userId);
 		return service.getMappingById(id);
 	}
 
 	@GetMapping("/getAllContractEntity")
-	public ResponseEntity getAllMappings(
-			@RequestParam(defaultValue = "0") int page,
+	public ResponseEntity getAllMappings(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size) {
 
-		logger.info("getAllMappings API hit with page {} and size {}", page,
-				size);
-
+		logger.info("getAllMappings API hit with page {} and size {}", page, size);
 		return service.getAllMappings(page, size);
 	}
 
 	@GetMapping("/getAllContractEntityMappings")
-	public ResponseEntity getAllContractEntityMappings(@RequestParam String contractType, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+	public ResponseEntity getAllContractEntityMappings(@RequestParam String contractType,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
 
 		logger.info("getAllContractEntityMappings API hit with contract type {}", contractType);
-
-		return service.getAllContractEntityMappings(contractType,page,size);
+		return service.getAllContractEntityMappings(contractType, page, size);
 	}
 
 	@DeleteMapping("/deactivateContractEntity/{id}")
-	public ResponseEntity deactivateMapping(@PathVariable Integer id,
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity deactivateMapping(@PathVariable Integer id, @RequestHeader("X-User-Id") String userId) {
 
-		logger.info("deactivateMapping API hit by user: {}", userId);
+		logger.info("deactivateMapping API hit for id {} by user: {}", id, userId);
 		return service.deactivateMapping(id);
 	}
 
 	@GetMapping("/getMappingByContractId/{id}")
-	public ResponseEntity getMappingByContractId(@PathVariable Integer id,
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity getMappingByContractId(@PathVariable Integer id, @RequestHeader("X-User-Id") String userId) {
 
-		logger.info("getMappingByContractId API hit by user: {}", userId);
+		logger.info("getMappingByContractId API hit for id {} by user: {}", id, userId);
 		return service.getMappingByContractId(id);
 	}
 
 	@DeleteMapping("/deactivateBulkContractEntity/{ids}")
-	public ResponseEntity deactivateBulkContractEntity(
-	        @PathVariable List<Integer> ids,
-	        @RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity deactivateBulkContractEntity(@PathVariable List<Integer> ids,
+			@RequestHeader("X-User-Id") String userId) {
 
-	    logger.info("deactivateBulkContractEntity API hit by user: {}", userId);
-	    return service.deactivateBulkContractEntity(ids);
+		logger.info("deactivateBulkContractEntity API hit by user: {}", userId);
+		return service.deactivateBulkContractEntity(ids);
 	}
 
+	@GetMapping("/getCustomerNameAndCodeByContractID/{contractId}")
+	public ResponseEntity getCustomerNameAndCodeByContractID(@PathVariable Integer contractId,
+			@RequestHeader("X-User-Id") String userId) {
+		logger.info("getContractEntity API hit for contractId {} by user: {}", contractId, userId);
+		return service.getCustomerNameAndCodeByContractID(contractId);
+	}
 }

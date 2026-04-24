@@ -140,4 +140,14 @@ public class CompSiteMasterController {
 	public ResponseEntity fetchAllSitesForFeign() {
 		return compSiteMasterService.getAllSitesForFeign();
 	}
+
+	@GetMapping("/getSiteByEmployeeId/{id}")
+    public ResponseEntity getSiteByEmployeeId(@PathVariable("id") Integer id) {
+        return compSiteMasterService.getSiteByEmployeeId(id);
+    }
+
+	@GetMapping("/getSiteByUserId/{id}")
+    public ResponseEntity getSiteByUserId(@PathVariable("id") Integer id) {
+        return compSiteMasterService.getSiteByUserId(id);
+    }
 }

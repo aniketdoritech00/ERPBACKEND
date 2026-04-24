@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
+import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Request.CustomerContactRequest;
 import com.doritech.CustomerService.Service.CustomerContactService;
 import com.doritech.CustomerService.ServiceImpl.CustomerContactServiceImpl;
@@ -24,6 +25,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/customer/api/contact")
 public class CustomerContactController {
+
 	private static final Logger logger = LoggerFactory.getLogger(CustomerContactServiceImpl.class);
 
 	private final CustomerContactService service;
@@ -36,7 +38,14 @@ public class CustomerContactController {
 	public ResponseEntity saveCustomerContact(@RequestBody List<@Valid CustomerContactRequest> request,
 			@RequestHeader("X-User-Id") String userId) {
 
-		Integer user = Integer.parseInt(userId);
+		Integer user;
+		try {
+			user = Integer.parseInt(userId);
+		} catch (NumberFormatException ex) {
+			logger.error("saveCustomerContact failed: Invalid X-User-Id header value: {}", userId);
+			throw new BadRequestException("Invalid X-User-Id header value: " + userId);
+		}
+
 		logger.info("Save Customer Contact API called by user {}", user);
 
 		request.forEach(r -> {
@@ -57,7 +66,6 @@ public class CustomerContactController {
 	@GetMapping("/getContact/{customerId}")
 	public ResponseEntity getCustomerContacts(@PathVariable Integer customerId,
 			@RequestHeader("X-User-Id") String userId) {
-
 		logger.info("Get Customer Contacts for customerId {} called by user {}", customerId, userId);
 		return service.getCustomerContacts(customerId);
 	}
@@ -65,9 +73,8 @@ public class CustomerContactController {
 	@GetMapping("/getCustomerContactsDetails/{contactId}")
 	public ResponseEntity getCustomerContactsDetails(@PathVariable Integer contactId,
 			@RequestHeader("X-User-Id") String userId) {
-		System.out.println("-----------------Get Customer Contacts for contactId");
 		logger.info("Get Customer Contacts for contactId {} called by user {}", contactId, userId);
-		return service.getCustomerContacts(contactId);
+		return service.getCustomerContactsDetails(contactId);
 	}
 
 	@DeleteMapping("/deleteBulkCustomerContact")

@@ -3,13 +3,17 @@ package com.doritech.CustomerService.Response;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
 public class CustomerResponse {
 
 	private Integer customerId;
 	private String customerName;
 	private String customerCode;
+		private Integer mappingId;
+
 	private Integer orgId;
 	private Integer compId;
+	private String ifsc;
 	private String address;
 	private String city;
 	private String district;
@@ -34,6 +38,7 @@ public class CustomerResponse {
 	private List<CustomerEntityTypeResponse> entityTypes;
 	private List<CustomerContactResponse> contacts;
 
+	
 	/**
 	 * @return the minNoVisits
 	 */
@@ -270,6 +275,22 @@ public class CustomerResponse {
 
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+    public String getIfsc() {
+        return ifsc;
+    }
+
+    public void setIfsc(String ifsc) {
+        this.ifsc = ifsc;
+    }
+
+	public Integer getMappingId() {
+		return mappingId;
+	}
+
+	public void setMappingId(Integer mappingId) {
+		this.mappingId = mappingId;
 	}
 
 }

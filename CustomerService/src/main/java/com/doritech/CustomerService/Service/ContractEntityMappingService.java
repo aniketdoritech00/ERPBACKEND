@@ -26,4 +26,6 @@ public interface ContractEntityMappingService {
 
     ResponseEntity deactivateBulkContractEntity(List<Integer> ids);
 
+	ResponseEntity getCustomerNameAndCodeByContractID(Integer contractId);
+
 }

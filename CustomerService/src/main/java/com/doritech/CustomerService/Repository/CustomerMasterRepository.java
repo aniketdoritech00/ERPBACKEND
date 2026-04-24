@@ -1,6 +1,5 @@
 package com.doritech.CustomerService.Repository;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,22 +16,17 @@ import com.doritech.CustomerService.Projection.CustomerWithContactProjection;
 
 @Repository
 public interface CustomerMasterRepository
-		extends
-		JpaRepository<CustomerMasterEntity, Integer>,
-		JpaSpecificationExecutor<CustomerMasterEntity> {
+		extends JpaRepository<CustomerMasterEntity, Integer>, JpaSpecificationExecutor<CustomerMasterEntity> {
 
-	Optional<CustomerMasterEntity> findByCustomerCodeIgnoreCase(
-			String customerCode);
+	Optional<CustomerMasterEntity> findByCustomerCodeIgnoreCase(String customerCode);
 
-	List<CustomerMasterEntity> findByCustomerNameIgnoreCase(
-			String customerName);
+	List<CustomerMasterEntity> findByCustomerNameIgnoreCase(String customerName);
 
 	List<CustomerMasterEntity> findByIsActiveIgnoreCase(String status);
 
 	CustomerMasterEntity findByCustomerId(Integer customerId);
 
-	List<CustomerMasterEntity> findByCustomerNameContainingIgnoreCase(
-			String customerName);
+	List<CustomerMasterEntity> findByCustomerNameContainingIgnoreCase(String customerName);
 
 	@Query("""
 			SELECT c
@@ -52,6 +46,7 @@ public interface CustomerMasterRepository
 			    cm.customer_code      AS customerCode,
 			    cm.org_id             AS orgId,
 			    cm.comp_id            AS compId,
+				cm.ifsc               AS ifsc,
 			    cm.address            AS address,
 			    cm.city               AS city,
 			    cm.district			  AS district,
@@ -84,6 +79,7 @@ public interface CustomerMasterRepository
 			    cm.customer_code      AS customerCode,
 			    cm.org_id             AS orgId,
 			    cm.comp_id            AS compId,
+				cm.ifsc               AS ifsc,
 			    cm.address            AS address,
 			    cm.city               AS city,
 			    cm.district			  AS district,
@@ -125,8 +121,7 @@ public interface CustomerMasterRepository
 			LEFT JOIN customer_entity_type  ce   ON ce.customer_id        = cm.customer_id
 			WHERE cm.customer_id = :customerId
 			""", nativeQuery = true)
-	List<CustomerWithContactProjection> findCustomerWithDetailsById(
-			@Param("customerId") Integer customerId);
+	List<CustomerWithContactProjection> findCustomerWithDetailsById(@Param("customerId") Integer customerId);
 
 	@Query(value = """
 			SELECT
@@ -135,6 +130,7 @@ public interface CustomerMasterRepository
 			    cm.customer_code      AS customerCode,
 			    cm.org_id             AS orgId,
 			    cm.comp_id            AS compId,
+				cm.ifsc               AS ifsc,
 			    cm.address            AS address,
 			    cm.city               AS city,
 			    cm.district           AS district,
@@ -180,9 +176,8 @@ public interface CustomerMasterRepository
 			    AND (:entityType IS NULL OR ce.entity_type = :entityType)
 			ORDER BY cm.customer_id
 			""", nativeQuery = true)
-	List<CustomerWithContactProjection> findCustomersWithDetailsByFilter(
-			@Param("name") String name, @Param("status") String status,
-			@Param("entityType") String entityType);
+	List<CustomerWithContactProjection> findCustomersWithDetailsByFilter(@Param("name") String name,
+			@Param("status") String status, @Param("entityType") String entityType);
 
 	@Query("""
 			    SELECT c.customerId AS customerId,
@@ -192,8 +187,8 @@ public interface CustomerMasterRepository
 			    WHERE c.orgId = :orgId
 			    AND c.hierarchyLevelId >= :levelId
 			""")
-	List<CustomerSummaryProjection> findByOrgAndHierarchy(
-			@Param("orgId") Integer orgId, @Param("levelId") Integer levelId);
+	List<CustomerSummaryProjection> findByOrgAndHierarchy(@Param("orgId") Integer orgId,
+			@Param("levelId") Integer levelId);
 
 	long countByIsActive(String string);
 

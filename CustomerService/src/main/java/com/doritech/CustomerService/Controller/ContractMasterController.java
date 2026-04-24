@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
+import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Request.ContractMasterRequest;
 import com.doritech.CustomerService.Service.ContractMasterService;
 
@@ -25,8 +27,8 @@ import jakarta.validation.Valid;
 @RequestMapping("/customer/api/contract")
 public class ContractMasterController {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(ContractMasterController.class);
+	private static final Logger logger = LoggerFactory.getLogger(ContractMasterController.class);
+
 	@Autowired
 	private ContractMasterService contractService;
 
@@ -36,7 +38,13 @@ public class ContractMasterController {
 			@Valid @RequestBody ContractMasterRequest request,
 			@RequestHeader("X-User-Id") String userId) {
 
-		Integer user = Integer.parseInt(userId);
+		Integer user;
+		try {
+			user = Integer.parseInt(userId);
+		} catch (NumberFormatException ex) {
+			logger.error("createContract failed: Invalid X-User-Id header value: {}", userId);
+			throw new BadRequestException("Invalid X-User-Id header value: " + userId);
+		}
 
 		logger.info("Create/Update Contract API hit by user {}", userId);
 
@@ -45,7 +53,6 @@ public class ContractMasterController {
 
 		return contractService.saveOrUpdateContract(id, request);
 	}
-
 
 	@GetMapping("/getContractById/{id}")
 	public ResponseEntity getContractById(@PathVariable Integer id,
@@ -105,11 +112,15 @@ public class ContractMasterController {
 		return contractService.getContractDetailsByType(type);
 	}
 
-		@GetMapping("/getContractNamesAndIdsForFillter")
+	@GetMapping("/getContractNamesAndIdsForFillter")
 	public ResponseEntity getContractNamesAndIdsForFillter(
 			@RequestHeader("X-User-Id") String userId) {
 		logger.info("Get Contract Names And Ids API hit by user {}", userId);
 		return contractService.getContractNamesAndIdsForFillter();
 	}
 
+	@GetMapping("/fullContractDetails/{contractId}")
+	public ResponseEntity getFullContract(@PathVariable Integer contractId) {
+		return contractService.getFullContractDetails(contractId);
+	}
 }

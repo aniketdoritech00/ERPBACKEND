@@ -29,11 +29,8 @@ public class CompSiteMasterEntity {
 	@Column(name = "site_code", length = 50, unique = true, nullable = false)
 	private String siteCode;
 
-	@Column(name = "ifsc", length = 50)
-	private String ifsc;
-
-	@Column(name = "site_type", length = 50)
-	private String siteType;
+	@Column(name = "gst_no", length = 15)
+	private String gstNo;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "hierarchy_level_id", nullable = false)
@@ -88,17 +85,17 @@ public class CompSiteMasterEntity {
 	private Integer modifiedBy;
 
 	/**
-	 * @return the ifsc
+	 * @return the gstNo
 	 */
-	public String getIfsc() {
-		return ifsc;
+	public String getGstNo() {
+		return gstNo;
 	}
 
 	/**
-	 * @param ifsc the ifsc to set
+	 * @param gstNo the gstNo to set
 	 */
-	public void setIfsc(String ifsc) {
-		this.ifsc = ifsc;
+	public void setGstNo(String gstNo) {
+		this.gstNo = gstNo;
 	}
 
 	public String getIsActive() {
@@ -267,11 +264,4 @@ public class CompSiteMasterEntity {
 		this.district = district;
 	}
 
-	public String getSiteType() {
-		return siteType;
-	}
-
-	public void setSiteType(String siteType) {
-		this.siteType = siteType;
-	}
 }

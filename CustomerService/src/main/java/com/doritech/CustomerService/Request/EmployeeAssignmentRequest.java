@@ -2,6 +2,7 @@ package com.doritech.CustomerService.Request;
 
 import java.time.LocalDateTime;
 
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -20,6 +21,8 @@ public class EmployeeAssignmentRequest {
 
 	private LocalDateTime assignmentEndDate;
 
+	@NotNull(message = "{assignment.visit.date.required}")
+	//@Future(message = "{assignment.visit.date.invalid}")
 	private LocalDateTime visitDate;
 
 	@NotBlank(message = "{assignment.status.required}")

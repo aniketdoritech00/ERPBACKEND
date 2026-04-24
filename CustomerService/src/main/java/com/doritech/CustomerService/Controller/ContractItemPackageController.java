@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
+import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Request.ContractItemPackageRequest;
 import com.doritech.CustomerService.Service.ContractItemPackageService;
 
@@ -25,8 +26,7 @@ import jakarta.validation.Valid;
 @RequestMapping("/customer/api/contractItemPackage")
 public class ContractItemPackageController {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(ContractItemPackageController.class);
+	private static final Logger logger = LoggerFactory.getLogger(ContractItemPackageController.class);
 
 	@Autowired
 	private ContractItemPackageService service;
@@ -37,21 +37,30 @@ public class ContractItemPackageController {
 			@RequestHeader("X-User-Id") String userId) {
 
 		logger.info("SaveOrUpdate ContractItemPackage API called for list");
+
+		if (userId == null || userId.isBlank()) {
+			throw new BadRequestException("X-User-Id header cannot be null or blank");
+		}
+
 		Integer user = Integer.parseInt(userId);
 
 		requests.forEach(req -> {
-			req.setCreatedBy(user);
-			req.setModifiedBy(user);
+			if (req != null) {
+				req.setCreatedBy(user);
+				req.setModifiedBy(user);
+			}
 		});
 
 		return service.saveOrUpdatePackageList(requests);
 	}
 
 	@GetMapping("/getPackageById/{id}")
-	public ResponseEntity getPackageById(@PathVariable Integer id,
+	public ResponseEntity getPackageById(
+			@PathVariable Integer id,
 			@RequestHeader("X-User-Id") String userId) {
-		logger.info("Get ContractItemPackage by id API called {} by user {}",
-				id, userId);
+
+		logger.info("Get ContractItemPackage by id API called {} by user {}", id, userId);
+
 		return service.getPackageById(id);
 	}
 
@@ -60,18 +69,19 @@ public class ContractItemPackageController {
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestHeader("X-User-Id") String userId) {
-		logger.info(
-				"Get all ContractItemPackages API called with page {} and size {} by user {}",
-				page, size, userId);
+
+		logger.info("Get all ContractItemPackages API called with page {} and size {} by user {}", page, size, userId);
+
 		return service.getAllPackages(page, size);
 	}
 
 	@DeleteMapping("/deletePackage/{id}")
-	public ResponseEntity deletePackage(@PathVariable Integer id,
+	public ResponseEntity deletePackage(
+			@PathVariable Integer id,
 			@RequestHeader("X-User-Id") String userId) {
-		logger.info(
-				"Delete ContractItemPackage API called for id {} by user {}",
-				id, userId);
+
+		logger.info("Delete ContractItemPackage API called for id {} by user {}", id, userId);
+
 		return service.deletePackage(id);
 	}
 
@@ -79,10 +89,9 @@ public class ContractItemPackageController {
 	public ResponseEntity getPackageByContractId(
 			@PathVariable Integer contractId,
 			@RequestHeader("X-User-Id") String userId) {
-		logger.info("Get packages by contractId API called {}", contractId);
 
-		logger.info("Get packages by contractId API called {} by user {}",
-				userId);
+		logger.info("Get packages by contractId API called {} by user {}", contractId, userId);
+
 		return service.getPackageByContractId(contractId);
 	}
 
@@ -97,5 +106,4 @@ public class ContractItemPackageController {
 
 	    return service.deleteBulkPackage(ids);
 	}
-
 }

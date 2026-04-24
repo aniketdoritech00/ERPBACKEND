@@ -9,6 +9,7 @@ public interface CustomerWithContactProjection {
 	String getCustomerCode();
 	Integer getOrgId();
 	Integer getCompId();
+	String getIfsc();
 	String getAddress();
 	String getCity();
 	String getDistrict();

@@ -10,6 +10,7 @@ public class ContractItemPackageResponse {
 	private String itemName;
 	private String isActive;
 	private Integer mappedItemId;
+	private String mappedItemName;
 	private LocalDateTime createdOn;
 	private LocalDateTime modifiedOn;
 	private Integer contractId;
@@ -22,6 +23,8 @@ public class ContractItemPackageResponse {
 	private Double basePrice;
 	private Double qty;
 	private Integer modifiedBy;
+
+	
 
 	public String getMappingItemCode() {
 		return mappingItemCode;
@@ -155,5 +158,11 @@ public class ContractItemPackageResponse {
 
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;
+	}
+	public String getMappedItemName() {
+		return mappedItemName;
+	}
+	public void setMappedItemName(String mappedItemName) {
+		this.mappedItemName = mappedItemName;
 	}
 }
