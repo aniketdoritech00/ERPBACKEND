@@ -1,6 +1,8 @@
 package com.doritech.CustomerService.Request;
 
 import java.math.BigDecimal;
+import java.util.List;
+
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,7 +16,7 @@ public class ContractItemMappingRequest {
     private Integer contractId;
 
     @NotNull(message = "{contract.entitymapping.id.required}")
-    private Integer entityMappingId;
+    private List<Integer> entityMappingId;
 
     @NotNull(message = "{item.id.required}")
     private Integer itemId;
@@ -93,10 +95,10 @@ public class ContractItemMappingRequest {
 
     public Integer getModifiedBy() { return modifiedBy; }
     public void setModifiedBy(Integer modifiedBy) { this.modifiedBy = modifiedBy; }
-    public Integer getEntityMappingId() {
+    public List<Integer> getEntityMappingId() {
         return entityMappingId;
     }
-    public void setEntityMappingId(Integer entityMappingId) {
+    public void setEntityMappingId(List<Integer> entityMappingId) {
         this.entityMappingId = entityMappingId;
     }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.doritech.CustomerService.Entity.QuotationDetail;
@@ -29,4 +30,7 @@ public interface QuotationDetailRepository extends JpaRepository<QuotationDetail
 	Page<QuotationDetail> findByParentItemIdIsNull(Pageable pageable);
 
 	List<QuotationDetail> findByQuotationMaster_QuotationId(Integer quotationId);
+
+	@Query("SELECT q FROM QuotationDetail q WHERE q.quotationMaster.quotationId IN :ids")
+	List<QuotationDetail> findByQuotationIds(List<Integer> ids);
 }
