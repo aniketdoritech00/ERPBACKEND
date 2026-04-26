@@ -25,4 +25,8 @@ public interface EmployeeAssignmentService {
 
 	ResponseEntity updateStatusAfterPdfGenerate(Integer assignmentId);
 
+	List<EmployeeAssignmentResponse> getAssignmentByIds(List<Integer> assignmentIds);
+
+	ResponseEntity updateVerifyStatus(Integer assignmentId,String verifyStatus,Integer userId);
+
 }
