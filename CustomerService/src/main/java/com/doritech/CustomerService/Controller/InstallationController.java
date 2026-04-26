@@ -46,7 +46,7 @@ public class InstallationController {
         return installationService.getInstallation(id);
     }
 
-    @GetMapping("/get-installation-by-assignment/{assignmentId}")
+    @GetMapping("/get-installation-by-assignment-id/{assignmentId}")
     public ResponseEntity getInstallationByAssignmentId(@PathVariable Integer assignmentId) {
         return installationService.getInstallationByAssignmentId(assignmentId);
     }

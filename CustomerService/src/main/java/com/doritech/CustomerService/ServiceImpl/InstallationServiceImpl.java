@@ -25,6 +25,7 @@ import com.doritech.CustomerService.Repository.InstallationImageRepository;
 import com.doritech.CustomerService.Repository.InstallationRepository;
 import com.doritech.CustomerService.Request.InstallationRequest;
 import com.doritech.CustomerService.Response.InstallationResponse;
+import com.doritech.CustomerService.Response.PageResponse;
 import com.doritech.CustomerService.Service.FileStorageService;
 import com.doritech.CustomerService.Service.installationService;
 
@@ -280,7 +281,15 @@ public class InstallationServiceImpl implements installationService {
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
 
-        return new ResponseEntity("All Installations Retrieved Successfully", HttpStatus.OK.value(), installationResponses);
+        PageResponse<InstallationResponse> pageResponse = new PageResponse<>();
+        pageResponse.setContent(installationResponses);
+        pageResponse.setPageNumber(installationPage.getNumber());
+        pageResponse.setPageSize(installationPage.getSize());
+        pageResponse.setTotalElements(installationPage.getTotalElements());
+        pageResponse.setTotalPages(installationPage.getTotalPages());
+        pageResponse.setLastPage(installationPage.isLast());
+
+        return new ResponseEntity("All Installations Retrieved Successfully", HttpStatus.OK.value(), pageResponse);
     }
 
     private InstallationResponse convertToResponse(Installation installation) {
@@ -288,6 +297,7 @@ public class InstallationServiceImpl implements installationService {
 
         res.setId(installation.getId());
         res.setBranch(installation.getBranch());
+        res.setAssignmentId(installation.getAssignmentId());
         res.setSalesOrder(installation.getSalesOrder());
 
         res.setWiring(installation.getWiring());

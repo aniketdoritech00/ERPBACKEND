@@ -6,6 +6,7 @@ public class InstallationResponse {
 
     private Long id;
     private String branch;
+    private Integer assignmentId;
     private String salesOrder;
 
     private Boolean wiring;
@@ -24,6 +25,8 @@ public class InstallationResponse {
     private List<String> hddImages;
     private List<String> deviceImages;
     private List<String> serviceImages;
+
+    
 
 
     
@@ -122,6 +125,12 @@ public class InstallationResponse {
     }
     public void setServiceImages(List<String> serviceImages) {
         this.serviceImages = serviceImages;
+    }
+    public Integer getAssignmentId() {
+        return assignmentId;
+    }
+    public void setAssignmentId(Integer assignmentId) {
+        this.assignmentId = assignmentId;
     }
 
     

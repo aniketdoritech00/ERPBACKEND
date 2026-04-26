@@ -76,6 +76,9 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 		entity.setSiteId(request.getSiteId());
 		entity.setAssignmentStartDate(request.getAssignmentStartDate());
 		entity.setAssignmentEndDate(request.getAssignmentEndDate());
+		entity.setVisitType(contractEntityMapping.get().getContract().getContractType());
+		entity.setVerifyStatus("Pending");
+		entity.setVerifyOn(null);
 		entity.setVisitDate(request.getVisitDate());
 		entity.setStatus("Pending");
 		entity.setRemark("NA");
@@ -145,7 +148,7 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 			if (contractEntityMapping.getContract().getAmcType() == "IN") {
 				entity.setHelperId(request.getHelperId());
 			}
-
+			entity.setVisitType(contractEntityMapping.getContract().getContractType());
 			entity.setVerifyStatus("Pending");
 			entity.setVerifyOn(null);
 			entity.setStatus("Pending");
