@@ -44,4 +44,6 @@ public interface ContractMasterRepository
 	long countByContractStartDateBetween(LocalDate start, LocalDate end);
 
 	long countByContractEndDateBetween(LocalDate start, LocalDate end);
+
+    List<ContractMaster> findByContractTypeAndIsActive(String type, String isActive);
 }

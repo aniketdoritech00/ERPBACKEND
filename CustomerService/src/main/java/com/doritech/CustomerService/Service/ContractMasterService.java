@@ -26,4 +26,6 @@ public interface ContractMasterService {
 
 	ResponseEntity getFullContractDetails(Integer contractId);
 
+	ResponseEntity getAllActiveContractsByType(String type);
+
 }
