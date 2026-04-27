@@ -115,7 +115,6 @@ public class EmployeeAssignmentController {
 	@GetMapping("/updateStatusAfterPdfGenerate")
 	public ResponseEntity updateStatusAfterPdfGenerate(@RequestParam Integer assignmentId) {
 		return assignmentService.updateStatusAfterPdfGenerate(assignmentId);
-
 	}
 
 	@GetMapping("/updateVerifyStatus")

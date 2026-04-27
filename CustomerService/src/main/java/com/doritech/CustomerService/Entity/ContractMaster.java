@@ -1,5 +1,6 @@
 package com.doritech.CustomerService.Entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -57,6 +58,39 @@ public class ContractMaster {
 
 	@Column(name = "is_active", length = 1, nullable = false)
 	private String isActive;
+	
+    @Column(name = "sales_order_number", nullable = false, unique = true)
+    private String salesOrderNumber;
+
+    @Column(name = "sales_order_date")
+    private LocalDate salesOrderDate;
+
+    @Column(name = "is_material_required")
+    private Boolean isMaterialRequired;
+
+    @Column(name = "movement_status")
+    private String movementStatus;
+
+    @Column(name = "docket_number")
+    private String docketNumber;
+
+    @Column(name = "brf_number")
+    private String brfNumber;
+
+    @Column(name = "remarks")
+    private String remarks;
+
+    @Column(name = "bill_number")
+    private String billNumber;
+
+    @Column(name = "bill_date")
+    private LocalDate billDate;
+
+    @Column(name = "bill_amount")
+    private BigDecimal billAmount;
+
+    @Column(name = "is_bill_submitted")
+    private Boolean isBillSubmitted;
 
 	@Column(name = "created_on", nullable = false)
 	private LocalDateTime createdOn;
