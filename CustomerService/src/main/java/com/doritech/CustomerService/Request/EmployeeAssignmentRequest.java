@@ -1,8 +1,6 @@
 package com.doritech.CustomerService.Request;
 
 import java.time.LocalDateTime;
-
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -16,6 +14,8 @@ public class EmployeeAssignmentRequest {
 
 	@NotNull(message = "{assignment.site.id.required}")
 	private Integer siteId;
+
+	private Integer helperId;
 
 	private LocalDateTime assignmentStartDate;
 
@@ -34,8 +34,6 @@ public class EmployeeAssignmentRequest {
 	private Integer createdBy;
 
 	private Integer modifiedBy;
-
-	
 
 	/**
 	 * @return the visitDate
@@ -179,5 +177,13 @@ public class EmployeeAssignmentRequest {
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;
 	}
+
+    public Integer getHelperId() {
+        return helperId;
+    }
+
+    public void setHelperId(Integer helperId) {
+        this.helperId = helperId;
+    }
 
 }

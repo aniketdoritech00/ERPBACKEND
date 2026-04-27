@@ -10,6 +10,11 @@ public class EmployeeAssignmentResponse {
 	private Integer mappingId;
 	private Integer employeeId;
 	private String employeeName;
+	private Integer helperId;
+	private String helperName;
+	private String verifyStatus;
+	private Integer verifyBy;
+	private LocalDateTime verifyOn;
 	private Integer siteId;
 	private String ifsc;
 	private String district;
@@ -34,7 +39,37 @@ public class EmployeeAssignmentResponse {
 	private Integer createdBy;
 	private Integer modifiedBy;
 
-	/**
+	public String getVerifyStatus() {
+        return verifyStatus;
+    }
+    public void setVerifyStatus(String verifyStatus) {
+        this.verifyStatus = verifyStatus;
+    }
+    public Integer getVerifyBy() {
+        return verifyBy;
+    }
+    public void setVerifyBy(Integer verifyBy) {
+        this.verifyBy = verifyBy;
+    }
+    public LocalDateTime getVerifyOn() {
+        return verifyOn;
+    }
+    public void setVerifyOn(LocalDateTime verifyOn) {
+        this.verifyOn = verifyOn;
+    }
+    public Integer getHelperId() {
+        return helperId;
+    }
+    public void setHelperId(Integer helperId) {
+        this.helperId = helperId;
+    }
+    public String getHelperName() {
+        return helperName;
+    }
+    public void setHelperName(String helperName) {
+        this.helperName = helperName;
+    }
+    /**
 	 * @return the ifsc
 	 */
 	public String getIfsc() {
