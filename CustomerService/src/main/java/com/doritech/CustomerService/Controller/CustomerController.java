@@ -118,4 +118,9 @@ public class CustomerController {
 	public ResponseEntity getCustomerDetailsByCustomerId(@PathVariable Integer customerId) {
 		return customerService.getCustomerDetailsByCustomerId(customerId);
 	}
+
+	@GetMapping("/getAllCustomerNamesForFilter")
+	public ResponseEntity getAllCustomerNamesForFilter() {
+		return customerService.getAllCustomerNamesForFilter();
+	}
 }
