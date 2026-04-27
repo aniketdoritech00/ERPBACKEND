@@ -17,4 +17,7 @@ public interface DispatchService {
 
 	ResponseEntity updateDispatchDeatils(Integer id, DispatchRequest request);
 
+    ResponseEntity filterDispatchDetails(String deliveryChallanNo, String consignmentNo, String dispatchMode,
+            String dispatchVendor, String status, int page, int size);
+
 }
