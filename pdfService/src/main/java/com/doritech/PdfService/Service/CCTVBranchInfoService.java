@@ -1891,8 +1891,17 @@ public class CCTVBranchInfoService {
 			entity.setConcernedPersonPhone(dto.getConcernedPersonPhone());
 			entity.setConcernedPersonDesignation(dto.getConcernedPersonDesignation());
 			entity.setCctvWorkingStatus(dto.getCctvWorkingStatus());
-			entity.setTotalHddSlots(dto.getTotalHddSlots());
-			entity.setHddInstalledQty(dto.getHddInstalledQty());
+			int hddSlot = dto.getTotalHddSlots();
+			entity.setTotalHddSlots(hddSlot);
+
+			int installedQty = dto.getHddInstalledQty();
+
+			if (installedQty <= hddSlot) {
+			    entity.setHddInstalledQty(installedQty);
+			} else {
+			    throw new IllegalArgumentException("Installed HDD quantity cannot be greater than total HDD slots");
+			}
+			
 			entity.setTotalCapacityTb(dto.getTotalCapacityTb());
 			entity.setTotalFreeSpaceTb(dto.getTotalFreeSpaceTb());
 			entity.setIsAcSupplyUninterrupted(dto.getIsAcSupplyUninterrupted());
