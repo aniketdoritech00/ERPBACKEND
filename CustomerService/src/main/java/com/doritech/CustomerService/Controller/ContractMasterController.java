@@ -32,10 +32,8 @@ public class ContractMasterController {
 	private ContractMasterService contractService;
 
 	@PostMapping("/saveOrUpdateContract")
-	public ResponseEntity createContract(
-			@RequestParam(required = false) Integer id,
-			@Valid @RequestBody ContractMasterRequest request,
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity createContract(@RequestParam(required = false) Integer id,
+			@Valid @RequestBody ContractMasterRequest request, @RequestHeader("X-User-Id") String userId) {
 
 		Integer user;
 		try {
@@ -54,51 +52,50 @@ public class ContractMasterController {
 	}
 
 	@GetMapping("/getContractById/{id}")
-	public ResponseEntity getContractById(@PathVariable Integer id,
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity getContractById(@PathVariable Integer id, @RequestHeader("X-User-Id") String userId) {
 		logger.info("Get Contract By Id API hit {} by user {}", id, userId);
 		return contractService.getContractById(id);
 	}
 
 	@GetMapping("/getAllContracts")
-	public ResponseEntity getAllContracts(
-			@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "100") int size,
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity getAllContracts(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "100") int size, @RequestHeader("X-User-Id") String userId) {
 
-		logger.info("Get All Contracts API hit page {} size {} by user {}",
-				page, size, userId);
+		logger.info("Get All Contracts API hit page {} size {} by user {}", page, size, userId);
 
 		return contractService.getAllContracts(page, size);
+	}
+
+	@GetMapping("/getAllInstallationContracts")
+	public ResponseEntity getAllInstallationContracts(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "100") int size, @RequestHeader("X-User-Id") String userId) {
+
+		logger.info("Get All Contracts API hit page {} size {} by user {}", page, size, userId);
+
+		return contractService.getAllInstallationContracts(page, size);
 	}
 
 	@DeleteMapping("/deactivateContract")
 	public ResponseEntity deactivateContract(@RequestParam List<Integer> ids,
 			@RequestHeader("X-User-Id") String userId) {
 
-		logger.info("Deactivate Contract API hit for ids: {} by user {}", ids,
-				userId);
+		logger.info("Deactivate Contract API hit for ids: {} by user {}", ids, userId);
 
 		return contractService.deactivateContracts(ids);
 	}
 
 	@GetMapping("/contracts")
-	public ResponseEntity getContracts(
-			@RequestParam(required = false) String contractNo,
-			@RequestParam(required = false) Integer customerId,
-			@RequestParam(required = false) String contractType,
-			@RequestParam(required = false) String isActive,
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity getContracts(@RequestParam(required = false) String contractNo,
+			@RequestParam(required = false) Integer customerId, @RequestParam(required = false) String contractType,
+			@RequestParam(required = false) String isActive, @RequestHeader("X-User-Id") String userId) {
 
 		logger.info("Get Contracts API hit by user {}", userId);
 
-		return contractService.filterContracts(contractNo, customerId,
-				contractType, isActive);
+		return contractService.filterContracts(contractNo, customerId, contractType, isActive);
 	}
 
 	@GetMapping("/getContractNamesAndIds")
-	public ResponseEntity getContractNamesAndIds(
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity getContractNamesAndIds(@RequestHeader("X-User-Id") String userId) {
 		logger.info("Get Contract Names And Ids API hit by user {}", userId);
 		return contractService.getContractNamesAndIds();
 	}
@@ -106,14 +103,12 @@ public class ContractMasterController {
 	@GetMapping("/getContractDetailsByType")
 	public ResponseEntity getContractDetailsByType(@RequestParam String type,
 			@RequestHeader("X-User-Id") String userId) {
-		logger.info("Get Contract Details By Type API hit {} by user {}", type,
-				userId);
+		logger.info("Get Contract Details By Type API hit {} by user {}", type, userId);
 		return contractService.getContractDetailsByType(type);
 	}
 
 	@GetMapping("/getContractNamesAndIdsForFillter")
-	public ResponseEntity getContractNamesAndIdsForFillter(
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity getContractNamesAndIdsForFillter(@RequestHeader("X-User-Id") String userId) {
 		logger.info("Get Contract Names And Ids API hit by user {}", userId);
 		return contractService.getContractNamesAndIdsForFillter();
 	}

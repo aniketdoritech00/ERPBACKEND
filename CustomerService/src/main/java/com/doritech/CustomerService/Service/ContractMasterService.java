@@ -26,4 +26,6 @@ public interface ContractMasterService {
 
 	ResponseEntity getFullContractDetails(Integer contractId);
 
+	ResponseEntity getAllInstallationContracts(int page, int size);
+
 }

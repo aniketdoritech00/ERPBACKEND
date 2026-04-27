@@ -233,6 +233,46 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 		return new ResponseEntity("Success", 200, result);
 	}
 
+	
+	@Override
+	@Transactional(readOnly = true)
+	public ResponseEntity getAllInstallationContracts(int page, int size) {
+
+	    logger.info("Get All Contracts API called page {} size {}", page, size);
+
+	    if (page < 0) {
+	        page = 0;
+	    }
+
+	    if (size <= 0) {
+	        size = 10;
+	    }
+
+	    Pageable pageable = PageRequest.of(page, size, Sort.by("contractId").descending());
+
+	    Page<ContractMaster> contractPage =
+	            contractRepository.findByContractTypeIgnoreCase("IN", pageable);
+
+	    if (contractPage.isEmpty()) {
+	        logger.warn("No IN type contracts found");
+	        throw new ResourceNotFoundException("No IN type contracts found");
+	    }
+
+	    List<ContractMasterResponse> response = contractPage.getContent()
+	            .stream()
+	            .map(ContractMapper::toResponse)
+	            .toList();
+
+	    Map<String, Object> result = new HashMap<>();
+	    result.put("contracts", response);
+	    result.put("currentPage", contractPage.getNumber());
+	    result.put("totalItems", contractPage.getTotalElements());
+	    result.put("totalPages", contractPage.getTotalPages());
+
+	    logger.info("Fetched {} IN type contracts", response.size());
+
+	    return new ResponseEntity("Success", 200, result);
+	}
 	@Override
 	@Transactional
 	public ResponseEntity deactivateContracts(List<Integer> ids) {
