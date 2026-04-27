@@ -19,7 +19,7 @@ import com.doritech.CustomerService.Service.StockDeliveryChallanService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/stock/delivery")
+@RequestMapping("/customer/api/stock/delivery")
 public class StockDeliveryChallenController {
 
 	@Autowired

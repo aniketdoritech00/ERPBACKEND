@@ -20,7 +20,7 @@ import com.doritech.CustomerService.Service.DispatchService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/dispatch/details")
+@RequestMapping("/customer/api/dispatch/details")
 public class DispatchController {
 
 	@Autowired
