@@ -31,4 +31,6 @@ public interface CustomerService {
 	ResponseEntity getCustomerNamesForFillter();
 
     ResponseEntity getCustomerDetailsByCustomerId(Integer customerId);
+
+    ResponseEntity getAllCustomerNamesForFilter();
 }

@@ -38,7 +38,7 @@ public class EmployeeAssignmentController {
 	public ResponseEntity saveEmployeeAssignment(
 			@Valid @RequestBody EmployeeAssignmentRequest request,
 			@RequestHeader("X-User-Id") String userId,
-			
+
 			HttpServletRequest httpServletRequest) throws BadRequestException {
 
 		request.setCreatedBy(Integer.parseInt(userId));
@@ -53,7 +53,7 @@ public class EmployeeAssignmentController {
 			@PathVariable Integer assignmentId,
 			@RequestBody EmployeeAssignmentRequest request,
 			@RequestHeader("X-User-Id") String userId,
-			
+
 			HttpServletRequest httpServletRequest) throws BadRequestException {
 
 		request.setModifiedBy(Integer.parseInt(userId));
@@ -83,19 +83,19 @@ public class EmployeeAssignmentController {
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "100") int size,
 			@RequestParam(defaultValue = "assignmentId") String sortBy,
-			@RequestParam(defaultValue = "asc") String sortDir,@RequestHeader("X-User-Id") String userId) {
+			@RequestParam(defaultValue = "asc") String sortDir, @RequestHeader("X-User-Id") String userId) {
 
 		return new ResponseEntity("Assignments fetched successfully",
 				HttpStatus.OK.value(), assignmentService.getEmployeeAssignments(
 						employeeId, page, size, sortBy, sortDir));
 	}
 
-@GetMapping("/getEmployeeAssignmentsByUserId")
+	@GetMapping("/getEmployeeAssignmentsByUserId")
 	public ResponseEntity getEmployeeAssignments(
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "100") int size,
 			@RequestParam(defaultValue = "assignmentId") String sortBy,
-			@RequestParam(defaultValue = "asc") String sortDir,@RequestHeader("X-User-Id") String userId) {
+			@RequestParam(defaultValue = "asc") String sortDir, @RequestHeader("X-User-Id") String userId) {
 
 		Integer userIdInt = Integer.parseInt(userId);
 
@@ -111,10 +111,23 @@ public class EmployeeAssignmentController {
 			@RequestParam Integer assignmentId) {
 		return assignmentService.getCustomerDetailsByAssignmentId(assignmentId);
 	}
+
 	@GetMapping("/updateStatusAfterPdfGenerate")
 	public ResponseEntity updateStatusAfterPdfGenerate(@RequestParam Integer assignmentId) {
-
 		return assignmentService.updateStatusAfterPdfGenerate(assignmentId);
 
+	}
+
+	@GetMapping("/updateVerifyStatus")
+	public ResponseEntity updateVerifyStatus(@RequestParam Integer assignmentId, @RequestParam String verifyStatus,
+			@RequestHeader("X-User-Id") String userId) {
+		return assignmentService.updateVerifyStatus(assignmentId, verifyStatus, Integer.parseInt(userId));
+
+	}
+
+	@GetMapping("/getAssignmentByIds")
+	public ResponseEntity getAssignmentByIds(@RequestParam List<Integer> assignmentIds) {
+		return new ResponseEntity("Assignments fetched successfully",
+				HttpStatus.OK.value(), assignmentService.getAssignmentByIds(assignmentIds));
 	}
 }

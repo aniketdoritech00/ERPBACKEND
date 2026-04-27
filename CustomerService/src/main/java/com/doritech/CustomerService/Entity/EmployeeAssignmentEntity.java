@@ -33,6 +33,9 @@ public class EmployeeAssignmentEntity {
 	@Column(name = "site_id", nullable = false)
 	private Integer siteId;
 
+	@Column(name = "helper_id")
+	private Integer helperId;
+
 	@Column(name = "assignment_start_date")
 	private LocalDateTime assignmentStartDate;
 
@@ -41,6 +44,18 @@ public class EmployeeAssignmentEntity {
 
 	@Column(name = "visit_date")
 	private LocalDateTime visitDate;
+
+	@Column(name = "visit_type")
+	private String visitType;
+
+	@Column(name="verify_status")
+	private String verifyStatus;
+
+	@Column(name="verify_on")
+	private LocalDateTime verifyOn;
+
+	@Column(name="verify_by")
+	private Integer verifyBy;
 
 	@Column(name = "status", nullable = false)
 	private String status;
@@ -59,6 +74,54 @@ public class EmployeeAssignmentEntity {
 
 	@Column(name = "modified_by")
 	private Integer modifiedBy;
+
+	
+
+	public String getVisitType() {
+		return visitType;
+	}
+
+	public void setVisitType(String visitType) {
+		this.visitType = visitType;
+	}
+
+	public String getVerifyStatus() {
+		return verifyStatus;
+	}
+
+	public void setVerifyStatus(String verifyStatus) {
+		this.verifyStatus = verifyStatus;
+	}
+
+	public LocalDateTime getVerifyOn() {
+		return verifyOn;
+	}
+
+	public void setVerifyOn(LocalDateTime verifyOn) {
+		this.verifyOn = verifyOn;
+	}
+
+	public Integer getVerifyBy() {
+		return verifyBy;
+	}
+
+	public void setVerifyBy(Integer verifyBy) {
+		this.verifyBy = verifyBy;
+	}
+
+	/**
+	 * @return the helperId
+	 */
+	public Integer getHelperId() {
+		return helperId;
+	}
+
+	/**
+	 * @param helperId the helperId to set
+	 */
+	public void setHelperId(Integer helperId) {
+		this.helperId = helperId;	
+	}
 
 	/**
 	 * @return the visitDate
