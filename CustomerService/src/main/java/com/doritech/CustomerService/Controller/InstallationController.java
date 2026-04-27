@@ -29,9 +29,7 @@ public class InstallationController {
 
     @PostMapping(value = "/save-installation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity saveInstallation(
-
             @Valid @RequestPart("data") InstallationRequest request,
-
             @RequestPart(value = "hddImage", required = false) MultipartFile hddImage,
             @RequestPart(value = "deviceImage", required = false) MultipartFile deviceImage,
             @RequestPart(value = "serviceImages", required = false) List<MultipartFile> serviceImages,
@@ -39,6 +37,14 @@ public class InstallationController {
 
         return installationService.saveInstallation(request, hddImage, deviceImage, serviceImages,
                 Integer.parseInt(userId));
+    }
+
+    @PostMapping(value = "/save-installation-for-fas-sas", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity saveInstallationForFasAndSas(
+            @Valid @RequestPart("data") InstallationRequest request,
+            @RequestPart(value = "serviceImages", required = false) List<MultipartFile> serviceImages,
+            @RequestHeader("X-User-Id") String userId) throws Exception {
+        return installationService.saveInstallationForFasAndSas(request, serviceImages,Integer.parseInt(userId));
     }
 
     @GetMapping("/get-installation/{id}")

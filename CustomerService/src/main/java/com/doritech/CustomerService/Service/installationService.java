@@ -11,6 +11,8 @@ public interface installationService {
     ResponseEntity saveInstallation(InstallationRequest request, MultipartFile hddImage, MultipartFile deviceImage,
             List<MultipartFile> serviceImages, Integer userId) throws Exception;
 
+    ResponseEntity saveInstallationForFasAndSas(InstallationRequest request, List<MultipartFile> serviceImages, Integer userId) throws Exception;
+
     ResponseEntity getInstallation(Long id);
 
     ResponseEntity getInstallationByAssignmentId(Integer assignmentId);
