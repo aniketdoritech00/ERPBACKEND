@@ -51,7 +51,7 @@ public class InstallationServiceImpl implements installationService {
     public ResponseEntity saveInstallation(InstallationRequest request, MultipartFile hddImage,
             MultipartFile deviceImage,
             List<MultipartFile> serviceImages, Integer userId) throws Exception {
-        System.out.println("App Running Dir: " + System.getProperty("user.dir"));
+        //System.out.println("App Running Dir: " + System.getProperty("user.dir"));
 
         Installation installation = new Installation();
 
@@ -96,11 +96,10 @@ public class InstallationServiceImpl implements installationService {
 
         List<InstallationImage> imageList = new ArrayList<>();
 
-        // HDD Image
         if (hddImage != null && !hddImage.isEmpty()) {
             validateFile(hddImage);
             String fileName = fileStorageService.saveFile(hddImage);
-            System.out.println("Saved HDD: " + fileName);
+            //System.out.println("Saved HDD: " + fileName);
 
             InstallationImage img = new InstallationImage();
             img.setImageType("HDD_CONFIG");
@@ -111,11 +110,10 @@ public class InstallationServiceImpl implements installationService {
             imageList.add(img);
         }
 
-        // Device Image
         if (deviceImage != null && !deviceImage.isEmpty()) {
             validateFile(deviceImage);
             String fileName = fileStorageService.saveFile(deviceImage);
-            System.out.println("Saved Device: " + fileName);
+            //System.out.println("Saved Device: " + fileName);
 
             InstallationImage img = new InstallationImage();
             img.setImageType("DEVICE_INFO");
@@ -126,12 +124,11 @@ public class InstallationServiceImpl implements installationService {
             imageList.add(img);
         }
 
-        // Service Report Images (Multiple)
         if (serviceImages != null && !serviceImages.isEmpty()) {
             for (MultipartFile file : serviceImages) {
                 validateFile(file);
                 String fileName = fileStorageService.saveFile(file);
-                System.out.println("Saved Service Report: " + fileName);
+                //System.out.println("Saved Service Report: " + fileName);
 
                 InstallationImage img = new InstallationImage();
                 img.setImageType("SERVICE_REPORT");
@@ -146,6 +143,59 @@ public class InstallationServiceImpl implements installationService {
         installationImageRepository.saveAll(imageList);
 
         return new ResponseEntity("Installation Details Saved Successfully", HttpStatus.OK.value(), null);
+    }
+
+
+    @Override
+    @Transactional
+    public ResponseEntity saveInstallationForFasAndSas(InstallationRequest request,
+            List<MultipartFile> serviceImages, Integer userId) throws Exception {
+        //System.out.println("App Running Dir: " + System.getProperty("user.dir"));
+
+        Installation installation = new Installation();
+
+        installation.setBranch(request.getBranch());
+        installation.setAssignmentId(request.getAssignmentId());
+        installation.setSalesOrder(request.getSalesOrder());
+        installation.setDcAdvBill(request.getDcAdvBill());
+
+        installation.setWiring(request.getWiring());
+        installation.setMounting(request.getMounting());
+        installation.setCommissioning(request.getCommissioning());
+        installation.setFinalDemo(request.getFinalDemo());
+
+        installation.setPvcPipe(request.getPvcPipe());
+        installation.setPvcBend(request.getPvcBend());
+        installation.setExternalAssistant(request.getExternalAssistant());
+        installation.setExternalHelperAadhar(request.getExternalHelperAadhar());
+
+        installation.setReportNo(request.getReportNo());
+        installation.setRemarks(request.getRemarks());
+        installation.setCreatedBy(userId);
+        installation = installationRepository.save(installation);
+
+        List<InstallationImage> imageList = new ArrayList<>();
+
+        // Service Report Images (Multiple)
+        if (serviceImages != null && !serviceImages.isEmpty()) {
+            for (MultipartFile file : serviceImages) {
+                validateFile(file);
+                String fileName = fileStorageService.saveFile(file);
+                //System.out.println("Saved Service Report: " + fileName);
+
+                InstallationImage img = new InstallationImage();
+                img.setImageType("SERVICE_REPORT");
+                img.setFileName(fileName);
+                img.setFilePath("uploads/" + fileName);
+                img.setInstallation(installation);
+
+                imageList.add(img);
+            }
+        }
+
+        installationImageRepository.saveAll(imageList);
+
+        return new ResponseEntity("Installation Details for FAS/SAS Saved Successfully", HttpStatus.OK.value(), null);
     }
 
     @Override
