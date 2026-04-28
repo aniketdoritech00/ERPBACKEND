@@ -489,6 +489,124 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 	@Override
 	@Transactional(readOnly = true)
+	public ResponseEntity getAllActiveContractsByType(String type) {
+
+		logger.info("Fetching contracts by type: {}", type);
+		if (type == null || type.trim().isEmpty()) {
+			logger.error("Contract type is null or empty");
+			throw new BadRequestException("Contract type cannot be null or empty");
+		}
+
+		try {
+
+			List<ContractMaster> contractList = contractRepository.findByContractTypeAndIsActive(type, "Y");
+
+			if (contractList == null || contractList.isEmpty()) {
+				logger.warn("No contracts found for type: {}", type);
+				throw new ResourceNotFoundException("No contracts found for given type");
+			}
+
+			List<ItemIDResponse> itemIDResponses = validationService.getAllItems();
+
+			List<ParamResponseDTO> categoryParamResponseDTOs = validationService.getParamByCodeAndSerial("Item",
+					"Category");
+
+			List<ParamResponseDTO> typeParamResponseDTOs = validationService.getParamByCodeAndSerial("CONTRACT",
+					"CONTRACT_TYPE");
+
+			Map<Integer, String> itemIdToCategoryMap = itemIDResponses.stream()
+					.collect(Collectors.toMap(ItemIDResponse::getItemId, ItemIDResponse::getCategory, (a, b) -> a
+
+					));
+
+			Map<String, String> categoryToParamMap = categoryParamResponseDTOs.stream()
+					.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
+
+			Map<String, String> typeToParamMap = typeParamResponseDTOs.stream()
+					.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
+
+			List<ContractMasterResponse> responseList = new ArrayList<>();
+
+			for (ContractMaster contract : contractList) {
+
+				ContractMasterResponse response = new ContractMasterResponse();
+
+				response.setContractId(contract.getContractId());
+				response.setContractNo(contract.getContractNo());
+				response.setContractName(contract.getContractName());
+				response.setCustomerId(contract.getCustomer().getCustomerId());
+				response.setCustomerName(contract.getCustomer().getCustomerName());
+
+				response.setZoneId(contract.getCustomer().getHierarchyLevelId());
+
+				HierarchyLevelResponseDTO responseDTO = validationService
+						.validateAndGetHierarchyLevel(contract.getCustomer().getHierarchyLevelId());
+				response.setZoneName(responseDTO.getLevelName());
+
+				List<CompanySiteMappingResponse> companySiteMappingResponses = validationService
+						.getAllCompSiteMappingByCompId(contract.getCustomer().getCompId());
+
+				response.setSiteId(companySiteMappingResponses.get(0).getSiteId());
+
+				CompSiteResponse siteResponse = validationService
+						.validateAndGetSite(companySiteMappingResponses.get(0).getSiteId(), "AB");
+
+				response.setSiteName(siteResponse.getSiteName());
+
+				response.setIfsc(contract.getCustomer().getIfsc());
+
+				response.setDistrict(siteResponse.getDistrict());
+
+				List<ContractItemMapping> contractItemMappings = contractItemMappingRepository
+						.findByContract_ContractId(contract.getContractId());
+
+				List<String> productTypes = contractItemMappings.stream().map(itemMapping -> {
+					Integer itemId = itemMapping.getItemId();
+
+					String category = itemIdToCategoryMap.get(itemId);
+
+					if (category == null) {
+						return null;
+					}
+
+					return categoryToParamMap.get(category);
+				}).filter(Objects::nonNull).distinct().toList();
+
+				response.setProductTypes(productTypes);
+
+				response.setContractStartDate(contract.getContractStartDate());
+				response.setContractEndDate(contract.getContractEndDate());
+				response.setContractStatus(contract.getContractStatus());
+				String paramType = typeToParamMap.get(contract.getContractType());
+				response.setContractType(paramType);
+				response.setBillingFrequency(contract.getBillingFrequency());
+				response.setAmcType(contract.getAmcType());
+				response.setTermCondition(contract.getTermCondition());
+				response.setPaymentTerms(contract.getPaymentTerms());
+				response.setIsActive(contract.getIsActive());
+				response.setCreatedOn(contract.getCreatedOn());
+				response.setModifiedOn(contract.getModifiedOn());
+				response.setCreatedBy(contract.getCreatedBy());
+				response.setModifiedBy(contract.getModifiedBy());
+
+				responseList.add(response);
+			}
+
+			logger.info("Successfully fetched {} contracts for type: {}", responseList.size(), type);
+
+			return new ResponseEntity("Contracts fetched successfully", 200, responseList);
+
+		} catch (ResourceNotFoundException ex) {
+			throw ex;
+
+		} catch (Exception ex) {
+			logger.error("Error while fetching contracts by type: {}", type, ex);
+			throw new DatabaseOperationException("Failed to fetch contracts by type");
+		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public ResponseEntity getContractNamesAndIdsForFillter() {
 
 		logger.info("Fetching active contract IDs and names");

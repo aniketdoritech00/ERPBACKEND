@@ -107,6 +107,14 @@ public class ContractMasterController {
 		return contractService.getContractDetailsByType(type);
 	}
 
+	@GetMapping("/getAllActiveContractsByType")
+	public ResponseEntity getActiveContractsByType(
+			@RequestParam String type,
+			@RequestHeader("X-User-Id") String userId) {
+
+		return contractService.getAllActiveContractsByType(type);
+	}
+
 	@GetMapping("/getContractNamesAndIdsForFillter")
 	public ResponseEntity getContractNamesAndIdsForFillter(@RequestHeader("X-User-Id") String userId) {
 		logger.info("Get Contract Names And Ids API hit by user {}", userId);
