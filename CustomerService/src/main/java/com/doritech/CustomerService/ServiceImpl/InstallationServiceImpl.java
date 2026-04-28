@@ -260,8 +260,10 @@ public class InstallationServiceImpl implements installationService {
 		EmployeeDTO employeeDTO = validationService.validateEmployeeExists(assignmentEntity.getEmployeeId());
 		res.setFaName(employeeDTO.getEmployeeName());
 
-		EmployeeDTO employeeHelperDTO = validationService.validateEmployeeExists(assignmentEntity.getHelperId());
-		res.setHelperName(employeeHelperDTO.getEmployeeName());
+		if (assignmentEntity.getHelperId() != null) {
+			EmployeeDTO employeeHelperDTO = validationService.validateEmployeeExists(assignmentEntity.getHelperId());
+			res.setHelperName(employeeHelperDTO.getEmployeeName());
+		}
 		res.setStatus(assignmentEntity.getStatus());
 		res.setCreatedAt(installation.getCreatedAt());
 
@@ -353,9 +355,6 @@ public class InstallationServiceImpl implements installationService {
 					res.setBankName(mapping.getCustomer().getCustomerName());
 				});
 
-		System.out.println("Assignment ID: " + assignmentEntity.getAssignmentId());
-		System.out.println("Employee ID: " + assignmentEntity.getEmployeeId());
-
 		EmployeeDTO employeeDTO = validationService.validateEmployeeExists(assignmentEntity.getEmployeeId());
 		res.setFaName(employeeDTO.getEmployeeName());
 
@@ -415,7 +414,7 @@ public class InstallationServiceImpl implements installationService {
 	private void validateFile(MultipartFile file) {
 
 		if (file.getSize() > 5 * 1024 * 1024) {
-			throw new RuntimeException("File size should be less than 5MB");
+			throw new BadRequestException("File size should be less than 5MB");
 		}
 
 		String contentType = file.getContentType();
@@ -423,7 +422,7 @@ public class InstallationServiceImpl implements installationService {
 		if (!contentType.equals("image/png") && !contentType.equals("image/jpeg") && !contentType.equals("image/jpg")
 				&& !contentType.equals("image/svg+xml")) {
 
-			throw new RuntimeException("Only image files are allowed");
+			throw new BadRequestException("Only image files are allowed");
 		}
 	}
 
