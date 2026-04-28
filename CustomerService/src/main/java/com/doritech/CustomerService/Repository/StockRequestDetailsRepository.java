@@ -29,4 +29,6 @@ public interface StockRequestDetailsRepository extends JpaRepository<StockReques
 	boolean existsByItemIdAndContractIdIsNullAndStockRequest_SourceSiteIdAndStockRequest_RequestedSiteIdAndStockRequest_StockRequestIdNot(
 			Integer itemId, Integer sourceSiteId, Integer requestedSiteId, Integer stockRequestId);
 
+	List<StockRequestDetailEntity> findByContractId(Integer contractId);		
+
 }

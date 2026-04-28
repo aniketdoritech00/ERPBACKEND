@@ -32,6 +32,8 @@ public class EmployeeAssignmentResponse {
 	private LocalDate visitDate;
 	private String visitType;
 
+	private String salesOrderNo;
+
 	private String status;
 	private String remark;
 
@@ -40,8 +42,6 @@ public class EmployeeAssignmentResponse {
 
 	private Integer createdBy;
 	private Integer modifiedBy;
-
-	
 	
 
 	public String getVerifyStatus() {
@@ -372,5 +372,11 @@ public class EmployeeAssignmentResponse {
     public void setVerifyByName(String verifyByName) {
         this.verifyByName = verifyByName;
     }
+	public String getSalesOrderNo() {
+		return salesOrderNo;
+	}
+	public void setSalesOrderNo(String salesOrderNo) {
+		this.salesOrderNo = salesOrderNo;
+	}
 
 }
