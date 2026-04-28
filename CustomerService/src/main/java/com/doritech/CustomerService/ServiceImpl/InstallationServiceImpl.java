@@ -1,17 +1,24 @@
 package com.doritech.CustomerService.ServiceImpl;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -20,21 +27,29 @@ import com.doritech.CustomerService.Entity.HDDConfig;
 import com.doritech.CustomerService.Entity.Installation;
 import com.doritech.CustomerService.Entity.InstallationImage;
 import com.doritech.CustomerService.Entity.ResponseEntity;
+import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Exception.ResourceNotFoundException;
+import com.doritech.CustomerService.Repository.ContractEntityMappingRepository;
 import com.doritech.CustomerService.Repository.EmployeeAssignmentRepository;
 import com.doritech.CustomerService.Repository.HDDConfigRepository;
 import com.doritech.CustomerService.Repository.InstallationImageRepository;
 import com.doritech.CustomerService.Repository.InstallationRepository;
 import com.doritech.CustomerService.Request.InstallationRequest;
+import com.doritech.CustomerService.Response.CompSiteResponse;
+import com.doritech.CustomerService.Response.EmployeeDTO;
 import com.doritech.CustomerService.Response.InstallationResponse;
 import com.doritech.CustomerService.Response.PageResponse;
 import com.doritech.CustomerService.Service.FileStorageService;
 import com.doritech.CustomerService.Service.installationService;
+import com.doritech.CustomerService.ValidationService.ValidationService;
 
 import jakarta.transaction.Transactional;
 
 @Service
 public class InstallationServiceImpl implements installationService {
+
+	@Value("${file.upload-dir}")
+	private String uploadDir;
 
 	@Autowired
 	private FileStorageService fileStorageService;
@@ -50,6 +65,15 @@ public class InstallationServiceImpl implements installationService {
 
 	@Autowired
 	private EmployeeAssignmentRepository assignmentRepository;
+
+	@Autowired
+	private ContractEntityMappingRepository contractEntityMappingRepository;
+
+	@Autowired
+	private ValidationService validationService;
+
+	@Autowired
+	private EmployeeAssignmentServiceImpl employeeAssignmentService;
 
 	@Override
 	@Transactional
@@ -146,6 +170,8 @@ public class InstallationServiceImpl implements installationService {
 
 		installationImageRepository.saveAll(imageList);
 
+		employeeAssignmentService.updateStatusAfterPdfGenerate(installation.getAssignmentId());
+
 		return new ResponseEntity("Installation Details Saved Successfully", HttpStatus.OK.value(), null);
 	}
 
@@ -226,6 +252,23 @@ public class InstallationServiceImpl implements installationService {
 			res.setSize10TB(hddConfig.getSize10TB());
 		}
 
+		contractEntityMappingRepository.findById(assignmentEntity.getContractEntityMapping().getMappingId())
+				.ifPresent(mapping -> {
+					res.setBankName(mapping.getCustomer().getCustomerName());
+				});
+
+		EmployeeDTO employeeDTO = validationService.validateEmployeeExists(assignmentEntity.getEmployeeId());
+		res.setFaName(employeeDTO.getEmployeeName());
+
+		EmployeeDTO employeeHelperDTO = validationService.validateEmployeeExists(assignmentEntity.getHelperId());
+		res.setHelperName(employeeHelperDTO.getEmployeeName());
+		res.setStatus(assignmentEntity.getStatus());
+		res.setCreatedAt(installation.getCreatedAt());
+
+		CompSiteResponse siteDTO = validationService.validateAndGetSite(assignmentEntity.getSiteId(),
+				"Installation Assignment");
+		res.setControllingOffice(siteDTO.getSiteName());
+
 		res.setId(installation.getId());
 		res.setBranch(installation.getBranch());
 		res.setAssignmentId(installation.getAssignmentId());
@@ -249,11 +292,13 @@ public class InstallationServiceImpl implements installationService {
 		List<String> device = new ArrayList<>();
 		List<String> service = new ArrayList<>();
 
-		String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+		//String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
 
 		for (InstallationImage img : installation.getImages()) {
 
-			String fullUrl = baseUrl + "/" + img.getFilePath();
+			//String fullUrl = baseUrl + "/" + img.getFilePath();
+
+			String fullUrl =  img.getFilePath();
 
 			if ("HDD_CONFIG".equals(img.getImageType())) {
 				hdd.add(fullUrl);
@@ -303,6 +348,29 @@ public class InstallationServiceImpl implements installationService {
 		res.setSalesOrder(installation.getSalesOrder());
 		res.setVisitType(assignmentEntity.getVisitType());
 
+		contractEntityMappingRepository.findById(assignmentEntity.getContractEntityMapping().getMappingId())
+				.ifPresent(mapping -> {
+					res.setBankName(mapping.getCustomer().getCustomerName());
+				});
+
+		System.out.println("Assignment ID: " + assignmentEntity.getAssignmentId());
+		System.out.println("Employee ID: " + assignmentEntity.getEmployeeId());
+
+		EmployeeDTO employeeDTO = validationService.validateEmployeeExists(assignmentEntity.getEmployeeId());
+		res.setFaName(employeeDTO.getEmployeeName());
+
+		if (assignmentEntity.getHelperId() != null) {
+			EmployeeDTO employeeHelperDTO = validationService.validateEmployeeExists(assignmentEntity.getHelperId());
+			res.setHelperName(employeeHelperDTO.getEmployeeName());
+		}
+
+		res.setStatus(assignmentEntity.getStatus());
+		res.setCreatedAt(installation.getCreatedAt());
+
+		CompSiteResponse siteDTO = validationService.validateAndGetSite(assignmentEntity.getSiteId(),
+				"Installation Assignment");
+		res.setControllingOffice(siteDTO.getSiteName());
+
 		res.setWiring(installation.getWiring());
 		res.setMounting(installation.getMounting());
 		res.setCommissioning(installation.getCommissioning());
@@ -320,11 +388,13 @@ public class InstallationServiceImpl implements installationService {
 		List<String> device = new ArrayList<>();
 		List<String> service = new ArrayList<>();
 
-		String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+		//String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
 
 		for (InstallationImage img : installation.getImages()) {
 
-			String fullUrl = baseUrl + "/" + img.getFilePath();
+			//String fullUrl = baseUrl + "/" + img.getFilePath();
+
+			String fullUrl = img.getFilePath();
 
 			if ("HDD_CONFIG".equals(img.getImageType())) {
 				hdd.add(fullUrl);
@@ -400,5 +470,35 @@ public class InstallationServiceImpl implements installationService {
 
 		return res;
 
+	}
+
+	@Override
+	public org.springframework.http.ResponseEntity<byte[]> getImage(String path) {
+
+		try {
+
+			String fileName = path.substring(path.lastIndexOf("/") + 1);
+
+			Path filePath = Paths.get(uploadDir).resolve(fileName).normalize();
+
+			if (!filePath.startsWith(Paths.get(uploadDir))) {
+				throw new BadRequestException("Invalid file path");
+			}
+
+			if (!Files.exists(filePath)) {
+				throw new ResourceNotFoundException("File not found: " + path);
+			}
+
+			byte[] image = Files.readAllBytes(filePath);
+
+			String contentType = Files.probeContentType(filePath);
+
+			return org.springframework.http.ResponseEntity.ok()
+					.header(HttpHeaders.CONTENT_TYPE, contentType)
+					.body(image);
+
+		} catch (IOException e) {
+			throw new RuntimeException("Error reading image: " + path, e);
+		}
 	}
 }
