@@ -2,9 +2,11 @@ package com.doritech.CustomerService.Mapper;
 
 import java.time.LocalDateTime;
 
+import com.doritech.CustomerService.Entity.ContractInstallationDetails;
 import com.doritech.CustomerService.Entity.ContractMaster;
 import com.doritech.CustomerService.Entity.CustomerMasterEntity;
 import com.doritech.CustomerService.Request.ContractMasterRequest;
+import com.doritech.CustomerService.Response.ContractInstallationResponse;
 import com.doritech.CustomerService.Response.ContractMasterResponse;
 
 public class ContractMapper {
@@ -41,12 +43,12 @@ public class ContractMapper {
 		response.setContractId(entity.getContractId());
 		response.setContractNo(entity.getContractNo());
 		response.setContractName(entity.getContractName());
-		   if (entity.getCustomer() != null) {
-	            response.setCustomerId(entity.getCustomer().getCustomerId());
-				response.setCustomerName(entity.getCustomer().getCustomerName());
-				response.setCustomerCode(entity.getCustomer().getCustomerCode());
-				
-	        }
+		if (entity.getCustomer() != null) {
+			response.setCustomerId(entity.getCustomer().getCustomerId());
+			response.setCustomerName(entity.getCustomer().getCustomerName());
+			response.setCustomerCode(entity.getCustomer().getCustomerCode());
+
+		}
 		response.setContractStartDate(entity.getContractStartDate());
 		response.setContractEndDate(entity.getContractEndDate());
 		response.setContractStatus(entity.getContractStatus());
@@ -60,7 +62,28 @@ public class ContractMapper {
 		response.setModifiedOn(entity.getModifiedOn());
 		response.setCreatedBy(entity.getCreatedBy());
 		response.setModifiedBy(entity.getModifiedBy());
+		if (entity.getInstallationDetails() != null && !entity.getInstallationDetails().isEmpty()) {
 
+			ContractInstallationDetails inst = entity.getInstallationDetails().get(0);
+
+			ContractInstallationResponse i = new ContractInstallationResponse();
+
+			i.setInstallationId(inst.getInstallationId());
+			i.setSalesOrderNumber(inst.getSalesOrderNumber());
+			i.setSalesOrderDate(inst.getSalesOrderDate());
+			i.setIsMaterialRequired(inst.getIsMaterialRequired());
+			i.setMovementStatus(inst.getMovementStatus());
+
+			i.setDocketNumber(inst.getDocketNumber());
+			i.setBrfNumber(inst.getBrfNumber());
+
+			i.setBillNumber(inst.getBillNumber());
+			i.setBillDate(inst.getBillDate());
+			i.setBillAmount(inst.getBillAmount());
+			i.setIsBillSubmitted(inst.getIsBillSubmitted());
+
+			response.setInstallationDetails(i);
+		}
 		return response;
 	}
 }

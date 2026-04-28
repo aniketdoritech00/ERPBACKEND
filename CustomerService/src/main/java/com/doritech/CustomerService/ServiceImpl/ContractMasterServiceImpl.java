@@ -23,8 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.doritech.CustomerService.Entity.ContractDocuments;
 import com.doritech.CustomerService.Entity.ContractEntityMapping;
+import com.doritech.CustomerService.Entity.ContractInstallationDetails;
 import com.doritech.CustomerService.Entity.ContractItemMapping;
-import com.doritech.CustomerService.Entity.ContractItemPackage;
 import com.doritech.CustomerService.Entity.ContractMaster;
 import com.doritech.CustomerService.Entity.QuotationDetail;
 import com.doritech.CustomerService.Entity.QuotationDocument;
@@ -38,6 +38,7 @@ import com.doritech.CustomerService.Mapper.ContractMapper;
 import com.doritech.CustomerService.Projection.ContractItemPackageProjection;
 import com.doritech.CustomerService.Repository.ContractDocumentRepository;
 import com.doritech.CustomerService.Repository.ContractEntityMappingRepository;
+import com.doritech.CustomerService.Repository.ContractInstallationDetailsRepository;
 import com.doritech.CustomerService.Repository.ContractItemMappingRepository;
 import com.doritech.CustomerService.Repository.ContractItemPackageRepository;
 import com.doritech.CustomerService.Repository.ContractMasterRepository;
@@ -45,6 +46,7 @@ import com.doritech.CustomerService.Repository.CustomerMasterRepository;
 import com.doritech.CustomerService.Repository.QuotationDetailRepository;
 import com.doritech.CustomerService.Repository.QuotationDocumentRepository;
 import com.doritech.CustomerService.Repository.QuotationMasterRepository;
+import com.doritech.CustomerService.Request.ContractInstallationRequest;
 import com.doritech.CustomerService.Request.ContractMasterRequest;
 import com.doritech.CustomerService.Response.CompSiteResponse;
 import com.doritech.CustomerService.Response.CompanySiteMappingResponse;
@@ -97,6 +99,9 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 	@Autowired
 	private ValidationService validationService;
+	@Autowired
+
+	ContractInstallationDetailsRepository installationRepository;
 
 	@Override
 	@Transactional
@@ -233,46 +238,43 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 		return new ResponseEntity("Success", 200, result);
 	}
 
-	
 	@Override
 	@Transactional(readOnly = true)
 	public ResponseEntity getAllInstallationContracts(int page, int size) {
 
-	    logger.info("Get All Contracts API called page {} size {}", page, size);
+		logger.info("Get All Contracts API called page {} size {}", page, size);
 
-	    if (page < 0) {
-	        page = 0;
-	    }
+		if (page < 0) {
+			page = 0;
+		}
 
-	    if (size <= 0) {
-	        size = 10;
-	    }
+		if (size <= 0) {
+			size = 10;
+		}
 
-	    Pageable pageable = PageRequest.of(page, size, Sort.by("contractId").descending());
+		Pageable pageable = PageRequest.of(page, size, Sort.by("contractId").descending());
 
-	    Page<ContractMaster> contractPage =
-	            contractRepository.findByContractTypeIgnoreCase("IN", pageable);
+		Page<ContractMaster> contractPage = contractRepository.findByContractTypeIgnoreCase("IN", pageable);
 
-	    if (contractPage.isEmpty()) {
-	        logger.warn("No IN type contracts found");
-	        throw new ResourceNotFoundException("No IN type contracts found");
-	    }
+		if (contractPage.isEmpty()) {
+			logger.warn("No IN type contracts found");
+			throw new ResourceNotFoundException("No IN type contracts found");
+		}
 
-	    List<ContractMasterResponse> response = contractPage.getContent()
-	            .stream()
-	            .map(ContractMapper::toResponse)
-	            .toList();
+		List<ContractMasterResponse> response = contractPage.getContent().stream().map(ContractMapper::toResponse)
+				.toList();
 
-	    Map<String, Object> result = new HashMap<>();
-	    result.put("contracts", response);
-	    result.put("currentPage", contractPage.getNumber());
-	    result.put("totalItems", contractPage.getTotalElements());
-	    result.put("totalPages", contractPage.getTotalPages());
+		Map<String, Object> result = new HashMap<>();
+		result.put("contracts", response);
+		result.put("currentPage", contractPage.getNumber());
+		result.put("totalItems", contractPage.getTotalElements());
+		result.put("totalPages", contractPage.getTotalPages());
 
-	    logger.info("Fetched {} IN type contracts", response.size());
+		logger.info("Fetched {} IN type contracts", response.size());
 
-	    return new ResponseEntity("Success", 200, result);
+		return new ResponseEntity("Success", 200, result);
 	}
+
 	@Override
 	@Transactional
 	public ResponseEntity deactivateContracts(List<Integer> ids) {
@@ -676,9 +678,7 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		List<QuotationMaster> quotations = quotationMasterRepository.findByContract_ContractId(contractId);
 
-		List<Integer> quotationIds = quotations.stream()
-				.map(QuotationMaster::getQuotationId)
-				.toList();
+		List<Integer> quotationIds = quotations.stream().map(QuotationMaster::getQuotationId).toList();
 
 		List<QuotationDetail> allQuotationDetails = quotationDetailRepository.findByQuotationIds(quotationIds);
 
@@ -733,8 +733,7 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		// ================= GROUP PACKAGES =================
 		Map<Integer, List<ContractItemPackageProjection>> packageMap = allPackages.stream()
-				.collect(Collectors.groupingBy(
-						p -> p.getContractMappingId()));
+				.collect(Collectors.groupingBy(p -> p.getContractMappingId()));
 
 		// ================= ITEM MAPPING =================
 		response.setItemMappings(itemMappings.stream().map(mapping -> {
@@ -856,6 +855,152 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 		}).toList());
 
 		return new ResponseEntity("Success", 200, response);
+	}
+
+	@Override
+	@Transactional
+	public ResponseEntity saveContractInstallationDetails(List<ContractInstallationRequest> requestList,
+			Integer userId) {
+
+		if (requestList == null || requestList.isEmpty()) {
+			throw new BadRequestException("Request list cannot be empty");
+		}
+
+		List<Map<String, Object>> payloadList = new ArrayList<>();
+		List<String> messages = new ArrayList<>();
+
+		for (ContractInstallationRequest req : requestList) {
+
+			if (req.getContractId() == null) {
+				throw new BadRequestException("ContractId is required");
+			}
+
+			ContractMaster contract = contractRepository.findById(req.getContractId()).orElseThrow(
+					() -> new ResourceNotFoundException("Contract not found with id: " + req.getContractId()));
+
+			ContractInstallationDetails entity = installationRepository.findByContractContractId(req.getContractId())
+					.orElseGet(() -> {
+						ContractInstallationDetails newEntity = new ContractInstallationDetails();
+						newEntity.setContract(contract);
+						newEntity.setIsActive("Y");
+						return newEntity;
+					});
+
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("contractId", req.getContractId());
+
+			boolean isUpdated = false;
+
+			if (req.getSalesOrderNumber() != null || req.getSalesOrderDate() != null) {
+
+				if (req.getSalesOrderNumber() != null) {
+					entity.setSalesOrderNumber(req.getSalesOrderNumber());
+					payload.put("salesOrderNumber", req.getSalesOrderNumber());
+				}
+
+				if (req.getSalesOrderDate() != null) {
+					entity.setSalesOrderDate(req.getSalesOrderDate());
+					payload.put("salesOrderDate", req.getSalesOrderDate());
+				}
+
+				entity.setSalesOrderCreatedAt(LocalDateTime.now());
+				entity.setSalesOrderCreatedBy(String.valueOf(userId));
+
+				messages.add("Sales order updated");
+				isUpdated = true;
+			}
+
+			if (req.getIsMaterialRequired() != null) {
+				entity.setIsMaterialRequired(req.getIsMaterialRequired());
+				entity.setMaterialRequestedAt(LocalDateTime.now());
+				entity.setMaterialRequestedBy(String.valueOf(userId));
+
+				payload.put("isMaterialRequired", req.getIsMaterialRequired());
+
+				messages.add("Material requirement updated");
+				isUpdated = true;
+			}
+
+			if (req.getMovementStatus() != null) {
+				entity.setMovementStatus(req.getMovementStatus());
+				entity.setStoreProcessedAt(LocalDateTime.now());
+				entity.setStoreProcessedBy(String.valueOf(userId));
+				payload.put("movementStatus", req.getMovementStatus());
+
+				messages.add("Movement status updated");
+				isUpdated = true;
+			}
+
+			if (req.getDocketNumber() != null || req.getBrfNumber() != null || req.getLogisticsRemarks() != null) {
+
+				if (req.getDocketNumber() != null) {
+					entity.setDocketNumber(req.getDocketNumber());
+					payload.put("docketNumber", req.getDocketNumber());
+				}
+
+				if (req.getBrfNumber() != null) {
+					entity.setBrfNumber(req.getBrfNumber());
+					payload.put("brfNumber", req.getBrfNumber());
+				}
+
+				if (req.getLogisticsRemarks() != null) {
+					entity.setLogisticsRemarks(req.getLogisticsRemarks());
+					payload.put("logisticsRemarks", req.getLogisticsRemarks());
+				}
+
+				entity.setLogisticsProcessedAt(LocalDateTime.now());
+				entity.setLogisticsProcessedBy(String.valueOf(userId));
+
+				messages.add("Logistics details updated");
+				isUpdated = true;
+			}
+
+			if (req.getBillNumber() != null || req.getBillDate() != null || req.getBillAmount() != null
+					|| req.getIsBillSubmitted() != null) {
+
+				if (req.getBillAmount() != null && req.getBillAmount().doubleValue() < 0) {
+					throw new BadRequestException("Bill amount cannot be negative");
+				}
+
+				if (req.getBillNumber() != null) {
+					entity.setBillNumber(req.getBillNumber());
+					payload.put("billNumber", req.getBillNumber());
+				}
+
+				if (req.getBillDate() != null) {
+					entity.setBillDate(req.getBillDate());
+					payload.put("billDate", req.getBillDate());
+				}
+
+				if (req.getBillAmount() != null) {
+					entity.setBillAmount(req.getBillAmount());
+					payload.put("billAmount", req.getBillAmount());
+				}
+
+				if (req.getIsBillSubmitted() != null) {
+					entity.setIsBillSubmitted(req.getIsBillSubmitted());
+					payload.put("isBillSubmitted", req.getIsBillSubmitted());
+				}
+
+				entity.setBillProcessedAt(LocalDateTime.now());
+				entity.setBillProcessedBy(String.valueOf(userId));
+
+				messages.add("Billing details updated");
+				isUpdated = true;
+			}
+
+			if (!isUpdated) {
+				throw new BadRequestException("At least one valid field must be provided");
+			}
+
+			installationRepository.save(entity);
+			payloadList.add(payload);
+		}
+
+		String finalMessage = messages.isEmpty() ? "Installation details updated successfully"
+				: String.join(", ", messages);
+
+		return new ResponseEntity(finalMessage, 200, payloadList);
 	}
 
 	// @Override

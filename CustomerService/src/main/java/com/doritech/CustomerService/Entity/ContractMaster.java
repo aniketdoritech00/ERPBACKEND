@@ -1,16 +1,19 @@
 package com.doritech.CustomerService.Entity;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -71,6 +74,9 @@ public class ContractMaster {
 	@Column(name = "modified_by")
 	private Integer modifiedBy;
 
+	@OneToMany(mappedBy = "contract", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	private List<ContractInstallationDetails> installationDetails;
+
 	public Integer getContractId() {
 		return contractId;
 	}
@@ -94,7 +100,6 @@ public class ContractMaster {
 	public void setContractName(String contractName) {
 		this.contractName = contractName;
 	}
-
 
 	public CustomerMasterEntity getCustomer() {
 		return customer;
@@ -206,6 +211,14 @@ public class ContractMaster {
 
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;
+	}
+
+	public List<ContractInstallationDetails> getInstallationDetails() {
+		return installationDetails;
+	}
+
+	public void setInstallationDetails(List<ContractInstallationDetails> installationDetails) {
+		this.installationDetails = installationDetails;
 	}
 
 }
