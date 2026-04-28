@@ -81,6 +81,11 @@ public class InstallationServiceImpl implements installationService {
 			MultipartFile deviceImage, List<MultipartFile> serviceImages, Integer userId) throws Exception {
 		// System.out.println("App Running Dir: " + System.getProperty("user.dir"));
 
+		installationRepository.findByAssignmentId(request.getAssignmentId()).ifPresent(existing -> {
+			throw new BadRequestException(
+					"Installation already exists for assignment id: " + request.getAssignmentId());
+		});
+
 		Installation installation = new Installation();
 
 		installation.setBranch(request.getBranch());

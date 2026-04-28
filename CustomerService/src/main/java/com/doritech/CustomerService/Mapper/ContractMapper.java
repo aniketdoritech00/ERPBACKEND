@@ -81,7 +81,7 @@ public class ContractMapper {
 			i.setBillDate(inst.getBillDate());
 			i.setBillAmount(inst.getBillAmount());
 			i.setIsBillSubmitted(inst.getIsBillSubmitted());
-
+			i.setLogisticsRemarks(inst.getLogisticsRemarks());
 			response.setInstallationDetails(i);
 		}
 		return response;
