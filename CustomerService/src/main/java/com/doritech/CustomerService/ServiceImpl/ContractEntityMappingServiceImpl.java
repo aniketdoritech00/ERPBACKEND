@@ -488,7 +488,7 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		payload.put("totalPages", pageResult.getTotalPages());
 		payload.put("isLast", pageResult.isLast());
 
-		return new ResponseEntity("Success", 200, payload);
+		return new ResponseEntity("Contract Entity Fetch Successfully", 200, payload);
 	}
 
 	@Override

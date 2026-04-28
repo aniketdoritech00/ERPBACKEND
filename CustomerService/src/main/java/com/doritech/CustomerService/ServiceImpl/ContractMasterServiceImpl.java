@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -867,8 +868,7 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 		}
 
 		List<Map<String, Object>> payloadList = new ArrayList<>();
-		List<String> messages = new ArrayList<>();
-
+		Set<String> messages = new LinkedHashSet<>();
 		for (ContractInstallationRequest req : requestList) {
 
 			if (req.getContractId() == null) {
@@ -931,28 +931,35 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 				isUpdated = true;
 			}
 
-			if (req.getDocketNumber() != null || req.getBrfNumber() != null || req.getLogisticsRemarks() != null) {
+			if (req.getDocketNumber() != null || req.getLogisticsRemarks() != null) {
 
-				if (req.getDocketNumber() != null) {
-					entity.setDocketNumber(req.getDocketNumber());
-					payload.put("docketNumber", req.getDocketNumber());
-				}
+			    if (req.getDocketNumber() != null) {
+			        entity.setDocketNumber(req.getDocketNumber());
+			        payload.put("docketNumber", req.getDocketNumber());
+			    }
 
-				if (req.getBrfNumber() != null) {
-					entity.setBrfNumber(req.getBrfNumber());
-					payload.put("brfNumber", req.getBrfNumber());
-				}
+			    if (req.getLogisticsRemarks() != null) {
+			        entity.setLogisticsRemarks(req.getLogisticsRemarks());
+			        payload.put("logisticsRemarks", req.getLogisticsRemarks());
+			    }
 
-				if (req.getLogisticsRemarks() != null) {
-					entity.setLogisticsRemarks(req.getLogisticsRemarks());
-					payload.put("logisticsRemarks", req.getLogisticsRemarks());
-				}
+			    entity.setLogisticsProcessedAt(LocalDateTime.now());
+			    entity.setLogisticsProcessedBy(String.valueOf(userId));
 
-				entity.setLogisticsProcessedAt(LocalDateTime.now());
-				entity.setLogisticsProcessedBy(String.valueOf(userId));
+			    messages.add("Logistics details updated");
+			    isUpdated = true;
+			}
+			
+			if (req.getBrfNumber() != null) {
 
-				messages.add("Logistics details updated");
-				isUpdated = true;
+			    entity.setBrfNumber(req.getBrfNumber());
+			    entity.setBrfCreatedAt(LocalDateTime.now());
+			    entity.setBrfCreatedBy(String.valueOf(userId));
+
+			    payload.put("brfNumber", req.getBrfNumber());
+
+			    messages.add("BRF number updated");
+			    isUpdated = true;
 			}
 
 			if (req.getBillNumber() != null || req.getBillDate() != null || req.getBillAmount() != null
