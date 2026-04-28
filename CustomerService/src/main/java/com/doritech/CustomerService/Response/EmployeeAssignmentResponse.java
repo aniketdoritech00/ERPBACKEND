@@ -13,7 +13,9 @@ public class EmployeeAssignmentResponse {
 	private Integer helperId;
 	private String helperName;
 	private String verifyStatus;
+	private String verifyRemark;
 	private Integer verifyBy;
+	private String verifyByName;
 	private LocalDateTime verifyOn;
 	private Integer siteId;
 	private String ifsc;
@@ -30,6 +32,8 @@ public class EmployeeAssignmentResponse {
 	private LocalDate visitDate;
 	private String visitType;
 
+	private String salesOrderNo;
+
 	private String status;
 	private String remark;
 
@@ -38,6 +42,7 @@ public class EmployeeAssignmentResponse {
 
 	private Integer createdBy;
 	private Integer modifiedBy;
+	
 
 	public String getVerifyStatus() {
         return verifyStatus;
@@ -354,6 +359,24 @@ public class EmployeeAssignmentResponse {
 	 */
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;
+	}
+    public String getVerifyRemark() {
+        return verifyRemark;
+    }
+    public void setVerifyRemark(String verifyRemark) {
+        this.verifyRemark = verifyRemark;
+    }
+    public String getVerifyByName() {
+        return verifyByName;
+    }
+    public void setVerifyByName(String verifyByName) {
+        this.verifyByName = verifyByName;
+    }
+	public String getSalesOrderNo() {
+		return salesOrderNo;
+	}
+	public void setSalesOrderNo(String salesOrderNo) {
+		this.salesOrderNo = salesOrderNo;
 	}
 
 }

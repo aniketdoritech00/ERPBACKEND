@@ -31,6 +31,7 @@ import com.doritech.CustomerService.Entity.QuotationDetail;
 import com.doritech.CustomerService.Entity.QuotationDocument;
 import com.doritech.CustomerService.Entity.QuotationMaster;
 import com.doritech.CustomerService.Entity.ResponseEntity;
+import com.doritech.CustomerService.Entity.StockRequestDetailEntity;
 import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Exception.DatabaseOperationException;
 import com.doritech.CustomerService.Exception.DuplicateResourceException;
@@ -47,8 +48,13 @@ import com.doritech.CustomerService.Repository.CustomerMasterRepository;
 import com.doritech.CustomerService.Repository.QuotationDetailRepository;
 import com.doritech.CustomerService.Repository.QuotationDocumentRepository;
 import com.doritech.CustomerService.Repository.QuotationMasterRepository;
+import com.doritech.CustomerService.Repository.StockRequestDetailsRepository;
+import com.doritech.CustomerService.Repository.StockRequestRepository;
 import com.doritech.CustomerService.Request.ContractInstallationRequest;
 import com.doritech.CustomerService.Request.ContractMasterRequest;
+import com.doritech.CustomerService.Request.StockDeliveryChallanRequest;
+import com.doritech.CustomerService.Request.StockRequestDetailRequest;
+import com.doritech.CustomerService.Request.StockRequestRequest;
 import com.doritech.CustomerService.Response.CompSiteResponse;
 import com.doritech.CustomerService.Response.CompanySiteMappingResponse;
 import com.doritech.CustomerService.Response.ContractDocumentResponse;
@@ -101,8 +107,16 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 	@Autowired
 	private ValidationService validationService;
 	@Autowired
-
 	ContractInstallationDetailsRepository installationRepository;
+
+	@Autowired
+	private StockRequestServiceImpl stockRequestService;
+
+	@Autowired
+	private StockRequestDetailsRepository stockRequestDetailsRepository;
+
+	@Autowired
+	private StockDeliveryChallanServiceImpl stockDeliveryChallanService;
 
 	@Override
 	@Transactional
@@ -869,6 +883,8 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		List<Map<String, Object>> payloadList = new ArrayList<>();
 		Set<String> messages = new LinkedHashSet<>();
+        Set<String> messages = new LinkedHashSet<>();
+		
 		for (ContractInstallationRequest req : requestList) {
 
 			if (req.getContractId() == null) {
@@ -919,6 +935,29 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 				messages.add("Material requirement updated");
 				isUpdated = true;
+
+				if (Boolean.TRUE.equals(req.getIsMaterialRequired())) {
+				StockRequestRequest stockReq = new StockRequestRequest();
+				stockReq.setRequestedSiteId(contractEntityMappingRepository.findByContractContractId(req.getContractId()).get(0).getSiteId());
+				stockReq.setSourceSiteId(5);
+				stockReq.setCreatedBy(userId);
+
+				List<ContractItemMapping> itemMappings = contractItemMappingRepository
+						.findByContract_ContractId(req.getContractId());
+
+				List<StockRequestDetailRequest> items = new ArrayList<>();
+				for (ContractItemMapping item : itemMappings) {
+					StockRequestDetailRequest detail = new StockRequestDetailRequest();
+					detail.setItemId(item.getItemId());
+					detail.setRequestedQty(item.getQuantity());
+					items.add(detail);
+				}
+
+				stockReq.setItems(items);
+
+				stockRequestService.saveStockRequest(stockReq);
+
+			}
 			}
 
 			if (req.getMovementStatus() != null) {
@@ -960,6 +999,20 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 			    messages.add("BRF number updated");
 			    isUpdated = true;
+				messages.add("Logistics details updated");
+				isUpdated = true;
+
+				StockDeliveryChallanRequest challanReq = new StockDeliveryChallanRequest();
+				challanReq.setDeliveryChallanNo(req.getDocketNumber());
+
+				List<Integer> stockRequestIds = stockRequestDetailsRepository.findByContractId(req.getContractId())
+						.stream().map(d -> d.getStockRequest().getStockRequestId()).distinct().toList();
+
+				challanReq.setStockRequestIds(stockRequestIds);
+				challanReq.setCreatedBy(userId);
+
+				stockDeliveryChallanService.saveStockDelivery(challanReq);
+
 			}
 
 			if (req.getBillNumber() != null || req.getBillDate() != null || req.getBillAmount() != null

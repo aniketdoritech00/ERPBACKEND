@@ -118,9 +118,9 @@ public class EmployeeAssignmentController {
 	}
 
 	@GetMapping("/updateVerifyStatus")
-	public ResponseEntity updateVerifyStatus(@RequestParam Integer assignmentId, @RequestParam String verifyStatus,
+	public ResponseEntity updateVerifyStatus(@RequestParam Integer assignmentId, @RequestParam String verifyStatus,@RequestParam(required = false) String verifyRemark,
 			@RequestHeader("X-User-Id") String userId) {
-		return assignmentService.updateVerifyStatus(assignmentId, verifyStatus, Integer.parseInt(userId));
+		return assignmentService.updateVerifyStatus(assignmentId, verifyStatus, verifyRemark, Integer.parseInt(userId));
 
 	}
 
