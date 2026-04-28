@@ -325,7 +325,11 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 		response.setRemark(entity.getRemark());
 
 		response.setVerifyStatus(entity.getVerifyStatus());
-		response.setVerifyBy(entity.getVerifyBy());	
+		response.setVerifyBy(entity.getVerifyBy());
+		if(entity.getVerifyBy() != null) {
+			EmployeeDTO verifyByDTO = validationService.validateEmployeeExists(entity.getVerifyBy());
+			response.setVerifyByName(verifyByDTO.getEmployeeName());
+		}
 		response.setVerifyOn(entity.getVerifyOn());
 
 		response.setVisitType(entity.getVisitType() != null
@@ -408,25 +412,42 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 	}
 
 	@Override
-	@Transactional
-	public ResponseEntity updateVerifyStatus(Integer assignmentId,String verifyStatus,Integer userId) {
+@Transactional
+public ResponseEntity updateVerifyStatus(Integer assignmentId, String verifyStatus, String verifyRemark, Integer userId) {
 
-		Optional<EmployeeAssignmentEntity> optional = repository.findById(assignmentId);
+    Optional<EmployeeAssignmentEntity> optional = repository.findById(assignmentId);
 
-		if (optional.isEmpty()) {
-			return new ResponseEntity("Assignment not found", 404, null);
-		}
-		EmployeeAssignmentEntity assignment = optional.get();
-		assignment.setVerifyStatus(verifyStatus);
-		assignment.setVerifyOn(LocalDateTime.now());
-		assignment.setVerifyBy(userId);
-		assignment.setModifiedOn(LocalDateTime.now());
-		assignment.setModifiedBy(userId);
+    if (optional.isEmpty()) {
+        return new ResponseEntity("Assignment not found", 404, null);
+    }
 
-		repository.save(assignment);
+    EmployeeAssignmentEntity assignment = optional.get();
 
-		return new ResponseEntity("Verify status updated successfully", 200, null);
-	}
+    String currentStatus = assignment.getVerifyStatus();
+
+    if (currentStatus != null &&
+        (currentStatus.equalsIgnoreCase("VERIFIED") || currentStatus.equalsIgnoreCase("REJECTED"))) {
+
+        return new ResponseEntity("This assignment is already " + currentStatus.toLowerCase(), 409, null);
+    }
+
+    if (!"VERIFIED".equalsIgnoreCase(verifyStatus) &&
+        !"REJECTED".equalsIgnoreCase(verifyStatus)) {
+
+        return new ResponseEntity("Invalid verify status. Allowed: VERIFIED or REJECTED", 400, null);
+    }
+
+    assignment.setVerifyStatus(verifyStatus.toUpperCase());
+    assignment.setVerifyOn(LocalDateTime.now());
+    assignment.setVerifyBy(userId);
+    assignment.setVerifyRemark(verifyRemark);
+    assignment.setModifiedOn(LocalDateTime.now());
+    assignment.setModifiedBy(userId);
+
+    repository.save(assignment);
+
+    return new ResponseEntity("Verify status updated successfully", 200, null);
+}
 
 	@Override
 	@Transactional
@@ -446,6 +467,7 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 			response.setHelperId(entity.getHelperId());
 			response.setVisitType(entity.getVisitType());
 			response.setVerifyStatus(entity.getVerifyStatus());
+			response.setVerifyRemark(entity.getVerifyRemark());
 			response.setStatus(entity.getStatus());
 			responses.add(response);
 		}

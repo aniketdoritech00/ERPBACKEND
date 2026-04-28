@@ -27,6 +27,6 @@ public interface EmployeeAssignmentService {
 
 	List<EmployeeAssignmentResponse> getAssignmentByIds(List<Integer> assignmentIds);
 
-	ResponseEntity updateVerifyStatus(Integer assignmentId,String verifyStatus,Integer userId);
+	ResponseEntity updateVerifyStatus(Integer assignmentId,String verifyStatus,String verifyRemark,Integer userId);
 
 }
