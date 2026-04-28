@@ -100,11 +100,6 @@
 			<scope>test</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>com.doritech.microservice</groupId>
-			<artifactId>AuthenticationService</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
