@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Exception.BadRequestException;
+import com.doritech.CustomerService.Request.ContractInstallationRequest;
 import com.doritech.CustomerService.Request.ContractMasterRequest;
 import com.doritech.CustomerService.Service.ContractMasterService;
 
@@ -108,8 +109,7 @@ public class ContractMasterController {
 	}
 
 	@GetMapping("/getAllActiveContractsByType")
-	public ResponseEntity getActiveContractsByType(
-			@RequestParam String type,
+	public ResponseEntity getActiveContractsByType(@RequestParam String type,
 			@RequestHeader("X-User-Id") String userId) {
 
 		return contractService.getAllActiveContractsByType(type);
@@ -124,5 +124,21 @@ public class ContractMasterController {
 	@GetMapping("/fullContractDetails/{contractId}")
 	public ResponseEntity getFullContract(@PathVariable Integer contractId) {
 		return contractService.getFullContractDetails(contractId);
+	}
+
+	@PostMapping("/saveContractInstallationDetails")
+	public ResponseEntity saveContractInstallationDetails(
+			@Valid @RequestBody List<ContractInstallationRequest> requestList,
+			@RequestHeader("X-User-Id") String userId) {
+
+		Integer user;
+		try {
+			user = Integer.parseInt(userId);
+		} catch (NumberFormatException ex) {
+			logger.error("Invalid X-User-Id {}", userId);
+			throw new BadRequestException("Invalid X-User-Id: " + userId);
+		}
+		logger.info("Bulk Save Installation API hit by user {}", user);
+		return contractService.saveContractInstallationDetails(requestList, user);
 	}
 }

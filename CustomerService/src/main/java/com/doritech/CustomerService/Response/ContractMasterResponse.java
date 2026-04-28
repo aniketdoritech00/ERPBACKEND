@@ -58,130 +58,76 @@ public class ContractMasterResponse {
 
 	private Integer modifiedBy;
 
+	private ContractInstallationResponse installationDetails;
+
 	public String getCustomerCode() {
 		return customerCode;
 	}
-	
+
 	public void setCustomerCode(String customerCode) {
 		this.customerCode = customerCode;
 	}
 
-	/**
-	 * @return the productTypes
-	 */
 	public List<String> getProductTypes() {
 		return productTypes;
 	}
 
-	/**
-	 * @param productTypes
-	 *            the productTypes to set
-	 */
 	public void setProductTypes(List<String> productTypes) {
 		this.productTypes = productTypes;
 	}
 
-	/**
-	 * @return the district
-	 */
 	public String getDistrict() {
 		return district;
 	}
 
-	/**
-	 * @param district
-	 *            the district to set
-	 */
 	public void setDistrict(String district) {
 		this.district = district;
 	}
 
-	/**
-	 * @return the ifsc
-	 */
 	public String getIfsc() {
 		return ifsc;
 	}
 
-	/**
-	 * @param ifsc
-	 *            the ifsc to set
-	 */
 	public void setIfsc(String ifsc) {
 		this.ifsc = ifsc;
 	}
 
-	/**
-	 * @return the siteId
-	 */
 	public Integer getSiteId() {
 		return siteId;
 	}
 
-	/**
-	 * @param siteId
-	 *            the siteId to set
-	 */
 	public void setSiteId(Integer siteId) {
 		this.siteId = siteId;
 	}
 
-	/**
-	 * @return the siteName
-	 */
 	public String getSiteName() {
 		return siteName;
 	}
 
-	/**
-	 * @param siteName
-	 *            the siteName to set
-	 */
 	public void setSiteName(String siteName) {
 		this.siteName = siteName;
 	}
 
-	/**
-	 * @return the zoneId
-	 */
 	public Integer getZoneId() {
 		return zoneId;
 	}
 
-	/**
-	 * @param zoneId
-	 *            the zoneId to set
-	 */
 	public void setZoneId(Integer zoneId) {
 		this.zoneId = zoneId;
 	}
 
-	/**
-	 * @return the zoneName
-	 */
 	public String getZoneName() {
 		return zoneName;
 	}
 
-	/**
-	 * @param zoneName
-	 *            the zoneName to set
-	 */
 	public void setZoneName(String zoneName) {
 		this.zoneName = zoneName;
 	}
 
-	/**
-	 * @return the customerName
-	 */
 	public String getCustomerName() {
 		return customerName;
 	}
 
-	/**
-	 * @param customerName
-	 *            the customerName to set
-	 */
 	public void setCustomerName(String customerName) {
 		this.customerName = customerName;
 	}
@@ -321,5 +267,14 @@ public class ContractMasterResponse {
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;
 	}
+
+	public ContractInstallationResponse getInstallationDetails() {
+		return installationDetails;
+	}
+
+	public void setInstallationDetails(ContractInstallationResponse installationDetails) {
+		this.installationDetails = installationDetails;
+	}
+
 
 }
