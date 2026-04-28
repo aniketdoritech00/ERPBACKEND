@@ -1,6 +1,5 @@
 package com.doritech.CustomerService.ServiceImpl;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -9,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.doritech.CustomerService.Entity.DispatchEntity;
@@ -20,12 +20,12 @@ import com.doritech.CustomerService.Request.DispatchRequest;
 import com.doritech.CustomerService.Response.DispatchResponse;
 import com.doritech.CustomerService.Response.PageResponse;
 import com.doritech.CustomerService.Service.DispatchService;
+import com.doritech.CustomerService.Specification.DispatchDetailsSpecification;
 
 @Service
 public class DispatchServiceImpl implements DispatchService {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(DispatchServiceImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(DispatchServiceImpl.class);
 
 	@Autowired
 	private DispatchRespository dispatchRespository;
@@ -44,20 +44,16 @@ public class DispatchServiceImpl implements DispatchService {
 				return response;
 			}
 
-			if (dispatchRespository.existsByDeliveryChallanNo(
-					request.getDeliveryChallanNo())) {
-				logger.warn("Duplicate DeliveryChallanNo: {}",
-						request.getDeliveryChallanNo());
+			if (dispatchRespository.existsByDeliveryChallanNo(request.getDeliveryChallanNo())) {
+				logger.warn("Duplicate DeliveryChallanNo: {}", request.getDeliveryChallanNo());
 				response.setMessage("Delivery Challan no Already exists");
 				response.setStatusCode(400);
 				response.setPayload(null);
 				return response;
 			}
 
-			if (dispatchRespository
-					.existsByConsignmentNo(request.getConsignmentNo())) {
-				logger.warn("Duplicate ConsignmentNo: {}",
-						request.getConsignmentNo());
+			if (dispatchRespository.existsByConsignmentNo(request.getConsignmentNo())) {
+				logger.warn("Duplicate ConsignmentNo: {}", request.getConsignmentNo());
 				response.setMessage("Consignment No is Already exists ");
 				response.setPayload(null);
 				response.setStatusCode(400);
@@ -65,14 +61,12 @@ public class DispatchServiceImpl implements DispatchService {
 			}
 
 			DispatchEntity entity = toEntity(request);
-			entity.setStatus("D");
 			entity.setCreatedOn(LocalDateTime.now());
 			entity.setCreatedBy(request.getCreatedBy());
-			entity.setDispatchDate(LocalDate.now());
+			entity.setDispatchDate(request.getDispatchDate());
 
 			DispatchEntity saved = dispatchRespository.save(entity);
-			logger.info("Dispatch saved successfully with ID: {}",
-					saved.getDispatchId());
+			logger.info("Dispatch saved successfully with ID: {}", saved.getDispatchId());
 
 			DispatchResponse response2 = toResponse(saved);
 			response.setPayload(response2);
@@ -108,8 +102,7 @@ public class DispatchServiceImpl implements DispatchService {
 	public ResponseEntity getAllDispatchDetails(int page, int size) {
 		ResponseEntity response = new ResponseEntity();
 		try {
-			logger.info("Fetching all dispatch details - page: {}, size: {}",
-					page, size);
+			logger.info("Fetching all dispatch details - page: {}, size: {}", page, size);
 
 			if (page < 0 || size <= 0) {
 				logger.warn("Invalid pagination parameters");
@@ -119,11 +112,9 @@ public class DispatchServiceImpl implements DispatchService {
 			}
 
 			PageRequest pageable = PageRequest.of(page, size);
-			Page<DispatchEntity> pageRequest = dispatchRespository
-					.findAll(pageable);
+			Page<DispatchEntity> pageRequest = dispatchRespository.findAll(pageable);
 
-			List<DispatchResponse> list = pageRequest.getContent().stream()
-					.map(this::toResponse).toList();
+			List<DispatchResponse> list = pageRequest.getContent().stream().map(this::toResponse).toList();
 
 			if (list == null || list.isEmpty()) {
 				logger.warn("No dispatch records found");
@@ -146,14 +137,12 @@ public class DispatchServiceImpl implements DispatchService {
 			response.setPayload(pageResponse);
 
 		} catch (ResourceNotFoundException e) {
-			logger.error("ResourceNotFoundException in getAllDispatchDetails",
-					e);
+			logger.error("ResourceNotFoundException in getAllDispatchDetails", e);
 			response.setMessage(e.getMessage());
 			response.setStatusCode(404);
 			response.setPayload(null);
 		} catch (ExternalServiceException e) {
-			logger.error("ExternalServiceException in getAllDispatchDetails",
-					e);
+			logger.error("ExternalServiceException in getAllDispatchDetails", e);
 			response.setMessage(e.getMessage());
 			response.setStatusCode(502);
 			response.setPayload(null);
@@ -181,8 +170,7 @@ public class DispatchServiceImpl implements DispatchService {
 			}
 
 			DispatchEntity entity = dispatchRespository.findById(id)
-					.orElseThrow(() -> new ResourceNotFoundException(
-							"Dispatch Details Not Found "));
+					.orElseThrow(() -> new ResourceNotFoundException("Dispatch Details Not Found with id " + id));
 
 			logger.info("Dispatch found for ID: {}", id);
 
@@ -197,8 +185,7 @@ public class DispatchServiceImpl implements DispatchService {
 			response.setStatusCode(404);
 			response.setPayload(null);
 		} catch (ExternalServiceException e) {
-			logger.error("ExternalServiceException in getDispathchDetailsById",
-					e);
+			logger.error("ExternalServiceException in getDispathchDetailsById", e);
 			response.setMessage(e.getMessage());
 			response.setStatusCode(502);
 			response.setPayload(null);
@@ -226,22 +213,18 @@ public class DispatchServiceImpl implements DispatchService {
 				return response;
 			}
 
-			List<DispatchEntity> entities = dispatchRespository
-					.findAllById(ids);
+			List<DispatchEntity> entities = dispatchRespository.findAllById(ids);
 
 			if (entities.isEmpty() || entities == null) {
 				logger.warn("No dispatch records found for given IDs");
-				response.setMessage(
-						"No Dispatched Details Found For Provided Ids");
+				response.setMessage("No Dispatched Details Found For Provided Ids");
 				response.setStatusCode(404);
 				return response;
 			}
 
-			List<Integer> foundList = entities.stream()
-					.map(DispatchEntity::getDispatchId).toList();
+			List<Integer> foundList = entities.stream().map(DispatchEntity::getDispatchId).toList();
 
-			List<Integer> missingIds = ids.stream()
-					.filter(id -> !foundList.contains(id)).toList();
+			List<Integer> missingIds = ids.stream().filter(id -> !foundList.contains(id)).toList();
 
 			dispatchRespository.deleteAll(entities);
 
@@ -250,15 +233,13 @@ public class DispatchServiceImpl implements DispatchService {
 				response.setMessage("Dispatch Details deleted successfully ");
 			} else {
 				logger.warn("Some IDs not found: {}", missingIds);
-				response.setMessage(
-						"Dispatch Details deleted successfully Some Ids Not Found");
+				response.setMessage("Dispatch Details deleted successfully Some Ids Not Found");
 			}
 
 			response.setStatusCode(200);
 
 		} catch (Exception e) {
-			logger.error("Unexpected error in deleteMultipleDispatchDetails",
-					e);
+			logger.error("Unexpected error in deleteMultipleDispatchDetails", e);
 			response.setMessage("Internal Server Error");
 			response.setStatusCode(500);
 			response.setPayload(null);
@@ -268,30 +249,24 @@ public class DispatchServiceImpl implements DispatchService {
 	}
 
 	@Override
-	public ResponseEntity updateDispatchDeatils(Integer id,
-			DispatchRequest request) {
+	public ResponseEntity updateDispatchDeatils(Integer id, DispatchRequest request) {
 		ResponseEntity response = new ResponseEntity();
 		try {
 			logger.info("Updating dispatch with ID: {}", id);
 
 			DispatchEntity entity = dispatchRespository.findById(id)
-					.orElseThrow(() -> new ResourceNotFoundException(
-							"Dispatch deatils Not Found "));
+					.orElseThrow(() -> new ResourceNotFoundException("Dispatch deatils Not Found "));
 
-			if (dispatchRespository.existsByDeliveryChallanNoAndDispatchIdNot(
-					request.getDeliveryChallanNo(), id)) {
-				logger.warn("Duplicate DeliveryChallanNo on update: {}",
-						request.getDeliveryChallanNo());
+			if (dispatchRespository.existsByDeliveryChallanNoAndDispatchIdNot(request.getDeliveryChallanNo(), id)) {
+				logger.warn("Duplicate DeliveryChallanNo on update: {}", request.getDeliveryChallanNo());
 				response.setMessage("Delivery Challan no Already exists");
 				response.setStatusCode(400);
 				response.setPayload(null);
 				return response;
 			}
 
-			if (dispatchRespository.existsByConsignmentNoAndDispatchIdNot(
-					request.getConsignmentNo(), id)) {
-				logger.warn("Duplicate ConsignmentNo on update: {}",
-						request.getConsignmentNo());
+			if (dispatchRespository.existsByConsignmentNoAndDispatchIdNot(request.getConsignmentNo(), id)) {
+				logger.warn("Duplicate ConsignmentNo on update: {}", request.getConsignmentNo());
 				response.setMessage("Consignment No is Already exists ");
 				response.setPayload(null);
 				response.setStatusCode(400);
@@ -303,6 +278,8 @@ public class DispatchServiceImpl implements DispatchService {
 			entity.setDispatchMode(request.getDispatchMode());
 			entity.setDispatchVendor(request.getDispatchVendor());
 			entity.setRemarks(request.getRemarks());
+			entity.setStatus(request.getStatus());
+			entity.setDispatchDate(request.getDispatchDate());
 			entity.setMrnNo(request.getMrnNo());
 			entity.setModifiedBy(request.getModifiedBy());
 			entity.setModifiedOn(LocalDateTime.now());
@@ -315,8 +292,7 @@ public class DispatchServiceImpl implements DispatchService {
 			response.setPayload(toResponse(updated));
 
 		} catch (IllegalArgumentException e) {
-			logger.error("IllegalArgumentException in updateDispatchDeatils",
-					e);
+			logger.error("IllegalArgumentException in updateDispatchDeatils", e);
 			response.setMessage(e.getMessage());
 			response.setStatusCode(400);
 			response.setPayload(null);
@@ -326,8 +302,7 @@ public class DispatchServiceImpl implements DispatchService {
 			response.setStatusCode(404);
 			response.setPayload(null);
 		} catch (ExternalServiceException e) {
-			logger.error("ExternalServiceException in updateDispatchDeatils",
-					e);
+			logger.error("ExternalServiceException in updateDispatchDeatils", e);
 			response.setMessage(e.getMessage());
 			response.setStatusCode(502);
 			response.setPayload(null);
@@ -341,11 +316,75 @@ public class DispatchServiceImpl implements DispatchService {
 		return response;
 	}
 
+	@Override
+	public ResponseEntity filterDispatchDetails(String deliveryChallanNo, String consignmentNo, String dispatchMode,
+			String dispatchVendor, String status, int page, int size) {
+
+		logger.info("Filter dispatch service started");
+
+		ResponseEntity response = new ResponseEntity();
+
+		try {
+
+			Pageable pageable = PageRequest.of(page, size);
+
+			Page<DispatchEntity> pageData = dispatchRespository.findAll(DispatchDetailsSpecification
+					.filter(deliveryChallanNo, consignmentNo, dispatchMode, dispatchVendor, status),
+					pageable);
+
+			List<DispatchResponse> responseList = pageData.getContent().stream().map(entity -> toResponse(entity))
+					.toList();
+
+			if (responseList.isEmpty()) {
+				logger.warn("No dispatch records found for given filter criteria");
+				response.setMessage("No dispatch records found");
+				response.setStatusCode(404);
+				response.setPayload(null);
+			} else {
+
+				PageResponse<DispatchResponse> pageResponse = new PageResponse<>();
+				pageResponse.setContent(responseList);
+				pageResponse.setPageNumber(pageData.getNumber());
+				pageResponse.setPageSize(pageData.getSize());
+				pageResponse.setTotalElements(pageData.getTotalElements());
+				pageResponse.setTotalPages(pageData.getTotalPages());
+				pageResponse.setLastPage(pageData.isLast());
+
+				logger.info("Filtered dispatch records fetched successfully. Total: {}", pageData.getTotalElements());
+
+				response.setMessage("Dispatch records fetched successfully");
+				response.setStatusCode(200);
+				response.setPayload(pageResponse);
+			}
+
+		} catch (ResourceNotFoundException e) {
+			logger.error("Resource not found while filtering dispatch: {}", e.getMessage());
+			response.setMessage(e.getMessage());
+			response.setStatusCode(404);
+			response.setPayload(null);
+
+		} catch (ExternalServiceException e) {
+			logger.error("External service error while filtering dispatch: {}", e.getMessage());
+			response.setMessage(e.getMessage());
+			response.setStatusCode(502);
+			response.setPayload(null);
+
+		} catch (Exception e) {
+			logger.error("Unexpected error while filtering dispatch: {}", e.getMessage(), e);
+			response.setMessage("Internal Server Error");
+			response.setStatusCode(500);
+			response.setPayload(null);
+		}
+
+		return response;
+	}
+
 	public DispatchEntity toEntity(DispatchRequest request) {
 		DispatchEntity entity = new DispatchEntity();
 		entity.setDeliveryChallanNo(request.getDeliveryChallanNo());
 		entity.setConsignmentNo(request.getConsignmentNo());
 		entity.setDispatchMode(request.getDispatchMode());
+		entity.setStatus(request.getStatus());
 		entity.setDispatchVendor(request.getDispatchVendor());
 		entity.setRemarks(request.getRemarks());
 		entity.setMrnNo(request.getMrnNo());

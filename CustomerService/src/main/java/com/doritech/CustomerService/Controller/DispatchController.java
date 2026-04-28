@@ -27,8 +27,7 @@ public class DispatchController {
 	private DispatchService dispatchService;
 
 	@PostMapping("/saveDispatchDetails")
-	public ResponseEntity saveDispatchDetails(
-			@RequestBody @Valid DispatchRequest request,
+	public ResponseEntity saveDispatchDetails(@RequestBody @Valid DispatchRequest request,
 			@RequestHeader("X-User-Id") String userId) {
 
 		request.setCreatedBy(Integer.parseInt(userId));
@@ -36,8 +35,7 @@ public class DispatchController {
 	}
 
 	@GetMapping("/getAllDispatchDetails")
-	public ResponseEntity getAllDispatchDetails(
-			@RequestParam(defaultValue = "0") int page,
+	public ResponseEntity getAllDispatchDetails(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size) {
 		return dispatchService.getAllDispatchDetails(page, size);
 	}
@@ -48,17 +46,26 @@ public class DispatchController {
 	}
 
 	@PutMapping("/updateDispatchDetails")
-	public ResponseEntity updateDispatchDetails(@RequestParam Integer id,
-			@RequestHeader("X-User-Id") String userId,
+	public ResponseEntity updateDispatchDetails(@RequestParam Integer id, @RequestHeader("X-User-Id") String userId,
 			@RequestBody @Valid DispatchRequest request) {
 		request.setModifiedBy(Integer.parseInt(userId));
 		return dispatchService.updateDispatchDeatils(id, request);
 	}
 
 	@DeleteMapping("/deleteMultipleDispatchDetails")
-	public ResponseEntity deleteMultipleDispatchDetails(
-			@RequestParam List<Integer> ids,
+	public ResponseEntity deleteMultipleDispatchDetails(@RequestParam List<Integer> ids,
 			@RequestHeader("X-User-Id") String userId) {
 		return dispatchService.deleteMultipleDispatchDetails(ids);
+	}
+
+	@GetMapping("/filterDispatchDetails")
+	public ResponseEntity filterDispatch(@RequestHeader("X-User-Id") String userId,
+			@RequestParam(required = false) String deliveryChallanNo,
+			@RequestParam(required = false) String consignmentNo, @RequestParam(required = false) String dispatchMode,
+			@RequestParam(required = false) String dispatchVendor, @RequestParam(required = false) String status,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+
+		return dispatchService.filterDispatchDetails(deliveryChallanNo, consignmentNo, dispatchMode, dispatchVendor,
+				status, page, size);
 	}
 }

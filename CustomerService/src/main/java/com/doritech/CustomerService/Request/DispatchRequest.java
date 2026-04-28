@@ -34,7 +34,6 @@ public class DispatchRequest {
 
     private LocalDate receivedDate;
 
-    @NotNull(message = "{dispatch.createdBy.required}")
     private Integer createdBy;
 
     private Integer modifiedBy;
