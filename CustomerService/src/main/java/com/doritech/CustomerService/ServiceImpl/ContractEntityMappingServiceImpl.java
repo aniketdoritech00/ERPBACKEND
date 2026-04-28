@@ -92,7 +92,9 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 		Set<String> uniqueCheck = new HashSet<>();
 		for (ContractEntityMappingRequest request : requests) {
-
+			
+			
+			
 			if (request.getMappingId() != null && !repository.existsById(request.getMappingId())) {
 				throw new ResourceNotFoundException("Mapping not found with id: " + request.getMappingId());
 			}
@@ -128,8 +130,22 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		validationService.validateSiteExists(request.getSiteId());
 		handleBranchAllocation(request, customer);
 
-		validationService.validateEmployeeExists(request.getEmployeeId());
-		handleEmployeeAllocation(request, customer);
+		//validationService.validateEmployeeExists(request.getEmployeeId());
+		
+		boolean isInType = contractRepository.findById(request.getContractId())
+		        .map(contractEntity -> "IN".equalsIgnoreCase(contractEntity.getContractType()))
+		        .orElse(false);
+
+		if (!isInType) {
+		    if (request.getEmployeeId() == null) {
+		        throw new BadRequestException("employeeId must not be null");
+		    }
+		    if (request.getEmployeeFromDate() == null) {
+		        throw new BadRequestException("employeeFromDate must not be null");
+		    }
+		    validationService.validateEmployeeExists(request.getEmployeeId()); 
+		    handleEmployeeAllocation(request, customer);
+		}
 
 		ContractEntityMapping mapping = buildMapping(request, contract, customer);
 		ContractEntityMapping saved = repository.save(mapping);
