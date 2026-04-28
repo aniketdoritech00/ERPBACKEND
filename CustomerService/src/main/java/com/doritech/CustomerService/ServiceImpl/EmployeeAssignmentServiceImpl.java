@@ -1,5 +1,6 @@
 package com.doritech.CustomerService.ServiceImpl;
 
+import com.doritech.CustomerService.Repository.ContractInstallationDetailsRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,9 @@ import jakarta.transaction.Transactional;
 @Service
 public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService {
 
-	@Autowired
+	private final ContractInstallationDetailsRepository contractInstallationDetailsRepository;
+
+    @Autowired
 	private EmployeeAssignmentRepository repository;
 
 	@Autowired
@@ -53,6 +56,10 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 	@Autowired
 	private ValidationService validationService;
+
+    EmployeeAssignmentServiceImpl(ContractInstallationDetailsRepository contractInstallationDetailsRepository) {
+        this.contractInstallationDetailsRepository = contractInstallationDetailsRepository;
+    }
 
 	@Override
 	@Transactional
@@ -258,6 +265,8 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 					return categoryToParamMap.get(category);
 				}).filter(Objects::nonNull).distinct().toList();
+
+				response.setSalesOrderNo(contractInstallationDetailsRepository.findByContractContractId(contractEntityMapping.getContract().getContractId()).get().getSalesOrderNumber());
 
 				response.setProductName(productTypes);
 
