@@ -10,6 +10,14 @@ public class InstallationResponse {
 	private Integer assignmentId;
 	private String salesOrder;
 	private String visitType;
+	private String bankName;
+	private String faName;
+	private String helperName;
+
+	private String status;
+	private String controllingOffice;
+
+	private LocalDateTime createdAt;
 
 	private Boolean wiring;
 	private Boolean mounting;
@@ -35,6 +43,54 @@ public class InstallationResponse {
 	private List<String> serviceImages;
 	
 	
+
+	public String getBankName() {
+		return bankName;
+	}
+
+	public void setBankName(String bankName) {
+		this.bankName = bankName;
+	}
+
+	public String getFaName() {
+		return faName;
+	}
+
+	public void setFaName(String faName) {
+		this.faName = faName;
+	}
+
+	public String getHelperName() {
+		return helperName;
+	}
+
+	public void setHelperName(String helperName) {
+		this.helperName = helperName;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getControllingOffice() {
+		return controllingOffice;
+	}
+
+	public void setControllingOffice(String controllingOffice) {
+		this.controllingOffice = controllingOffice;
+	}
+
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
 
 	public String getVisitType() {
 		return visitType;

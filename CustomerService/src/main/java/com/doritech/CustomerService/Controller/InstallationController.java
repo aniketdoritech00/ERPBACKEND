@@ -11,9 +11,14 @@ import com.doritech.CustomerService.Request.InstallationRequest;
 
 import jakarta.validation.Valid;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,7 +49,7 @@ public class InstallationController {
             @Valid @RequestPart("data") InstallationRequest request,
             @RequestPart(value = "serviceImages", required = false) List<MultipartFile> serviceImages,
             @RequestHeader("X-User-Id") String userId) throws Exception {
-        return installationService.saveInstallationForFasAndSas(request, serviceImages,Integer.parseInt(userId));
+        return installationService.saveInstallationForFasAndSas(request, serviceImages, Integer.parseInt(userId));
     }
 
     @GetMapping("/get-installation/{id}")
@@ -55,6 +60,11 @@ public class InstallationController {
     @GetMapping("/get-installation-by-assignment-id/{assignmentId}")
     public ResponseEntity getInstallationByAssignmentId(@PathVariable Integer assignmentId) {
         return installationService.getInstallationByAssignmentId(assignmentId);
+    }
+
+    @GetMapping("/image")
+    public org.springframework.http.ResponseEntity<byte[]> getImage(@RequestParam String path) {
+        return installationService.getImage(path);
     }
 
     @GetMapping("/get-all-installations")

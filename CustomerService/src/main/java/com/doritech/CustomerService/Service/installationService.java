@@ -19,4 +19,6 @@ public interface installationService {
 
     ResponseEntity getAllInstallations(Integer page, Integer size);
 
+    public org.springframework.http.ResponseEntity<byte[]> getImage(String path);
+
 }
