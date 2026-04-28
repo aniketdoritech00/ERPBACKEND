@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -867,8 +868,8 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 		}
 
 		List<Map<String, Object>> payloadList = new ArrayList<>();
-		List<String> messages = new ArrayList<>();
-
+        Set<String> messages = new LinkedHashSet<>();
+		
 		for (ContractInstallationRequest req : requestList) {
 
 			if (req.getContractId() == null) {
