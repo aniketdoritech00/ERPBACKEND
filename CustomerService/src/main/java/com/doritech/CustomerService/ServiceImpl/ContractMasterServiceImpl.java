@@ -882,6 +882,7 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 		}
 
 		List<Map<String, Object>> payloadList = new ArrayList<>();
+		Set<String> messages = new LinkedHashSet<>();
         Set<String> messages = new LinkedHashSet<>();
 		
 		for (ContractInstallationRequest req : requestList) {
@@ -969,26 +970,35 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 				isUpdated = true;
 			}
 
-			if (req.getDocketNumber() != null || req.getBrfNumber() != null || req.getLogisticsRemarks() != null) {
+			if (req.getDocketNumber() != null || req.getLogisticsRemarks() != null) {
 
-				if (req.getDocketNumber() != null) {
-					entity.setDocketNumber(req.getDocketNumber());
-					payload.put("docketNumber", req.getDocketNumber());
-				}
+			    if (req.getDocketNumber() != null) {
+			        entity.setDocketNumber(req.getDocketNumber());
+			        payload.put("docketNumber", req.getDocketNumber());
+			    }
 
-				if (req.getBrfNumber() != null) {
-					entity.setBrfNumber(req.getBrfNumber());
-					payload.put("brfNumber", req.getBrfNumber());
-				}
+			    if (req.getLogisticsRemarks() != null) {
+			        entity.setLogisticsRemarks(req.getLogisticsRemarks());
+			        payload.put("logisticsRemarks", req.getLogisticsRemarks());
+			    }
 
-				if (req.getLogisticsRemarks() != null) {
-					entity.setLogisticsRemarks(req.getLogisticsRemarks());
-					payload.put("logisticsRemarks", req.getLogisticsRemarks());
-				}
+			    entity.setLogisticsProcessedAt(LocalDateTime.now());
+			    entity.setLogisticsProcessedBy(String.valueOf(userId));
 
-				entity.setLogisticsProcessedAt(LocalDateTime.now());
-				entity.setLogisticsProcessedBy(String.valueOf(userId));
+			    messages.add("Logistics details updated");
+			    isUpdated = true;
+			}
+			
+			if (req.getBrfNumber() != null) {
 
+			    entity.setBrfNumber(req.getBrfNumber());
+			    entity.setBrfCreatedAt(LocalDateTime.now());
+			    entity.setBrfCreatedBy(String.valueOf(userId));
+
+			    payload.put("brfNumber", req.getBrfNumber());
+
+			    messages.add("BRF number updated");
+			    isUpdated = true;
 				messages.add("Logistics details updated");
 				isUpdated = true;
 

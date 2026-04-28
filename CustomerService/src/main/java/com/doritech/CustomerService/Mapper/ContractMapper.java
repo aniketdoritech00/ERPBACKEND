@@ -76,7 +76,7 @@ public class ContractMapper {
 
 			i.setDocketNumber(inst.getDocketNumber());
 			i.setBrfNumber(inst.getBrfNumber());
-
+			i.setLogisticsRemarks(inst.getLogisticsRemarks());
 			i.setBillNumber(inst.getBillNumber());
 			i.setBillDate(inst.getBillDate());
 			i.setBillAmount(inst.getBillAmount());
