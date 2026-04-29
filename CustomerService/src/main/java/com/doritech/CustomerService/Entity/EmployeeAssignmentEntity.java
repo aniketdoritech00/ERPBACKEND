@@ -48,7 +48,7 @@ public class EmployeeAssignmentEntity {
 	@Column(name = "visit_type")
 	private String visitType;
 
-	@Column(name="verify_status")
+	@Column(name = "verify_status")
 	private String verifyStatus;
 
 	@Column(name="verify_remark")
@@ -57,7 +57,7 @@ public class EmployeeAssignmentEntity {
 	@Column(name="verify_on")
 	private LocalDateTime verifyOn;
 
-	@Column(name="verify_by")
+	@Column(name = "verify_by")
 	private Integer verifyBy;
 
 	@Column(name = "status", nullable = false)
@@ -77,10 +77,7 @@ public class EmployeeAssignmentEntity {
 
 	@Column(name = "modified_by")
 	private Integer modifiedBy;
-
-	
-	
-
+  
 	public String getVisitType() {
 		return visitType;
 	}
@@ -124,7 +121,7 @@ public class EmployeeAssignmentEntity {
 	 * @param helperId the helperId to set
 	 */
 	public void setHelperId(Integer helperId) {
-		this.helperId = helperId;	
+		this.helperId = helperId;
 	}
 
 	/**
@@ -135,8 +132,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param visitDate
-	 *            the visitDate to set
+	 * @param visitDate the visitDate to set
 	 */
 	public void setVisitDate(LocalDateTime visitDate) {
 		this.visitDate = visitDate;
@@ -161,14 +157,11 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param assignmentId
-	 *            the assignmentId to set
+	 * @param assignmentId the assignmentId to set
 	 */
 	public void setAssignmentId(Integer assignmentId) {
 		this.assignmentId = assignmentId;
 	}
-
-	
 
 	/**
 	 * @return the employeeId
@@ -178,8 +171,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param employeeId
-	 *            the employeeId to set
+	 * @param employeeId the employeeId to set
 	 */
 	public void setEmployeeId(Integer employeeId) {
 		this.employeeId = employeeId;
@@ -193,8 +185,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param siteId
-	 *            the siteId to set
+	 * @param siteId the siteId to set
 	 */
 	public void setSiteId(Integer siteId) {
 		this.siteId = siteId;
@@ -208,8 +199,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param assignmentStartDate
-	 *            the assignmentStartDate to set
+	 * @param assignmentStartDate the assignmentStartDate to set
 	 */
 	public void setAssignmentStartDate(LocalDateTime assignmentStartDate) {
 		this.assignmentStartDate = assignmentStartDate;
@@ -223,8 +213,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param assignmentEndDate
-	 *            the assignmentEndDate to set
+	 * @param assignmentEndDate the assignmentEndDate to set
 	 */
 	public void setAssignmentEndDate(LocalDateTime assignmentEndDate) {
 		this.assignmentEndDate = assignmentEndDate;
@@ -238,8 +227,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param status
-	 *            the status to set
+	 * @param status the status to set
 	 */
 	public void setStatus(String status) {
 		this.status = status;
@@ -253,8 +241,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param remark
-	 *            the remark to set
+	 * @param remark the remark to set
 	 */
 	public void setRemark(String remark) {
 		this.remark = remark;
@@ -268,8 +255,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param createdOn
-	 *            the createdOn to set
+	 * @param createdOn the createdOn to set
 	 */
 	public void setCreatedOn(LocalDateTime createdOn) {
 		this.createdOn = createdOn;
@@ -283,8 +269,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param modifiedOn
-	 *            the modifiedOn to set
+	 * @param modifiedOn the modifiedOn to set
 	 */
 	public void setModifiedOn(LocalDateTime modifiedOn) {
 		this.modifiedOn = modifiedOn;
@@ -298,8 +283,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param createdBy
-	 *            the createdBy to set
+	 * @param createdBy the createdBy to set
 	 */
 	public void setCreatedBy(Integer createdBy) {
 		this.createdBy = createdBy;
@@ -313,8 +297,7 @@ public class EmployeeAssignmentEntity {
 	}
 
 	/**
-	 * @param modifiedBy
-	 *            the modifiedBy to set
+	 * @param modifiedBy the modifiedBy to set
 	 */
 	public void setModifiedBy(Integer modifiedBy) {
 		this.modifiedBy = modifiedBy;
