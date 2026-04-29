@@ -1,6 +1,5 @@
 package com.doritech.CustomerService.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -28,7 +27,9 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
 			+ "WHERE ea.assignmentId = :assignmentId")
 	Object[] getCustomerDetailsByAssignmentId(@Param("assignmentId") Integer assignmentId);
 
-	boolean existsByContractEntityMapping_MappingIdAndEmployeeIdAndSiteIdAndStatusNotAndAssignmentStartDateLessThanEqualAndAssignmentEndDateGreaterThanEqual(
-			Integer mappingId, Integer employeeId, Integer siteId, String status, LocalDateTime endDate,
-			LocalDateTime startDate);
+	boolean existsByContractEntityMapping_MappingIdAndStatus(Integer mappingId, String status);
+	
+	Page<EmployeeAssignmentEntity> findByStatus(String status, Pageable pageable);
+
+	Page<EmployeeAssignmentEntity> findByEmployeeIdAndStatus(Integer employeeId, String status, Pageable pageable);
 }
