@@ -4,8 +4,11 @@ import java.util.List;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Request.EmployeeAssignmentRequest;
+import com.doritech.CustomerService.Request.EmployeeTaskAssignmentRequest;
 import com.doritech.CustomerService.Response.EmployeeAssignmentResponse;
 import com.doritech.CustomerService.Response.PageResponse;
+
+import jakarta.validation.Valid;
 
 public interface EmployeeAssignmentService {
 
@@ -28,5 +31,8 @@ public interface EmployeeAssignmentService {
 	List<EmployeeAssignmentResponse> getAssignmentByIds(List<Integer> assignmentIds);
 
 	ResponseEntity updateVerifyStatus(Integer assignmentId,String verifyStatus,String verifyRemark,Integer userId);
+
+
+	List<EmployeeAssignmentResponse> saveEmployeeAssignments(@Valid List<EmployeeTaskAssignmentRequest> requests);
 
 }

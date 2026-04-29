@@ -31,7 +31,7 @@ import com.doritech.CustomerService.Entity.QuotationDetail;
 import com.doritech.CustomerService.Entity.QuotationDocument;
 import com.doritech.CustomerService.Entity.QuotationMaster;
 import com.doritech.CustomerService.Entity.ResponseEntity;
-import com.doritech.CustomerService.Entity.StockRequestDetailEntity;
+
 import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Exception.DatabaseOperationException;
 import com.doritech.CustomerService.Exception.DuplicateResourceException;
@@ -49,7 +49,7 @@ import com.doritech.CustomerService.Repository.QuotationDetailRepository;
 import com.doritech.CustomerService.Repository.QuotationDocumentRepository;
 import com.doritech.CustomerService.Repository.QuotationMasterRepository;
 import com.doritech.CustomerService.Repository.StockRequestDetailsRepository;
-import com.doritech.CustomerService.Repository.StockRequestRepository;
+
 import com.doritech.CustomerService.Request.ContractInstallationRequest;
 import com.doritech.CustomerService.Request.ContractMasterRequest;
 import com.doritech.CustomerService.Request.StockDeliveryChallanRequest;
@@ -269,11 +269,15 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		Pageable pageable = PageRequest.of(page, size, Sort.by("contractId").descending());
 
-		Page<ContractMaster> contractPage = contractRepository.findByContractTypeIgnoreCase("IN", pageable);
-
+		Page<ContractMaster> contractPage =
+		        contractRepository.findByContractTypeIgnoreCaseAndIsActive(
+		                "IN",
+		                "Y",
+		                pageable
+		        );
 		if (contractPage.isEmpty()) {
 			logger.warn("No IN type contracts found");
-			throw new ResourceNotFoundException("No IN type contracts found");
+			throw new ResourceNotFoundException("No Installation type contracts found");
 		}
 
 		List<ContractMasterResponse> response = contractPage.getContent().stream().map(ContractMapper::toResponse)
@@ -998,8 +1002,6 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 			    messages.add("BRF number updated");
 			    isUpdated = true;
-				messages.add("Logistics details updated");
-				isUpdated = true;
 
 				StockDeliveryChallanRequest challanReq = new StockDeliveryChallanRequest();
 				challanReq.setDeliveryChallanNo(req.getDocketNumber());
