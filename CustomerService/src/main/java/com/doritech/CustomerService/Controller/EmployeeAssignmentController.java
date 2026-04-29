@@ -1,5 +1,6 @@
 package com.doritech.CustomerService.Controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.apache.coyote.BadRequestException;
@@ -37,66 +38,53 @@ public class EmployeeAssignmentController {
 	private ValidationService validationService;
 
 	@PostMapping("/saveEmployeeAssignment")
-	public ResponseEntity saveEmployeeAssignment(
-			@Valid @RequestBody EmployeeAssignmentRequest request,
+	public ResponseEntity saveEmployeeAssignment(@Valid @RequestBody EmployeeAssignmentRequest request,
 			@RequestHeader("X-User-Id") String userId,
 
 			HttpServletRequest httpServletRequest) throws BadRequestException {
 
 		request.setCreatedBy(Integer.parseInt(userId));
 
-		return new ResponseEntity("Employee Assignment save Successfully",
-				HttpStatus.OK.value(),
+		return new ResponseEntity("Employee Assignment save Successfully", HttpStatus.OK.value(),
 				assignmentService.saveEmployeeAssignment(request));
 	}
 
 	@PutMapping("/updateEmployeeAssignmentStatus/{assignmentId}")
-	public ResponseEntity updateEmployeeAssignmentStatus(
-			@PathVariable Integer assignmentId,
-			@RequestBody EmployeeAssignmentRequest request,
-			@RequestHeader("X-User-Id") String userId,
+	public ResponseEntity updateEmployeeAssignmentStatus(@PathVariable Integer assignmentId,
+			@RequestBody EmployeeAssignmentRequest request, @RequestHeader("X-User-Id") String userId,
 
 			HttpServletRequest httpServletRequest) throws BadRequestException {
 
 		request.setModifiedBy(Integer.parseInt(userId));
 
-		return new ResponseEntity("Employee Assignment Status updated successfully",
-				HttpStatus.OK.value(),
+		return new ResponseEntity("Employee Assignment Status updated successfully", HttpStatus.OK.value(),
 				assignmentService.updateEmployeeAssignmentStatus(assignmentId, request));
 	}
 
 	@PostMapping("/saveBulkEmployeeAssignment")
-	public ResponseEntity saveBulkEmployeeAssignment(
-			@Valid @RequestBody List<EmployeeAssignmentRequest> requests,
-			@RequestHeader("X-User-Id") String userId,
-			HttpServletRequest httpServletRequest) {
+	public ResponseEntity saveBulkEmployeeAssignment(@Valid @RequestBody List<EmployeeAssignmentRequest> requests,
+			@RequestHeader("X-User-Id") String userId, HttpServletRequest httpServletRequest) {
 		Integer userIdInt = Integer.parseInt(userId);
 
 		requests.forEach(req -> req.setCreatedBy(userIdInt));
 
-		return new ResponseEntity("Employee Assignments saved successfully",
-				HttpStatus.OK.value(),
+		return new ResponseEntity("Employee Assignments saved successfully", HttpStatus.OK.value(),
 				assignmentService.saveBulkEmployeeAssignment(requests));
 	}
 
 	@GetMapping("/getEmployeeAssignments")
-	public ResponseEntity getEmployeeAssignments(
-			@RequestParam(required = false) Integer employeeId,
-			@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "100") int size,
+	public ResponseEntity getEmployeeAssignments(@RequestParam(required = false) Integer employeeId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "100") int size,
 			@RequestParam(defaultValue = "assignmentId") String sortBy,
 			@RequestParam(defaultValue = "asc") String sortDir, @RequestHeader("X-User-Id") String userId) {
 
-		return new ResponseEntity("Assignments fetched successfully",
-				HttpStatus.OK.value(), assignmentService.getEmployeeAssignments(
-						employeeId, page, size, sortBy, sortDir));
+		return new ResponseEntity("Assignments fetched successfully", HttpStatus.OK.value(),
+				assignmentService.getEmployeeAssignments(employeeId, page, size, sortBy, sortDir));
 	}
 
 	@GetMapping("/getEmployeeAssignmentsByUserId")
-	public ResponseEntity getEmployeeAssignments(
-			@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "100") int size,
-			@RequestParam(defaultValue = "assignmentId") String sortBy,
+	public ResponseEntity getEmployeeAssignments(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "100") int size, @RequestParam(defaultValue = "assignmentId") String sortBy,
 			@RequestParam(defaultValue = "asc") String sortDir, @RequestHeader("X-User-Id") String userId) {
 
 		Integer userIdInt = Integer.parseInt(userId);
@@ -113,8 +101,7 @@ public class EmployeeAssignmentController {
 	}
 
 	@GetMapping("/customer-details")
-	public ResponseEntity getCustomerDetails(
-			@RequestParam Integer assignmentId) {
+	public ResponseEntity getCustomerDetails(@RequestParam Integer assignmentId) {
 		return assignmentService.getCustomerDetailsByAssignmentId(assignmentId);
 	}
 
@@ -124,33 +111,44 @@ public class EmployeeAssignmentController {
 	}
 
 	@GetMapping("/updateVerifyStatus")
-	public ResponseEntity updateVerifyStatus(@RequestParam Integer assignmentId, @RequestParam String verifyStatus,@RequestParam(required = false) String verifyRemark,
-			@RequestHeader("X-User-Id") String userId) {
+	public ResponseEntity updateVerifyStatus(@RequestParam Integer assignmentId, @RequestParam String verifyStatus,
+			@RequestParam(required = false) String verifyRemark, @RequestHeader("X-User-Id") String userId) {
 		return assignmentService.updateVerifyStatus(assignmentId, verifyStatus, verifyRemark, Integer.parseInt(userId));
 
 	}
 
 	@GetMapping("/getAssignmentByIds")
 	public ResponseEntity getAssignmentByIds(@RequestParam List<Integer> assignmentIds) {
-		return new ResponseEntity("Assignments fetched successfully",
-				HttpStatus.OK.value(), assignmentService.getAssignmentByIds(assignmentIds));
+		return new ResponseEntity("Assignments fetched successfully", HttpStatus.OK.value(),
+				assignmentService.getAssignmentByIds(assignmentIds));
 	}
-	
-	
+
 	@PostMapping("/faAssign")
 	public com.doritech.CustomerService.Entity.ResponseEntity faAssign(
-	        @Valid @RequestBody List<EmployeeTaskAssignmentRequest> requests,
-	        @RequestHeader("X-User-Id") String userId,
-	        HttpServletRequest httpServletRequest) {
+			@Valid @RequestBody List<EmployeeTaskAssignmentRequest> requests, @RequestHeader("X-User-Id") String userId,
+			HttpServletRequest httpServletRequest) {
 
-	    requests.forEach(req -> req.setCreatedBy(Integer.parseInt(userId)));
+		requests.forEach(req -> req.setCreatedBy(Integer.parseInt(userId)));
 
-	    List<EmployeeAssignmentResponse> savedAssignments = assignmentService.saveEmployeeAssignments(requests);
+		List<EmployeeAssignmentResponse> savedAssignments = assignmentService.saveEmployeeAssignments(requests);
 
-	    return new com.doritech.CustomerService.Entity.ResponseEntity(
-	            "FA Assignments saved successfully",
-	            HttpStatus.OK.value(),
-	            savedAssignments
-	    );
+		return new com.doritech.CustomerService.Entity.ResponseEntity("FA Assignments saved successfully",
+				HttpStatus.OK.value(), savedAssignments);
+	}
+
+	@GetMapping("/getAssignedEmployeeAssignments")
+	public ResponseEntity getAssignedEmployeeAssignments(@RequestParam(required = false) Integer employeeId,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "100") int size,
+			@RequestParam(defaultValue = "assignmentId") String sortBy,
+			@RequestParam(defaultValue = "asc") String sortDir, @RequestHeader("X-User-Id") String userId) {
+
+		return new ResponseEntity("Assigned assignments fetched successfully", HttpStatus.OK.value(),
+				assignmentService.getAssignedEmployeeAssignments(employeeId, page, size, sortBy, sortDir));
+	}
+
+	@PostMapping("/scheduledFiledAssociated")
+	public ResponseEntity scheduledFiledAssociated(@RequestParam List<Integer> ids, @RequestParam LocalDateTime date) {
+		return new ResponseEntity("Employee associated successfully", HttpStatus.OK.value(),
+				assignmentService.scheduledFiledAssociated(ids, date));
 	}
 }
