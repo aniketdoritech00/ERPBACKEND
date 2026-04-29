@@ -35,7 +35,7 @@ public class ContractEntityMappingResponse {
 	private Integer modifiedBy;
 	private String billNumber;
 	private String salesOrderNumber;
-
+	private String status;
 	private String productCategories;
 
 	private String hierarchyLevelName;
@@ -286,6 +286,14 @@ public class ContractEntityMappingResponse {
 
 	public void setProductCategories(String productCategories) {
 		this.productCategories = productCategories;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 }

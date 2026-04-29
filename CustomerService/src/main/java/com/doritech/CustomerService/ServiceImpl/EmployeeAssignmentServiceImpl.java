@@ -90,7 +90,7 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 		entity.setVerifyStatus("Pending");
 		entity.setVerifyOn(null);
 		entity.setVisitDate(request.getVisitDate());
-		entity.setStatus("Pending");
+		entity.setStatus("Assigned");
 		entity.setRemark("NA");
 		entity.setCreatedBy(request.getCreatedBy());
 
@@ -489,57 +489,199 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 	@Override
 	@Transactional
-	public List<EmployeeAssignmentResponse> saveEmployeeAssignments(@Valid List<EmployeeTaskAssignmentRequest> requests) {
+	public List<EmployeeAssignmentResponse> saveEmployeeAssignments(
+			@Valid List<EmployeeTaskAssignmentRequest> requests) {
 
-	    List<EmployeeAssignmentResponse> responses = new ArrayList<>();
+		List<EmployeeAssignmentResponse> responses = new ArrayList<>();
 
-	    for (EmployeeTaskAssignmentRequest request : requests) {
+		for (EmployeeTaskAssignmentRequest request : requests) {
 
-	        ContractEntityMapping contractEntityMapping = contractEntityMappingRepository
-	                .findById(request.getMappingId())
-	                .orElseThrow(() -> new ResourceNotFoundException(
-	                        "Contract not found with ID: " + request.getMappingId()));
+			ContractEntityMapping contractEntityMapping = contractEntityMappingRepository
+					.findById(request.getMappingId()).orElseThrow(() -> new ResourceNotFoundException(
+							"Contract not found with ID: " + request.getMappingId()));
 
-	        boolean isDuplicate = repository
-	                .existsByContractEntityMapping_MappingIdAndEmployeeIdAndSiteIdAndStatusNotAndAssignmentStartDateLessThanEqualAndAssignmentEndDateGreaterThanEqual(
-	                        request.getMappingId(),
-	                        request.getEmployeeId(),
-	                        request.getSiteId(),
-	                        "Cancelled",
-	                        request.getAssignmentEndDate(),
-	                        request.getAssignmentStartDate()
-	                );
+			boolean isDuplicate = repository.existsByContractEntityMapping_MappingIdAndStatus(request.getMappingId(),
+					"Assigned");
 
-	        if (isDuplicate) {
-	            throw new BadRequestException(
-	                    "EmployeeId " + request.getEmployeeId() +
-	                    " already assigned for MappingId " + request.getMappingId() +
-	                    " at SiteId " + request.getSiteId() +
-	                    " in given date range"
-	            );
-	        }
+			if (isDuplicate) {
+				throw new BadRequestException(
+						"MappingId " + request.getMappingId() + " already has an Assigned assignment");
+			}
 
-	        EmployeeAssignmentEntity entity = new EmployeeAssignmentEntity();
+			EmployeeAssignmentEntity entity = new EmployeeAssignmentEntity();
 
-	        if ("IN".equals(contractEntityMapping.getContract().getAmcType())) {
-	            entity.setHelperId(request.getHelperId());
-	        }
+			if ("IN".equals(contractEntityMapping.getContract().getAmcType())) {
+				entity.setHelperId(request.getHelperId());
+			}
 
-	        entity.setContractEntityMapping(contractEntityMapping);
-	        entity.setEmployeeId(request.getEmployeeId());
-	        entity.setHelperId(request.getHelperId());
-	        entity.setSiteId(request.getSiteId());
-	        entity.setAssignmentStartDate(request.getAssignmentStartDate());
-	        entity.setAssignmentEndDate(request.getAssignmentEndDate());
-	        entity.setVisitType(request.getVisitType());
-	        entity.setVerifyStatus("Pending");
-	        entity.setStatus("Pending");
-	        entity.setCreatedBy(request.getCreatedBy());
+			entity.setContractEntityMapping(contractEntityMapping);
+			entity.setEmployeeId(request.getEmployeeId());
+			entity.setHelperId(request.getHelperId());
+			entity.setSiteId(request.getSiteId());
+			entity.setAssignmentStartDate(request.getAssignmentStartDate());
+			entity.setAssignmentEndDate(request.getAssignmentEndDate());
+			entity.setVisitType(request.getVisitType());
+			entity.setVerifyStatus("Pending");
+			entity.setStatus("Assigned");
+			entity.setCreatedBy(request.getCreatedBy());
 
-	        EmployeeAssignmentEntity saved = repository.save(entity);
-	        responses.add(mapToResponse(saved));
+			EmployeeAssignmentEntity saved = repository.save(entity);
+			responses.add(mapToResponse(saved));
+		}
+
+		return responses;
+	}
+
+	@Override
+	public PageResponse<EmployeeAssignmentResponse> getAssignedEmployeeAssignments(Integer employeeId, int page,
+			int size, String sortBy, String sortDir) {
+
+		if (page < 0) {
+			throw new IllegalArgumentException("Page cannot be negative");
+		}
+
+		if (size <= 0) {
+			throw new IllegalArgumentException("Size must be greater than 0");
+		}
+
+		if (size > 100) {
+			size = 100;
+		}
+
+		List<String> allowedSortFields = List.of("assignmentId", "createdOn", "status");
+
+		if (!allowedSortFields.contains(sortBy)) {
+			sortBy = "assignmentId";
+		}
+
+		Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+
+		Pageable pageable = PageRequest.of(page, size, sort);
+
+		Page<EmployeeAssignmentEntity> entityPage;
+
+		if (employeeId != null) {
+			entityPage = repository.findByEmployeeIdAndStatus(employeeId, "Assigned", pageable);
+		} else {
+			entityPage = repository.findByStatus("Assigned", pageable);
+		}
+
+		Page<EmployeeAssignmentResponse> dtoPage = entityPage.map(this::mapToResponse);
+
+		List<EmployeeAssignmentResponse> content = dtoPage.getContent();
+
+		List<ItemIDResponse> itemIDResponses = validationService.getAllItems();
+
+		List<ParamResponseDTO> categoryParamResponseDTOs = validationService.getParamByCodeAndSerial("Item",
+				"Category");
+
+		Map<Integer, String> itemIdToCategoryMap = itemIDResponses.stream()
+				.collect(Collectors.toMap(ItemIDResponse::getItemId, ItemIDResponse::getCategory, (a, b) -> a));
+
+		Map<String, String> categoryToParamMap = categoryParamResponseDTOs.stream()
+				.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
+
+		List<ParamResponseDTO> typeParamResponseDTOs = validationService.getParamByCodeAndSerial("CONTRACT",
+				"CONTRACT_TYPE");
+
+		Map<String, String> typeToParamMap = typeParamResponseDTOs.stream()
+				.collect(Collectors.toMap(ParamResponseDTO::getDesp1, ParamResponseDTO::getDesp2, (a, b) -> a));
+
+		for (int i = 0; i < content.size(); i++) {
+
+			EmployeeAssignmentResponse response = content.get(i);
+			EmployeeAssignmentEntity entity = entityPage.getContent().get(i);
+
+			ContractEntityMapping contractEntityMapping = entity.getContractEntityMapping();
+
+			if (contractEntityMapping != null && contractEntityMapping.getCustomer() != null) {
+
+				response.setCustomerName(contractEntityMapping.getCustomer().getCustomerName());
+
+				response.setCustomerId(contractEntityMapping.getCustomer().getCustomerId());
+
+				HierarchyLevelResponseDTO responseDTO = validationService
+						.validateAndGetHierarchyLevel(contractEntityMapping.getCustomer().getHierarchyLevelId());
+
+				if (responseDTO != null) {
+					response.setZoneName(responseDTO.getLevelName());
+				}
+
+				String paramType = typeToParamMap.get(contractEntityMapping.getContract().getContractType());
+
+				response.setVisitType(paramType);
+
+				List<ContractItemMapping> contractItemMappings = contractItemMappingRepository
+						.findByContract_ContractId(contractEntityMapping.getContract().getContractId());
+
+				List<String> productTypes = contractItemMappings.stream().map(itemMapping -> {
+					Integer itemId = itemMapping.getItemId();
+					String category = itemIdToCategoryMap.get(itemId);
+					if (category == null) {
+						return null;
+					}
+					return categoryToParamMap.get(category);
+				}).filter(Objects::nonNull).distinct().toList();
+
+				contractInstallationDetailsRepository
+						.findByContractContractId(contractEntityMapping.getContract().getContractId())
+						.ifPresent(details -> response.setSalesOrderNo(details.getSalesOrderNumber()));
+
+				response.setProductName(productTypes);
+
+				response.setIfsc(contractEntityMapping.getCustomer().getIfsc());
+
+				List<CompanySiteMappingResponse> companySites = validationService
+						.getAllCompSiteMappingByCompId(contractEntityMapping.getCustomer().getCompId());
+
+				if (companySites != null && !companySites.isEmpty()) {
+
+					Integer siteId = companySites.get(0).getSiteId();
+					response.setSiteId(siteId);
+
+					CompSiteResponse siteResponse = validationService.validateAndGetSite(siteId, "AB");
+
+					if (siteResponse != null) {
+						response.setSiteName(siteResponse.getSiteName());
+						response.setDistrict(siteResponse.getDistrict());
+					}
+				}
+			}
+		}
+
+		return new PageResponse<>(dtoPage.getContent(), dtoPage.getNumber(), dtoPage.getSize(),
+				dtoPage.getTotalElements(), dtoPage.getTotalPages(), dtoPage.isLast());
+	}
+
+	@Override
+	@Transactional
+	public Object scheduledFiledAssociated(List<Integer> ids, LocalDateTime date) {
+
+	    if (ids == null || ids.isEmpty()) {
+	        throw new BadRequestException("Ids list cannot be null or empty");
 	    }
 
-	    return responses;
+	    if (date == null) {
+	        throw new BadRequestException("Date cannot be null");
+	    }
+
+	    List<EmployeeAssignmentEntity> employeeList = repository.findAllById(ids);
+
+	    if (employeeList == null || employeeList.isEmpty()) {
+	        throw new ResourceNotFoundException("No EmployeeAssignment records found for given ids");
+	    }
+
+	    employeeList.forEach(emp -> {
+	        emp.setVisitDate(date);
+	        emp.setStatus("Scheduled");
+	    });
+
+	    repository.saveAll(employeeList);
+
+	    return Map.of(
+	        "message", "Schedule successful",
+	        "scheduledCount", employeeList.size(),
+	        "date", date.toString()
+	    );
 	}
 }
