@@ -156,4 +156,7 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
 					    AND ea.status = 'Completed'
 					""", nativeQuery = true)
 	List<Object[]> getCompletedAssignmentsWithExpense();
+	boolean existsByContractEntityMapping_MappingIdAndEmployeeIdAndSiteIdAndStatusNotAndAssignmentStartDateLessThanEqualAndAssignmentEndDateGreaterThanEqual(
+			Integer mappingId, Integer employeeId, Integer siteId, String status, LocalDateTime endDate,
+			LocalDateTime startDate);
 }

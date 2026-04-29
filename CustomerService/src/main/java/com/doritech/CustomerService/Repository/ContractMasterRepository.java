@@ -47,6 +47,10 @@ public interface ContractMasterRepository
 
 	long countByContractEndDateBetween(LocalDate start, LocalDate end);
 
-	Page<ContractMaster> findByContractTypeIgnoreCase(String string, Pageable pageable);
     List<ContractMaster> findByContractTypeAndIsActive(String type, String isActive);
-}
+
+    Page<ContractMaster> findByContractTypeIgnoreCaseAndIsActive(
+            String contractType,
+            String isActive,
+            Pageable pageable
+    );}

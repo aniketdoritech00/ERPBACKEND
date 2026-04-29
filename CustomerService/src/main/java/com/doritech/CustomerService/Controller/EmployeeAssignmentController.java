@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Request.EmployeeAssignmentRequest;
+import com.doritech.CustomerService.Request.EmployeeTaskAssignmentRequest;
+import com.doritech.CustomerService.Response.EmployeeAssignmentResponse;
 import com.doritech.CustomerService.Response.UserResponse;
 import com.doritech.CustomerService.Service.EmployeeAssignmentService;
 import com.doritech.CustomerService.ValidationService.ValidationService;
@@ -118,9 +120,9 @@ public class EmployeeAssignmentController {
 	}
 
 	@GetMapping("/updateVerifyStatus")
-	public ResponseEntity updateVerifyStatus(@RequestParam Integer assignmentId, @RequestParam String verifyStatus,
+	public ResponseEntity updateVerifyStatus(@RequestParam Integer assignmentId, @RequestParam String verifyStatus,@RequestParam(required = false) String verifyRemark,
 			@RequestHeader("X-User-Id") String userId) {
-		return assignmentService.updateVerifyStatus(assignmentId, verifyStatus, Integer.parseInt(userId));
+		return assignmentService.updateVerifyStatus(assignmentId, verifyStatus, verifyRemark, Integer.parseInt(userId));
 
 	}
 
@@ -128,5 +130,23 @@ public class EmployeeAssignmentController {
 	public ResponseEntity getAssignmentByIds(@RequestParam List<Integer> assignmentIds) {
 		return new ResponseEntity("Assignments fetched successfully",
 				HttpStatus.OK.value(), assignmentService.getAssignmentByIds(assignmentIds));
+	}
+	
+	
+	@PostMapping("/faAssign")
+	public com.doritech.CustomerService.Entity.ResponseEntity faAssign(
+	        @Valid @RequestBody List<EmployeeTaskAssignmentRequest> requests,
+	        @RequestHeader("X-User-Id") String userId,
+	        HttpServletRequest httpServletRequest) {
+
+	    requests.forEach(req -> req.setCreatedBy(Integer.parseInt(userId)));
+
+	    List<EmployeeAssignmentResponse> savedAssignments = assignmentService.saveEmployeeAssignments(requests);
+
+	    return new com.doritech.CustomerService.Entity.ResponseEntity(
+	            "FA Assignments saved successfully",
+	            HttpStatus.OK.value(),
+	            savedAssignments
+	    );
 	}
 }

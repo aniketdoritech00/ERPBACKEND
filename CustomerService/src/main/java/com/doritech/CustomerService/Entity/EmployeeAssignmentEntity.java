@@ -51,7 +51,10 @@ public class EmployeeAssignmentEntity {
 	@Column(name = "verify_status")
 	private String verifyStatus;
 
-	@Column(name = "verify_on")
+	@Column(name="verify_remark")
+	private String verifyRemark;
+
+	@Column(name="verify_on")
 	private LocalDateTime verifyOn;
 
 	@Column(name = "verify_by")
@@ -74,7 +77,7 @@ public class EmployeeAssignmentEntity {
 
 	@Column(name = "modified_by")
 	private Integer modifiedBy;
-
+  
 	public String getVisitType() {
 		return visitType;
 	}
@@ -307,5 +310,13 @@ public class EmployeeAssignmentEntity {
 	public void setContractEntityMapping(ContractEntityMapping contractEntityMapping) {
 		this.contractEntityMapping = contractEntityMapping;
 	}
+
+    public String getVerifyRemark() {
+        return verifyRemark;
+    }
+
+    public void setVerifyRemark(String verifyRemark) {
+        this.verifyRemark = verifyRemark;
+    }
 
 }

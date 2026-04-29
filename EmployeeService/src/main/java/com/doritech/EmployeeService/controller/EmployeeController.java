@@ -129,6 +129,11 @@ public class EmployeeController {
 		return employeeService.getAllAssociateFa(siteId);
 	}
 
+	@GetMapping("/getAllFa")
+	public ResponseEntity getAllFa() {
+		return employeeService.getAllFa();
+	}
+
 	@GetMapping("/getDistrictByEmployee/{employeeId}")
 	public ResponseEntity getDistrictByEmployee(@PathVariable Integer employeeId) {
 		return employeeService.getEmployeeDistrict(employeeId);

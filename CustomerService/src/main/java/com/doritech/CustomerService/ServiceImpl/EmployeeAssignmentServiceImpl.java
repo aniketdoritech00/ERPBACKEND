@@ -21,11 +21,14 @@ import com.doritech.CustomerService.Entity.ContractItemMapping;
 import com.doritech.CustomerService.Entity.CustomerMasterEntity;
 import com.doritech.CustomerService.Entity.EmployeeAssignmentEntity;
 import com.doritech.CustomerService.Entity.ResponseEntity;
+import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Exception.ResourceNotFoundException;
 import com.doritech.CustomerService.Repository.ContractEntityMappingRepository;
+import com.doritech.CustomerService.Repository.ContractInstallationDetailsRepository;
 import com.doritech.CustomerService.Repository.ContractItemMappingRepository;
 import com.doritech.CustomerService.Repository.EmployeeAssignmentRepository;
 import com.doritech.CustomerService.Request.EmployeeAssignmentRequest;
+import com.doritech.CustomerService.Request.EmployeeTaskAssignmentRequest;
 import com.doritech.CustomerService.Response.CompSiteResponse;
 import com.doritech.CustomerService.Response.CompanySiteMappingResponse;
 import com.doritech.CustomerService.Response.CustomerResponse;
@@ -39,9 +42,12 @@ import com.doritech.CustomerService.Service.EmployeeAssignmentService;
 import com.doritech.CustomerService.ValidationService.ValidationService;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 
 @Service
 public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService {
+
+	private final ContractInstallationDetailsRepository contractInstallationDetailsRepository;
 
 	@Autowired
 	private EmployeeAssignmentRepository repository;
@@ -53,6 +59,10 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 	@Autowired
 	private ValidationService validationService;
+
+	EmployeeAssignmentServiceImpl(ContractInstallationDetailsRepository contractInstallationDetailsRepository) {
+		this.contractInstallationDetailsRepository = contractInstallationDetailsRepository;
+	}
 
 	@Override
 	@Transactional
@@ -259,6 +269,10 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 					return categoryToParamMap.get(category);
 				}).filter(Objects::nonNull).distinct().toList();
 
+				response.setSalesOrderNo(contractInstallationDetailsRepository
+						.findByContractContractId(contractEntityMapping.getContract().getContractId()).get()
+						.getSalesOrderNumber());
+
 				response.setProductName(productTypes);
 
 				response.setIfsc(contractEntityMapping.getCustomer().getIfsc());
@@ -325,12 +339,14 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 		response.setRemark(entity.getRemark());
 
 		response.setVerifyStatus(entity.getVerifyStatus());
-		response.setVerifyBy(entity.getVerifyBy());	
+		response.setVerifyBy(entity.getVerifyBy());
+		if (entity.getVerifyBy() != null) {
+			EmployeeDTO verifyByDTO = validationService.validateEmployeeExists(entity.getVerifyBy());
+			response.setVerifyByName(verifyByDTO.getEmployeeName());
+		}
 		response.setVerifyOn(entity.getVerifyOn());
 
-		response.setVisitType(entity.getVisitType() != null
-						? entity.getVisitType()
-						: null);
+		response.setVisitType(entity.getVisitType() != null ? entity.getVisitType() : null);
 
 		response.setCreatedOn(entity.getCreatedOn());
 		response.setModifiedOn(entity.getModifiedOn());
@@ -409,17 +425,34 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 	@Override
 	@Transactional
-	public ResponseEntity updateVerifyStatus(Integer assignmentId,String verifyStatus,Integer userId) {
+	public ResponseEntity updateVerifyStatus(Integer assignmentId, String verifyStatus, String verifyRemark,
+			Integer userId) {
 
 		Optional<EmployeeAssignmentEntity> optional = repository.findById(assignmentId);
 
 		if (optional.isEmpty()) {
 			return new ResponseEntity("Assignment not found", 404, null);
 		}
+
 		EmployeeAssignmentEntity assignment = optional.get();
-		assignment.setVerifyStatus(verifyStatus);
+
+		String currentStatus = assignment.getVerifyStatus();
+
+		if (currentStatus != null
+				&& (currentStatus.equalsIgnoreCase("VERIFIED") || currentStatus.equalsIgnoreCase("REJECTED"))) {
+
+			return new ResponseEntity("This assignment is already " + currentStatus.toLowerCase(), 409, null);
+		}
+
+		if (!"VERIFIED".equalsIgnoreCase(verifyStatus) && !"REJECTED".equalsIgnoreCase(verifyStatus)) {
+
+			return new ResponseEntity("Invalid verify status. Allowed: VERIFIED or REJECTED", 400, null);
+		}
+
+		assignment.setVerifyStatus(verifyStatus.toUpperCase());
 		assignment.setVerifyOn(LocalDateTime.now());
 		assignment.setVerifyBy(userId);
+		assignment.setVerifyRemark(verifyRemark);
 		assignment.setModifiedOn(LocalDateTime.now());
 		assignment.setModifiedBy(userId);
 
@@ -433,12 +466,12 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 	public List<EmployeeAssignmentResponse> getAssignmentByIds(List<Integer> assignmentIds) {
 		List<EmployeeAssignmentEntity> assignmentEntities = repository.findAllById(assignmentIds);
 
-		if(assignmentEntities == null || assignmentEntities.isEmpty()) {
+		if (assignmentEntities == null || assignmentEntities.isEmpty()) {
 			throw new ResourceNotFoundException("No assignments found for the provided IDs");
 		}
 
 		List<EmployeeAssignmentResponse> responses = new ArrayList<>();
-		for(EmployeeAssignmentEntity entity : assignmentEntities) {
+		for (EmployeeAssignmentEntity entity : assignmentEntities) {
 
 			EmployeeAssignmentResponse response = new EmployeeAssignmentResponse();
 			response.setAssignmentId(entity.getAssignmentId());
@@ -446,10 +479,67 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 			response.setHelperId(entity.getHelperId());
 			response.setVisitType(entity.getVisitType());
 			response.setVerifyStatus(entity.getVerifyStatus());
+			response.setVerifyRemark(entity.getVerifyRemark());
 			response.setStatus(entity.getStatus());
 			responses.add(response);
 		}
 
 		return responses;
+	}
+
+	@Override
+	@Transactional
+	public List<EmployeeAssignmentResponse> saveEmployeeAssignments(@Valid List<EmployeeTaskAssignmentRequest> requests) {
+
+	    List<EmployeeAssignmentResponse> responses = new ArrayList<>();
+
+	    for (EmployeeTaskAssignmentRequest request : requests) {
+
+	        ContractEntityMapping contractEntityMapping = contractEntityMappingRepository
+	                .findById(request.getMappingId())
+	                .orElseThrow(() -> new ResourceNotFoundException(
+	                        "Contract not found with ID: " + request.getMappingId()));
+
+	        boolean isDuplicate = repository
+	                .existsByContractEntityMapping_MappingIdAndEmployeeIdAndSiteIdAndStatusNotAndAssignmentStartDateLessThanEqualAndAssignmentEndDateGreaterThanEqual(
+	                        request.getMappingId(),
+	                        request.getEmployeeId(),
+	                        request.getSiteId(),
+	                        "Cancelled",
+	                        request.getAssignmentEndDate(),
+	                        request.getAssignmentStartDate()
+	                );
+
+	        if (isDuplicate) {
+	            throw new BadRequestException(
+	                    "EmployeeId " + request.getEmployeeId() +
+	                    " already assigned for MappingId " + request.getMappingId() +
+	                    " at SiteId " + request.getSiteId() +
+	                    " in given date range"
+	            );
+	        }
+
+	        EmployeeAssignmentEntity entity = new EmployeeAssignmentEntity();
+
+	        if ("IN".equals(contractEntityMapping.getContract().getAmcType())) {
+	            entity.setHelperId(request.getHelperId());
+	        }
+
+	        entity.setContractEntityMapping(contractEntityMapping);
+	        entity.setEmployeeId(request.getEmployeeId());
+	        entity.setHelperId(request.getHelperId());
+	        entity.setSiteId(request.getSiteId());
+	        entity.setAssignmentStartDate(request.getAssignmentStartDate());
+	        entity.setAssignmentEndDate(request.getAssignmentEndDate());
+	        entity.setVisitType(request.getVisitType());
+	        entity.setVerifyStatus("Pending");
+	        entity.setStatus("Pending");
+	        entity.setCreatedBy(request.getCreatedBy());
+
+	        EmployeeAssignmentEntity saved = repository.save(entity);
+	        responses.add(mapToResponse(saved));
+	    }
+
+	    return responses;
 	}
 }

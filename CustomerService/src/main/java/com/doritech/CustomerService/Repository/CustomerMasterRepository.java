@@ -214,4 +214,11 @@ public interface CustomerMasterRepository
 			  AND cm.is_active = 'Y'
 			""", nativeQuery = true)
 	List<Object[]> findCustomerDetailsByCustomerId(@Param("customerId") Integer customerId);
+	
+	@Query(value = "SELECT h.level_name " +
+            "FROM customer_master c " +
+            "JOIN hierarchy_level h ON c.hierarchy_level_id = h.hierarchy_level_id " +
+            "WHERE c.customer_id = :customerId",
+    nativeQuery = true)
+Optional<String> findHierarchyLevelNameByCustomerId(@Param("customerId") Integer customerId);
 }

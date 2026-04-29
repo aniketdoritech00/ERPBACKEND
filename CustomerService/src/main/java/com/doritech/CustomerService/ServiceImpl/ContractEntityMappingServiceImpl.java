@@ -92,9 +92,7 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 		Set<String> uniqueCheck = new HashSet<>();
 		for (ContractEntityMappingRequest request : requests) {
-			
-			
-			
+
 			if (request.getMappingId() != null && !repository.existsById(request.getMappingId())) {
 				throw new ResourceNotFoundException("Mapping not found with id: " + request.getMappingId());
 			}
@@ -130,21 +128,20 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		validationService.validateSiteExists(request.getSiteId());
 		handleBranchAllocation(request, customer);
 
-		//validationService.validateEmployeeExists(request.getEmployeeId());
-		
+		// validationService.validateEmployeeExists(request.getEmployeeId());
+
 		boolean isInType = contractRepository.findById(request.getContractId())
-		        .map(contractEntity -> "IN".equalsIgnoreCase(contractEntity.getContractType()))
-		        .orElse(false);
+				.map(contractEntity -> "IN".equalsIgnoreCase(contractEntity.getContractType())).orElse(false);
 
 		if (!isInType) {
-		    if (request.getEmployeeId() == null) {
-		        throw new BadRequestException("employeeId must not be null");
-		    }
-		    if (request.getEmployeeFromDate() == null) {
-		        throw new BadRequestException("employeeFromDate must not be null");
-		    }
-		    validationService.validateEmployeeExists(request.getEmployeeId()); 
-		    handleEmployeeAllocation(request, customer);
+			if (request.getEmployeeId() == null) {
+				throw new BadRequestException("employeeId must not be null");
+			}
+			if (request.getEmployeeFromDate() == null) {
+				throw new BadRequestException("employeeFromDate must not be null");
+			}
+			validationService.validateEmployeeExists(request.getEmployeeId());
+			handleEmployeeAllocation(request, customer);
 		}
 
 		ContractEntityMapping mapping = buildMapping(request, contract, customer);
@@ -405,6 +402,7 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 		Map<Integer, CompSiteResponse> siteCache = new HashMap<>();
 		Map<Integer, CustomerMasterEntity> customerCache = new HashMap<>();
+		Map<Integer, String> hierarchyLevelCache = new HashMap<>();
 
 		List<ContractEntityMappingResponse> response = new ArrayList<>();
 
@@ -417,7 +415,22 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 				if (contractName != null && !contractName.trim().isEmpty()) {
 					res.setContractId(mapping.getContract().getContractId());
 					res.setContractName(contractName);
+					res.setContractStartDate(mapping.getContract().getContractStartDate());
+					res.setContractEndDate(mapping.getContract().getContractEndDate());
 					res.setContractNo(mapping.getContract().getContractNo());
+
+					if (mapping.getContract().getInstallationDetails() != null
+							&& !mapping.getContract().getInstallationDetails().isEmpty()) {
+						res.setBillNumber(mapping.getContract().getInstallationDetails().get(0).getBillNumber());
+						res.setSalesOrderNumber(
+								mapping.getContract().getInstallationDetails().get(0).getSalesOrderNumber());
+					}
+
+					Integer contractId = mapping.getContract().getContractId();
+
+					List<String> categories = repository.findDistinctCategoriesByContractId(contractId);
+					res.setProductList(categories);
+
 				} else {
 					logger.warn("Contract name is null/empty for contractId {}", mapping.getContract().getContractId());
 				}
@@ -454,12 +467,18 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 							CustomerMasterEntity customer = customerCache.get(customerId);
 							res.setCustomerName(customer.getCustomerName());
 							res.setCustomerCode(customer.getCustomerCode());
+							String levelName = hierarchyLevelCache.getOrDefault(customerId, "Unknown Level");
+							res.setHierarchyLevelName(levelName);
 						} else {
 							CustomerMasterEntity customer = customerRepository.findById(customerId).orElse(null);
 							if (customer != null) {
 								customerCache.put(customerId, customer);
 								res.setCustomerName(customer.getCustomerName());
 								res.setCustomerCode(customer.getCustomerCode());
+								String levelName = customerRepository.findHierarchyLevelNameByCustomerId(customerId)
+										.orElse("Unknown Level");
+								hierarchyLevelCache.put(customerId, levelName);
+								res.setHierarchyLevelName(levelName);
 							} else {
 								res.setCustomerName("Unknown Customer");
 							}
@@ -488,7 +507,7 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		payload.put("totalPages", pageResult.getTotalPages());
 		payload.put("isLast", pageResult.isLast());
 
-		return new ResponseEntity("Success", 200, payload);
+		return new ResponseEntity("Contract Entity Fetch Successfully", 200, payload);
 	}
 
 	@Override
@@ -792,7 +811,8 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 		return new ResponseEntity("Mappings deactivated successfully", 200, null);
 	}
-@Override
+
+	@Override
 	public ResponseEntity getCustomerNameAndCodeByContractID(Integer contractId) {
 
 		logger.info("Fetching customer details for contractId: {}", contractId);
@@ -809,18 +829,14 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 			throw new ResourceNotFoundException("No mapping found for given contractId");
 		}
 
-		List<ContractEntityMappingResponse> customerMapping =
-		        contractEntityMappings.stream()
-		                .map(m -> {
-		                    ContractEntityMappingResponse result = new ContractEntityMappingResponse();
+		List<ContractEntityMappingResponse> customerMapping = contractEntityMappings.stream().map(m -> {
+			ContractEntityMappingResponse result = new ContractEntityMappingResponse();
 
-		                    result.setMappingId(m.getMappingId());
-		                    result.setCustomerId(m.getCustomer().getCustomerId());
+			result.setMappingId(m.getMappingId());
+			result.setCustomerId(m.getCustomer().getCustomerId());
 
-		                    return result;
-		                })
-		                .collect(Collectors.toList());
-		
+			return result;
+		}).collect(Collectors.toList());
 
 		if (customerMapping.isEmpty()) {
 			logger.error("CustomerIds list is empty for contractId: {}", contractId);
@@ -828,26 +844,23 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		}
 
 		List<CustomerResponse> payload = contractEntityMappings.stream()
-		        .filter(m -> m != null && m.getCustomer() != null)
-		        .map(m -> {
-		            CustomerMasterEntity c = m.getCustomer();
+				.filter(m -> m != null && m.getCustomer() != null).map(m -> {
+					CustomerMasterEntity c = m.getCustomer();
 
-		            if (!"Y".equalsIgnoreCase(c.getIsActive())) {
-		                return null;
-		            }
+					if (!"Y".equalsIgnoreCase(c.getIsActive())) {
+						return null;
+					}
 
-		            CustomerResponse r = new CustomerResponse();
-		            r.setCustomerId(c.getCustomerId());
-		            r.setCustomerName(c.getCustomerName());
-		            r.setCustomerCode(c.getCustomerCode());
+					CustomerResponse r = new CustomerResponse();
+					r.setCustomerId(c.getCustomerId());
+					r.setCustomerName(c.getCustomerName());
+					r.setCustomerCode(c.getCustomerCode());
 
-		            r.setMappingId(m.getMappingId());
+					r.setMappingId(m.getMappingId());
 
-		            return r;
-		        })
-		        .filter(Objects::nonNull)
-		        .collect(Collectors.toList());
-		
+					return r;
+				}).filter(Objects::nonNull).collect(Collectors.toList());
+
 		ResponseEntity response = new ResponseEntity();
 		response.setMessage("Success");
 		response.setStatusCode(200);

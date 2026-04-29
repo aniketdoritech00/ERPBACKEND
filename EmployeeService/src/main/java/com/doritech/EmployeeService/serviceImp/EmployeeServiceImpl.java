@@ -386,6 +386,24 @@ public class EmployeeServiceImpl implements EmployeeService {
 		return new ResponseEntity("employee found successfully", 200, list);
 	}
 
+	@Override
+	public ResponseEntity getAllFa() {
+		List<EmployeeMaster> employeeMasters = employeeMasterRepository
+				.findByDesignationAndIsActive("FA", "Y");
+		if (employeeMasters.isEmpty()) {
+			throw new ResourceNotFoundException("Employee not found");
+		}
+		List<Map<String, Object>> list = new ArrayList<>();
+		for (EmployeeMaster emp : employeeMasters) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("employeeId", emp.getEmployeeId());
+			map.put("employeeCode", emp.getEmployeeCode());
+			map.put("employeeName", emp.getEmployeeName());
+			list.add(map);
+		}
+		return new ResponseEntity("employee found successfully", 200, list);
+	}
+
 	public ResponseEntity getEmployeeDistrict(Integer employeeId) {
 		if (employeeId == null) {
 			return new ResponseEntity("Employee ID must not be null", 400, null);
@@ -631,11 +649,11 @@ public class EmployeeServiceImpl implements EmployeeService {
 			return null;
 
 		return switch (cell.getCellType()) {
-		case STRING -> cell.getStringCellValue().trim();
-		case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
-		case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-		case BLANK -> null;
-		default -> null;
+			case STRING -> cell.getStringCellValue().trim();
+			case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
+			case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+			case BLANK -> null;
+			default -> null;
 		};
 	}
 
