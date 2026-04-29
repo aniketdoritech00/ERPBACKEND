@@ -1,25 +1,26 @@
 package com.doritech.CustomerService.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Request.EmployeeAssignmentRequest;
+import com.doritech.CustomerService.Request.EmployeeTaskAssignmentRequest;
 import com.doritech.CustomerService.Response.EmployeeAssignmentResponse;
 import com.doritech.CustomerService.Response.PageResponse;
 
+import jakarta.validation.Valid;
+
 public interface EmployeeAssignmentService {
 
-	EmployeeAssignmentResponse saveEmployeeAssignment(
-			EmployeeAssignmentRequest request);
+	EmployeeAssignmentResponse saveEmployeeAssignment(EmployeeAssignmentRequest request);
 
 	EmployeeAssignmentResponse updateEmployeeAssignmentStatus(Integer assignmentId, EmployeeAssignmentRequest request);
 
-	List<EmployeeAssignmentResponse> saveBulkEmployeeAssignment(
-			List<EmployeeAssignmentRequest> requests);
+	List<EmployeeAssignmentResponse> saveBulkEmployeeAssignment(List<EmployeeAssignmentRequest> requests);
 
-	PageResponse<EmployeeAssignmentResponse> getEmployeeAssignments(
-			Integer employeeId, int page, int size, String sortBy,
-			String sortDir);
+	PageResponse<EmployeeAssignmentResponse> getEmployeeAssignments(Integer employeeId, int page, int size,
+			String sortBy, String sortDir);
 
 	ResponseEntity getCustomerDetailsByAssignmentId(Integer assignmentId);
 
@@ -27,6 +28,12 @@ public interface EmployeeAssignmentService {
 
 	List<EmployeeAssignmentResponse> getAssignmentByIds(List<Integer> assignmentIds);
 
-	ResponseEntity updateVerifyStatus(Integer assignmentId,String verifyStatus,Integer userId);
+	ResponseEntity updateVerifyStatus(Integer assignmentId, String verifyStatus, String verifyRemark, Integer userId);
+
+	List<EmployeeAssignmentResponse> saveEmployeeAssignments(@Valid List<EmployeeTaskAssignmentRequest> requests);
+
+	Object getAssignedEmployeeAssignments(Integer employeeId, int page, int size, String sortBy, String sortDir);
+
+	Object scheduledFiledAssociated(List<Integer> ids, LocalDateTime date);
 
 }

@@ -43,5 +43,12 @@ public interface ContractEntityMappingRepository
 
 	List<ContractEntityMapping> findByContract_ContractIdAndCustomer_CustomerIdAndSiteId(Integer contractId,
 			Integer customerId, Integer siteId);
+	
+	@Query(value = "SELECT DISTINCT i.category " +
+            "FROM contract_item_mapping cim " +
+            "JOIN item_master i ON i.item_id = cim.item_id " +
+            "WHERE cim.contract_id = :contractId",
+    nativeQuery = true)
+List<String> findDistinctCategoriesByContractId(@Param("contractId") Integer contractId);
 
 }

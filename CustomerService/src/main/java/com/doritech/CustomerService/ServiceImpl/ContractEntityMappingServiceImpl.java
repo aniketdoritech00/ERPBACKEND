@@ -28,6 +28,7 @@ import com.doritech.CustomerService.Entity.ContractMaster;
 import com.doritech.CustomerService.Entity.CustomerBranchAllocation;
 import com.doritech.CustomerService.Entity.CustomerEmployeeAllocation;
 import com.doritech.CustomerService.Entity.CustomerMasterEntity;
+import com.doritech.CustomerService.Entity.EmployeeAssignmentEntity;
 import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Exception.DatabaseOperationException;
@@ -39,6 +40,7 @@ import com.doritech.CustomerService.Repository.ContractMasterRepository;
 import com.doritech.CustomerService.Repository.CustomerBranchAllocationRepository;
 import com.doritech.CustomerService.Repository.CustomerEmployeeAllocationRepository;
 import com.doritech.CustomerService.Repository.CustomerMasterRepository;
+import com.doritech.CustomerService.Repository.EmployeeAssignmentRepository;
 import com.doritech.CustomerService.Request.ContractEntityMappingRequest;
 import com.doritech.CustomerService.Response.CompSiteResponse;
 import com.doritech.CustomerService.Response.ContractEntityMappingResponse;
@@ -78,6 +80,10 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 	@Autowired
 	private CustomerEmployeeAllocationRepository customerEmployeeAllocationRepository;
+	
+	
+	@Autowired
+	private EmployeeAssignmentRepository employeeAssignmentRepository; 
 
 	@Override
 	@Transactional
@@ -92,9 +98,7 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 		Set<String> uniqueCheck = new HashSet<>();
 		for (ContractEntityMappingRequest request : requests) {
-			
-			
-			
+
 			if (request.getMappingId() != null && !repository.existsById(request.getMappingId())) {
 				throw new ResourceNotFoundException("Mapping not found with id: " + request.getMappingId());
 			}
@@ -130,21 +134,20 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		validationService.validateSiteExists(request.getSiteId());
 		handleBranchAllocation(request, customer);
 
-		//validationService.validateEmployeeExists(request.getEmployeeId());
-		
+		// validationService.validateEmployeeExists(request.getEmployeeId());
+
 		boolean isInType = contractRepository.findById(request.getContractId())
-		        .map(contractEntity -> "IN".equalsIgnoreCase(contractEntity.getContractType()))
-		        .orElse(false);
+				.map(contractEntity -> "IN".equalsIgnoreCase(contractEntity.getContractType())).orElse(false);
 
 		if (!isInType) {
-		    if (request.getEmployeeId() == null) {
-		        throw new BadRequestException("employeeId must not be null");
-		    }
-		    if (request.getEmployeeFromDate() == null) {
-		        throw new BadRequestException("employeeFromDate must not be null");
-		    }
-		    validationService.validateEmployeeExists(request.getEmployeeId()); 
-		    handleEmployeeAllocation(request, customer);
+			if (request.getEmployeeId() == null) {
+				throw new BadRequestException("employeeId must not be null");
+			}
+			if (request.getEmployeeFromDate() == null) {
+				throw new BadRequestException("employeeFromDate must not be null");
+			}
+			validationService.validateEmployeeExists(request.getEmployeeId());
+			handleEmployeeAllocation(request, customer);
 		}
 
 		ContractEntityMapping mapping = buildMapping(request, contract, customer);
@@ -392,105 +395,136 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 	@Transactional(readOnly = true)
 	public ResponseEntity getAllMappings(int page, int size) {
 
-		logger.info("getAllMappings API hit with page {} and size {}", page, size);
+	    logger.info("getAllMappings API hit with page {} and size {}", page, size);
 
-		if (page < 0 || size <= 0) {
-			throw new BadRequestException("Invalid page or size value");
-		}
+	    if (page < 0 || size <= 0) {
+	        throw new BadRequestException("Invalid page or size value");
+	    }
 
-		Pageable pageable = PageRequest.of(page, size, Sort.by("mappingId").descending());
-		Page<ContractEntityMapping> pageResult = repository.findAll(pageable);
+	    Pageable pageable = PageRequest.of(page, size, Sort.by("mappingId").descending());
+	    Page<ContractEntityMapping> pageResult = repository.findAll(pageable);
 
-		List<ContractEntityMapping> mappings = pageResult.getContent();
+	    List<ContractEntityMapping> mappings = pageResult.getContent();
 
-		Map<Integer, CompSiteResponse> siteCache = new HashMap<>();
-		Map<Integer, CustomerMasterEntity> customerCache = new HashMap<>();
+	    Map<Integer, CompSiteResponse> siteCache = new HashMap<>();
+	    Map<Integer, CustomerMasterEntity> customerCache = new HashMap<>();
+	    Map<Integer, String> hierarchyLevelCache = new HashMap<>();
 
-		List<ContractEntityMappingResponse> response = new ArrayList<>();
+	    List<ContractEntityMappingResponse> response = new ArrayList<>();
 
-		for (ContractEntityMapping mapping : mappings) {
+	    for (ContractEntityMapping mapping : mappings) {
 
-			ContractEntityMappingResponse res = mapper.toResponse(mapping);
+	        ContractEntityMappingResponse res = mapper.toResponse(mapping);
 
-			if (mapping.getContract() != null) {
-				String contractName = mapping.getContract().getContractName();
-				if (contractName != null && !contractName.trim().isEmpty()) {
-					res.setContractId(mapping.getContract().getContractId());
-					res.setContractName(contractName);
-					res.setContractNo(mapping.getContract().getContractNo());
-				} else {
-					logger.warn("Contract name is null/empty for contractId {}", mapping.getContract().getContractId());
-				}
-			} else {
-				logger.warn("Contract is null for mappingId {}", mapping.getMappingId());
-			}
+	        if (mapping.getContract() != null) {
+	            String contractName = mapping.getContract().getContractName();
+	            if (contractName != null && !contractName.trim().isEmpty()) {
+	                res.setContractId(mapping.getContract().getContractId());
+	                res.setContractName(contractName);
+	                res.setContractStartDate(mapping.getContract().getContractStartDate());
+	                res.setContractEndDate(mapping.getContract().getContractEndDate());
+	                res.setContractNo(mapping.getContract().getContractNo());
 
-			try {
-				Integer siteId = mapping.getSiteId();
-				if (siteId != null) {
-					if (siteCache.containsKey(siteId)) {
-						CompSiteResponse site = siteCache.get(siteId);
-						res.setSiteName(site.getSiteName());
-						res.setSiteCode(site.getSiteCode());
-					} else {
-						CompSiteResponse site = validationService.validateAndGetSite(siteId, "Source");
-						siteCache.put(siteId, site);
-						res.setSiteName(site.getSiteName());
-						res.setSiteCode(site.getSiteCode());
-					}
-				} else {
-					res.setSiteName("Unknown Site");
-				}
-			} catch (Exception ex) {
-				logger.warn("Site fetch failed for siteId {}", mapping.getSiteId());
-				res.setSiteName("Unknown Site");
-			}
+	                if (mapping.getContract().getInstallationDetails() != null
+	                        && !mapping.getContract().getInstallationDetails().isEmpty()) {
+	                    res.setBillNumber(mapping.getContract().getInstallationDetails().get(0).getBillNumber());
+	                    res.setSalesOrderNumber(
+	                            mapping.getContract().getInstallationDetails().get(0).getSalesOrderNumber());
+	                }
 
-			try {
-				if (mapping.getCustomer() != null) {
-					Integer customerId = mapping.getCustomer().getCustomerId();
-					if (customerId != null) {
-						if (customerCache.containsKey(customerId)) {
-							CustomerMasterEntity customer = customerCache.get(customerId);
-							res.setCustomerName(customer.getCustomerName());
-							res.setCustomerCode(customer.getCustomerCode());
-						} else {
-							CustomerMasterEntity customer = customerRepository.findById(customerId).orElse(null);
-							if (customer != null) {
-								customerCache.put(customerId, customer);
-								res.setCustomerName(customer.getCustomerName());
-								res.setCustomerCode(customer.getCustomerCode());
-							} else {
-								res.setCustomerName("Unknown Customer");
-							}
-						}
-					} else {
-						res.setCustomerName("Unknown Customer");
-					}
-				} else {
-					res.setCustomerName("Unknown Customer");
-				}
-			} catch (Exception ex) {
-				logger.error("Customer fetch failed for mappingId {}", mapping.getMappingId(), ex);
-				res.setCustomerName("Unknown Customer");
-			}
+	                Integer contractId = mapping.getContract().getContractId();
 
-			response.add(res);
-		}
+	                List<String> categories = repository.findDistinctCategoriesByContractId(contractId);
+	                res.setProductList(categories);
 
-		logger.info("Total mappings fetched in this page {}: {}", pageResult.getNumber(), response.size());
+	            } else {
+	                logger.warn("Contract name is null/empty for contractId {}", mapping.getContract().getContractId());
+	            }
+	        } else {
+	            logger.warn("Contract is null for mappingId {}", mapping.getMappingId());
+	        }
 
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("data", response);
-		payload.put("currentPage", pageResult.getNumber());
-		payload.put("pageSize", pageResult.getSize());
-		payload.put("totalItems", pageResult.getTotalElements());
-		payload.put("totalPages", pageResult.getTotalPages());
-		payload.put("isLast", pageResult.isLast());
+	        try {
+	            Integer siteId = mapping.getSiteId();
+	            if (siteId != null) {
+	                if (siteCache.containsKey(siteId)) {
+	                    CompSiteResponse site = siteCache.get(siteId);
+	                    res.setSiteName(site.getSiteName());
+	                    res.setSiteCode(site.getSiteCode());
+	                } else {
+	                    CompSiteResponse site = validationService.validateAndGetSite(siteId, "Source");
+	                    siteCache.put(siteId, site);
+	                    res.setSiteName(site.getSiteName());
+	                    res.setSiteCode(site.getSiteCode());
+	                }
+	            } else {
+	                res.setSiteName("Unknown Site");
+	            }
+	        } catch (Exception ex) {
+	            logger.warn("Site fetch failed for siteId {}", mapping.getSiteId());
+	            res.setSiteName("Unknown Site");
+	        }
 
-		return new ResponseEntity("Success", 200, payload);
+	        try {
+	            if (mapping.getCustomer() != null) {
+	                Integer customerId = mapping.getCustomer().getCustomerId();
+	                if (customerId != null) {
+	                    if (customerCache.containsKey(customerId)) {
+	                        CustomerMasterEntity customer = customerCache.get(customerId);
+	                        res.setCustomerName(customer.getCustomerName());
+	                        res.setCustomerCode(customer.getCustomerCode());
+	                        String levelName = hierarchyLevelCache.getOrDefault(customerId, "Unknown Level");
+	                        res.setHierarchyLevelName(levelName);
+	                    } else {
+	                        CustomerMasterEntity customer = customerRepository.findById(customerId).orElse(null);
+	                        if (customer != null) {
+	                            customerCache.put(customerId, customer);
+	                            res.setCustomerName(customer.getCustomerName());
+	                            res.setCustomerCode(customer.getCustomerCode());
+	                            String levelName = customerRepository.findHierarchyLevelNameByCustomerId(customerId)
+	                                    .orElse("Unknown Level");
+	                            hierarchyLevelCache.put(customerId, levelName);
+	                            res.setHierarchyLevelName(levelName);
+	                        } else {
+	                            res.setCustomerName("Unknown Customer");
+	                        }
+	                    }
+	                } else {
+	                    res.setCustomerName("Unknown Customer");
+	                }
+	            } else {
+	                res.setCustomerName("Unknown Customer");
+	            }
+	        } catch (Exception ex) {
+	            logger.error("Customer fetch failed for mappingId {}", mapping.getMappingId(), ex);
+	            res.setCustomerName("Unknown Customer");
+	        }
+
+	        EmployeeAssignmentEntity entity = employeeAssignmentRepository
+	                .findById(mapping.getMappingId())
+	                .orElse(null);
+	        if (entity != null) {
+	            res.setStatus(entity.getStatus());
+	        } else {
+	            logger.warn("Assignment not found for mappingId {}", mapping.getMappingId());
+	            res.setStatus("UnAssigned");
+	        }
+
+	        response.add(res);
+	    }
+
+	    logger.info("Total mappings fetched in this page {}: {}", pageResult.getNumber(), response.size());
+
+	    Map<String, Object> payload = new HashMap<>();
+	    payload.put("data", response);
+	    payload.put("currentPage", pageResult.getNumber());
+	    payload.put("pageSize", pageResult.getSize());
+	    payload.put("totalItems", pageResult.getTotalElements());
+	    payload.put("totalPages", pageResult.getTotalPages());
+	    payload.put("isLast", pageResult.isLast());
+
+	    return new ResponseEntity("Contract Entity Fetch Successfully", 200, payload);
 	}
-
 	@Override
 	@Transactional(readOnly = true)
 	public ResponseEntity getAllContractEntityMappings(String contractType, int page, int size) {
@@ -792,7 +826,8 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 
 		return new ResponseEntity("Mappings deactivated successfully", 200, null);
 	}
-@Override
+
+	@Override
 	public ResponseEntity getCustomerNameAndCodeByContractID(Integer contractId) {
 
 		logger.info("Fetching customer details for contractId: {}", contractId);
@@ -809,18 +844,14 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 			throw new ResourceNotFoundException("No mapping found for given contractId");
 		}
 
-		List<ContractEntityMappingResponse> customerMapping =
-		        contractEntityMappings.stream()
-		                .map(m -> {
-		                    ContractEntityMappingResponse result = new ContractEntityMappingResponse();
+		List<ContractEntityMappingResponse> customerMapping = contractEntityMappings.stream().map(m -> {
+			ContractEntityMappingResponse result = new ContractEntityMappingResponse();
 
-		                    result.setMappingId(m.getMappingId());
-		                    result.setCustomerId(m.getCustomer().getCustomerId());
+			result.setMappingId(m.getMappingId());
+			result.setCustomerId(m.getCustomer().getCustomerId());
 
-		                    return result;
-		                })
-		                .collect(Collectors.toList());
-		
+			return result;
+		}).collect(Collectors.toList());
 
 		if (customerMapping.isEmpty()) {
 			logger.error("CustomerIds list is empty for contractId: {}", contractId);
@@ -828,26 +859,23 @@ public class ContractEntityMappingServiceImpl implements ContractEntityMappingSe
 		}
 
 		List<CustomerResponse> payload = contractEntityMappings.stream()
-		        .filter(m -> m != null && m.getCustomer() != null)
-		        .map(m -> {
-		            CustomerMasterEntity c = m.getCustomer();
+				.filter(m -> m != null && m.getCustomer() != null).map(m -> {
+					CustomerMasterEntity c = m.getCustomer();
 
-		            if (!"Y".equalsIgnoreCase(c.getIsActive())) {
-		                return null;
-		            }
+					if (!"Y".equalsIgnoreCase(c.getIsActive())) {
+						return null;
+					}
 
-		            CustomerResponse r = new CustomerResponse();
-		            r.setCustomerId(c.getCustomerId());
-		            r.setCustomerName(c.getCustomerName());
-		            r.setCustomerCode(c.getCustomerCode());
+					CustomerResponse r = new CustomerResponse();
+					r.setCustomerId(c.getCustomerId());
+					r.setCustomerName(c.getCustomerName());
+					r.setCustomerCode(c.getCustomerCode());
 
-		            r.setMappingId(m.getMappingId());
+					r.setMappingId(m.getMappingId());
 
-		            return r;
-		        })
-		        .filter(Objects::nonNull)
-		        .collect(Collectors.toList());
-		
+					return r;
+				}).filter(Objects::nonNull).collect(Collectors.toList());
+
 		ResponseEntity response = new ResponseEntity();
 		response.setMessage("Success");
 		response.setStatusCode(200);

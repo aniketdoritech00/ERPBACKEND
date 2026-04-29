@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,6 +31,7 @@ import com.doritech.CustomerService.Entity.QuotationDetail;
 import com.doritech.CustomerService.Entity.QuotationDocument;
 import com.doritech.CustomerService.Entity.QuotationMaster;
 import com.doritech.CustomerService.Entity.ResponseEntity;
+
 import com.doritech.CustomerService.Exception.BadRequestException;
 import com.doritech.CustomerService.Exception.DatabaseOperationException;
 import com.doritech.CustomerService.Exception.DuplicateResourceException;
@@ -46,8 +48,13 @@ import com.doritech.CustomerService.Repository.CustomerMasterRepository;
 import com.doritech.CustomerService.Repository.QuotationDetailRepository;
 import com.doritech.CustomerService.Repository.QuotationDocumentRepository;
 import com.doritech.CustomerService.Repository.QuotationMasterRepository;
+import com.doritech.CustomerService.Repository.StockRequestDetailsRepository;
+
 import com.doritech.CustomerService.Request.ContractInstallationRequest;
 import com.doritech.CustomerService.Request.ContractMasterRequest;
+import com.doritech.CustomerService.Request.StockDeliveryChallanRequest;
+import com.doritech.CustomerService.Request.StockRequestDetailRequest;
+import com.doritech.CustomerService.Request.StockRequestRequest;
 import com.doritech.CustomerService.Response.CompSiteResponse;
 import com.doritech.CustomerService.Response.CompanySiteMappingResponse;
 import com.doritech.CustomerService.Response.ContractDocumentResponse;
@@ -100,8 +107,16 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 	@Autowired
 	private ValidationService validationService;
 	@Autowired
-
 	ContractInstallationDetailsRepository installationRepository;
+
+	@Autowired
+	private StockRequestServiceImpl stockRequestService;
+
+	@Autowired
+	private StockRequestDetailsRepository stockRequestDetailsRepository;
+
+	@Autowired
+	private StockDeliveryChallanServiceImpl stockDeliveryChallanService;
 
 	@Override
 	@Transactional
@@ -254,11 +269,15 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		Pageable pageable = PageRequest.of(page, size, Sort.by("contractId").descending());
 
-		Page<ContractMaster> contractPage = contractRepository.findByContractTypeIgnoreCase("IN", pageable);
-
+		Page<ContractMaster> contractPage =
+		        contractRepository.findByContractTypeIgnoreCaseAndIsActive(
+		                "IN",
+		                "Y",
+		                pageable
+		        );
 		if (contractPage.isEmpty()) {
 			logger.warn("No IN type contracts found");
-			throw new ResourceNotFoundException("No IN type contracts found");
+			throw new ResourceNotFoundException("No Installation type contracts found");
 		}
 
 		List<ContractMasterResponse> response = contractPage.getContent().stream().map(ContractMapper::toResponse)
@@ -867,8 +886,8 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 		}
 
 		List<Map<String, Object>> payloadList = new ArrayList<>();
-		List<String> messages = new ArrayList<>();
-
+		Set<String> messages = new LinkedHashSet<>();
+		
 		for (ContractInstallationRequest req : requestList) {
 
 			if (req.getContractId() == null) {
@@ -919,6 +938,29 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 				messages.add("Material requirement updated");
 				isUpdated = true;
+
+				if (Boolean.TRUE.equals(req.getIsMaterialRequired())) {
+				StockRequestRequest stockReq = new StockRequestRequest();
+				stockReq.setRequestedSiteId(contractEntityMappingRepository.findByContractContractId(req.getContractId()).get(0).getSiteId());
+				stockReq.setSourceSiteId(5);
+				stockReq.setCreatedBy(userId);
+
+				List<ContractItemMapping> itemMappings = contractItemMappingRepository
+						.findByContract_ContractId(req.getContractId());
+
+				List<StockRequestDetailRequest> items = new ArrayList<>();
+				for (ContractItemMapping item : itemMappings) {
+					StockRequestDetailRequest detail = new StockRequestDetailRequest();
+					detail.setItemId(item.getItemId());
+					detail.setRequestedQty(item.getQuantity());
+					items.add(detail);
+				}
+
+				stockReq.setItems(items);
+
+				stockRequestService.saveStockRequest(stockReq);
+
+			}
 			}
 
 			if (req.getMovementStatus() != null) {
@@ -931,28 +973,47 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 				isUpdated = true;
 			}
 
-			if (req.getDocketNumber() != null || req.getBrfNumber() != null || req.getLogisticsRemarks() != null) {
+			if (req.getDocketNumber() != null || req.getLogisticsRemarks() != null) {
 
-				if (req.getDocketNumber() != null) {
-					entity.setDocketNumber(req.getDocketNumber());
-					payload.put("docketNumber", req.getDocketNumber());
-				}
+			    if (req.getDocketNumber() != null) {
+			        entity.setDocketNumber(req.getDocketNumber());
+			        payload.put("docketNumber", req.getDocketNumber());
+			    }
 
-				if (req.getBrfNumber() != null) {
-					entity.setBrfNumber(req.getBrfNumber());
-					payload.put("brfNumber", req.getBrfNumber());
-				}
+			    if (req.getLogisticsRemarks() != null) {
+			        entity.setLogisticsRemarks(req.getLogisticsRemarks());
+			        payload.put("logisticsRemarks", req.getLogisticsRemarks());
+			    }
 
-				if (req.getLogisticsRemarks() != null) {
-					entity.setLogisticsRemarks(req.getLogisticsRemarks());
-					payload.put("logisticsRemarks", req.getLogisticsRemarks());
-				}
+			    entity.setLogisticsProcessedAt(LocalDateTime.now());
+			    entity.setLogisticsProcessedBy(String.valueOf(userId));
 
-				entity.setLogisticsProcessedAt(LocalDateTime.now());
-				entity.setLogisticsProcessedBy(String.valueOf(userId));
+			    messages.add("Logistics details updated");
+			    isUpdated = true;
+			}
+			
+			if (req.getBrfNumber() != null) {
 
-				messages.add("Logistics details updated");
-				isUpdated = true;
+			    entity.setBrfNumber(req.getBrfNumber());
+			    entity.setBrfCreatedAt(LocalDateTime.now());
+			    entity.setBrfCreatedBy(String.valueOf(userId));
+
+			    payload.put("brfNumber", req.getBrfNumber());
+
+			    messages.add("BRF number updated");
+			    isUpdated = true;
+
+				StockDeliveryChallanRequest challanReq = new StockDeliveryChallanRequest();
+				challanReq.setDeliveryChallanNo(req.getDocketNumber());
+
+				List<Integer> stockRequestIds = stockRequestDetailsRepository.findByContractId(req.getContractId())
+						.stream().map(d -> d.getStockRequest().getStockRequestId()).distinct().toList();
+
+				challanReq.setStockRequestIds(stockRequestIds);
+				challanReq.setCreatedBy(userId);
+
+				stockDeliveryChallanService.saveStockDelivery(challanReq);
+
 			}
 
 			if (req.getBillNumber() != null || req.getBillDate() != null || req.getBillAmount() != null

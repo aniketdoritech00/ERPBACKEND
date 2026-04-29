@@ -90,6 +90,12 @@ public class ContractInstallationDetails {
 
 	@Column(name = "bill_processed_at")
 	private LocalDateTime billProcessedAt;
+	
+	@Column(name = "brf_created_at")
+	private LocalDateTime brfCreatedAt;
+
+	@Column(name = "brf_created_by", length = 50)
+	private String brfCreatedBy;
 
 	@Column(name = "is_active", length = 1, nullable = false)
 	private String isActive;
@@ -282,4 +288,25 @@ public class ContractInstallationDetails {
 	public void setIsActive(String isActive) {
 		this.isActive = isActive;
 	}
+
+	public LocalDateTime getBrfCreatedAt() {
+		return brfCreatedAt;
+	}
+
+	public void setBrfCreatedAt(LocalDateTime brfCreatedAt) {
+		this.brfCreatedAt = brfCreatedAt;
+	}
+
+	public String getBrfCreatedBy() {
+		return brfCreatedBy;
+	}
+
+	public void setBrfCreatedBy(String brfCreatedBy) {
+		this.brfCreatedBy = brfCreatedBy;
+	}
+
+	public void setInstallationId(Long installationId) {
+		this.installationId = installationId;
+	}
+	
 }
