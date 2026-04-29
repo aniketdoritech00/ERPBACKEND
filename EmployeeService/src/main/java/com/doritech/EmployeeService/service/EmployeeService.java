@@ -38,6 +38,8 @@ public interface EmployeeService {
 
 	ResponseEntity getAllAssociateFa(Integer siteId);
 
+	ResponseEntity getAllFa();
+
 	ResponseEntity getEmployeeDistrict(Integer employeeId);
 
 	ResponseEntity uploadEmployeeExcel(MultipartFile file, Integer userIdInt);
