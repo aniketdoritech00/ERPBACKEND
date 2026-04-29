@@ -27,16 +27,18 @@ public class ContractEntityMappingResponse {
 	private List<String> productList;
 	private Integer minNoVisits;
 	private Integer visitsFrequency;
-	private String visitsPaid;	
+	private String visitsPaid;
 	private String isActive;
 	private LocalDateTime createdOn;
 	private LocalDateTime modifiedOn;
 	private Integer createdBy;
 	private Integer modifiedBy;
+	private String billNumber;
+	private String salesOrderNumber;
 
-	
+	private String productCategories;
 
-	
+	private String hierarchyLevelName;
 
 	public String getContractType() {
 		return contractType;
@@ -46,25 +48,23 @@ public class ContractEntityMappingResponse {
 		this.contractType = contractType;
 	}
 
-	
-
 	public String getSiteDistrictName() {
-        return siteDistrictName;
-    }
+		return siteDistrictName;
+	}
 
-    public void setSiteDistrictName(String siteDistrictName) {
-        this.siteDistrictName = siteDistrictName;
-    }
+	public void setSiteDistrictName(String siteDistrictName) {
+		this.siteDistrictName = siteDistrictName;
+	}
 
-    public String getIfsc() {
-        return ifsc;
-    }
+	public String getIfsc() {
+		return ifsc;
+	}
 
-    public void setIfsc(String ifsc) {
-        this.ifsc = ifsc;
-    }
+	public void setIfsc(String ifsc) {
+		this.ifsc = ifsc;
+	}
 
-    public String getZoneName() {
+	public String getZoneName() {
 		return zoneName;
 	}
 
@@ -224,32 +224,68 @@ public class ContractEntityMappingResponse {
 		this.contractName = contractName;
 	}
 
-    public Integer getFaId() {
-        return faId;
-    }
+	public Integer getFaId() {
+		return faId;
+	}
 
-    public void setFaId(Integer faId) {
-        this.faId = faId;
-    }
+	public void setFaId(Integer faId) {
+		this.faId = faId;
+	}
 
-    public String getFaName() {
-        return faName;
-    }
+	public String getFaName() {
+		return faName;
+	}
 
-    public void setFaName(String faName) {
-        this.faName = faName;
-    }
+	public void setFaName(String faName) {
+		this.faName = faName;
+	}
+
 	public LocalDate getContractStartDate() {
 		return contractStartDate;
 	}
+
 	public void setContractStartDate(LocalDate contractStartDate) {
 		this.contractStartDate = contractStartDate;
 	}
+
 	public LocalDate getContractEndDate() {
 		return contractEndDate;
 	}
+
 	public void setContractEndDate(LocalDate contractEndDate) {
 		this.contractEndDate = contractEndDate;
+	}
+
+	public String getBillNumber() {
+		return billNumber;
+	}
+
+	public void setBillNumber(String billNumber) {
+		this.billNumber = billNumber;
+	}
+
+	public String getSalesOrderNumber() {
+		return salesOrderNumber;
+	}
+
+	public void setSalesOrderNumber(String salesOrderNumber) {
+		this.salesOrderNumber = salesOrderNumber;
+	}
+
+	public String getHierarchyLevelName() {
+		return hierarchyLevelName;
+	}
+
+	public void setHierarchyLevelName(String hierarchyLevelName) {
+		this.hierarchyLevelName = hierarchyLevelName;
+	}
+
+	public String getProductCategories() {
+		return productCategories;
+	}
+
+	public void setProductCategories(String productCategories) {
+		this.productCategories = productCategories;
 	}
 
 }
