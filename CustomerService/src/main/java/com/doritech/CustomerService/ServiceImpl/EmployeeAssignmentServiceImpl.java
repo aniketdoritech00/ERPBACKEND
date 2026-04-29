@@ -203,7 +203,8 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 		Page<EmployeeAssignmentEntity> entityPage;
 
 		if (employeeId != null) {
-			entityPage = repository.findByEmployeeId(employeeId, pageable);
+			//entityPage = repository.findByEmployeeId(employeeId, pageable);
+			entityPage = repository.findByEmployeeIdAndStatus(employeeId, "Scheduled", pageable);
 		} else {
 			entityPage = repository.findAll(pageable);
 		}
@@ -494,8 +495,7 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 	@Override
 	@Transactional
-	public List<EmployeeAssignmentResponse> saveEmployeeAssignments(
-			@Valid List<EmployeeTaskAssignmentRequest> requests) {
+	public List<EmployeeAssignmentResponse> saveEmployeeAssignments(@Valid List<EmployeeTaskAssignmentRequest> requests) {
 
 		List<EmployeeAssignmentResponse> responses = new ArrayList<>();
 

@@ -19,6 +19,8 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
 
 	Page<EmployeeAssignmentEntity> findByEmployeeId(Integer employeeId, Pageable pageable);
 
+	Page<EmployeeAssignmentEntity> findByEmployeeIdAndStatus(Integer employeeId, String status, Pageable pageable);
+
 	@Query("SELECT ea.contractEntityMapping.contract.contractId " + "FROM EmployeeAssignmentEntity ea "
 			+ "WHERE LOWER(ea.status) = LOWER(:status)")
 	List<Integer> findContractIdsByStatus(@Param("status") String status);

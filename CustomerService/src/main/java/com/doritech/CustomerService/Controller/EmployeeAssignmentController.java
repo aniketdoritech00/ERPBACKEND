@@ -103,6 +103,10 @@ public class EmployeeAssignmentController {
 
 		UserResponse userResponse = validationService.validateAndGetUser(userIdInt);
 
+		if (userResponse.getSourceId()==null) {
+			throw new IllegalArgumentException("Invalid user ID");
+		}
+
 		return new ResponseEntity("Assignments fetched successfully",
 				HttpStatus.OK.value(), assignmentService.getEmployeeAssignments(
 						userResponse.getSourceId(), page, size, sortBy, sortDir));
