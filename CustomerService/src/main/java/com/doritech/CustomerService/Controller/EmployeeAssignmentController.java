@@ -91,8 +91,13 @@ public class EmployeeAssignmentController {
 
 		UserResponse userResponse = validationService.validateAndGetUser(userIdInt);
 
-		return new ResponseEntity("Assignments fetched successfully", HttpStatus.OK.value(),
-				assignmentService.getEmployeeAssignments(userResponse.getSourceId(), page, size, sortBy, sortDir));
+		if (userResponse.getSourceId()==null) {
+			throw new IllegalArgumentException("Invalid user ID");
+		}
+
+		return new ResponseEntity("Assignments fetched successfully",
+				HttpStatus.OK.value(), assignmentService.getEmployeeAssignments(
+						userResponse.getSourceId(), page, size, sortBy, sortDir));
 	}
 
 	@GetMapping("/customer-details")

@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.doritech.CustomerService.Entity.ContractEntityMapping;
+import com.doritech.CustomerService.Entity.ContractInstallationDetails;
 import com.doritech.CustomerService.Entity.ContractItemMapping;
 import com.doritech.CustomerService.Entity.CustomerMasterEntity;
 import com.doritech.CustomerService.Entity.EmployeeAssignmentEntity;
@@ -202,7 +203,8 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 		Page<EmployeeAssignmentEntity> entityPage;
 
 		if (employeeId != null) {
-			entityPage = repository.findByEmployeeId(employeeId, pageable);
+			//entityPage = repository.findByEmployeeId(employeeId, pageable);
+			entityPage = repository.findByEmployeeIdAndStatus(employeeId, "Scheduled", pageable);
 		} else {
 			entityPage = repository.findAll(pageable);
 		}
@@ -269,9 +271,13 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 					return categoryToParamMap.get(category);
 				}).filter(Objects::nonNull).distinct().toList();
 
-				response.setSalesOrderNo(contractInstallationDetailsRepository
-						.findByContractContractId(contractEntityMapping.getContract().getContractId()).get()
-						.getSalesOrderNumber());
+				Optional<ContractInstallationDetails> contractInstallationDetailsOptional = contractInstallationDetailsRepository
+						.findByContractContractId(contractEntityMapping.getContract().getContractId());
+
+				if(contractInstallationDetailsOptional.isPresent()){
+				response.setSalesOrderNo(contractInstallationDetailsOptional
+						.map(ContractInstallationDetails::getSalesOrderNumber).orElse(null));
+				}
 
 				response.setProductName(productTypes);
 
@@ -489,8 +495,7 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 	@Override
 	@Transactional
-	public List<EmployeeAssignmentResponse> saveEmployeeAssignments(
-			@Valid List<EmployeeTaskAssignmentRequest> requests) {
+	public List<EmployeeAssignmentResponse> saveEmployeeAssignments(@Valid List<EmployeeTaskAssignmentRequest> requests) {
 
 		List<EmployeeAssignmentResponse> responses = new ArrayList<>();
 
