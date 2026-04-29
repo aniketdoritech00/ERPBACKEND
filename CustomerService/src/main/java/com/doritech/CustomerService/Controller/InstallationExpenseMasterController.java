@@ -1,7 +1,6 @@
 package com.doritech.CustomerService.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,7 +13,6 @@ import com.doritech.CustomerService.Service.InstallationExpenseMasterService;
 
 @RestController
 @RequestMapping("/customer/api/installation-expense")
-@CrossOrigin(allowedHeaders = "*")
 public class InstallationExpenseMasterController {
 
 	@Autowired
@@ -24,9 +22,9 @@ public class InstallationExpenseMasterController {
 	public ResponseEntity saveOrUpdate(@RequestBody InstallationExpenseMasterRequest request) {
 		return service.saveOrUpdate(request);
 	}
-	
+
 	@GetMapping("/calculateinstallationExpense")
-    public ResponseEntity getCompletedAssignmentsExpense() {
-        return service.getCompletedAssignmentsExpense();
-    }
+	public ResponseEntity getCompletedAssignmentsExpense() {
+		return service.getCompletedAssignmentsExpense();
+	}
 }

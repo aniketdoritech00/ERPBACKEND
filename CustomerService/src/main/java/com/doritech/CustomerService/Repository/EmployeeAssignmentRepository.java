@@ -1,5 +1,6 @@
 package com.doritech.CustomerService.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -28,7 +29,7 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
 	Object[] getCustomerDetailsByAssignmentId(@Param("assignmentId") Integer assignmentId);
 
 	boolean existsByContractEntityMapping_MappingIdAndStatus(Integer mappingId, String status);
-	
+
 	Page<EmployeeAssignmentEntity> findByStatus(String status, Pageable pageable);
 
 	Page<EmployeeAssignmentEntity> findByEmployeeIdAndStatus(Integer employeeId, String status, Pageable pageable);
@@ -81,45 +82,44 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
 	String findDistrictByAssignmentId(@Param("assignmentId") Integer assignmentId);
 
 	@Query(value = """
-		    SELECT DISTINCT
-		        ea.assignment_id,
-		        ea.employee_id,
-		        ea.site_id,
-		        csm.site_name,
-		        ea.visit_date,
-		        csm.district,
-		        im.category,
-		        em.employee_name
-		    FROM employee_assignment ea
-		    JOIN employee_master em
-		        ON ea.employee_id = em.employee_id
-		    JOIN comp_site_master csm
-		        ON ea.site_id = csm.site_id   -- ✅ FIXED JOIN
-		    JOIN contract_entity_mapping cem
-		        ON ea.mapping_id = cem.mapping_id
-		    JOIN contract_item_mapping cim
-		        ON cem.contract_id = cim.contract_id
-		    JOIN item_master im
-		        ON im.item_id = cim.item_id
-		    WHERE ea.visit_type = 'AM'
-		      AND ea.status = 'Completed'
-		      AND (:employeeId IS NULL OR ea.employee_id = :employeeId)
-		      AND (:siteId IS NULL OR ea.site_id = :siteId)
-		      AND (:startDate IS NULL OR ea.visit_date >= :startDate)
-		      AND (:endDate IS NULL OR ea.visit_date <= :endDate)
-		""", nativeQuery = true)
-		List<Object[]> findAllAssignmentItemsWithDistrict(
-		        @Param("employeeId") Integer employeeId,
-		        @Param("siteId") Integer siteId,
-		        @Param("startDate") LocalDateTime startDate,
-		        @Param("endDate") LocalDateTime endDate);
+			    SELECT DISTINCT
+			        ea.assignment_id,
+			        ea.employee_id,
+			        ea.site_id,
+			        csm.site_name,
+			        ea.visit_date,
+			        csm.district,
+			        im.category,
+			        em.employee_name
+			    FROM employee_assignment ea
+			    JOIN employee_master em
+			        ON ea.employee_id = em.employee_id
+			    JOIN comp_site_master csm
+			        ON ea.site_id = csm.site_id   -- ✅ FIXED JOIN
+			    JOIN contract_entity_mapping cem
+			        ON ea.mapping_id = cem.mapping_id
+			    JOIN contract_item_mapping cim
+			        ON cem.contract_id = cim.contract_id
+			    JOIN item_master im
+			        ON im.item_id = cim.item_id
+			    WHERE ea.visit_type = 'AM'
+			      AND ea.status = 'Completed'
+			      AND (:employeeId IS NULL OR ea.employee_id = :employeeId)
+			      AND (:siteId IS NULL OR ea.site_id = :siteId)
+			      AND (:startDate IS NULL OR ea.visit_date >= :startDate)
+			      AND (:endDate IS NULL OR ea.visit_date <= :endDate)
+			""", nativeQuery = true)
+	List<Object[]> findAllAssignmentItemsWithDistrict(@Param("employeeId") Integer employeeId,
+			@Param("siteId") Integer siteId, @Param("startDate") LocalDateTime startDate,
+			@Param("endDate") LocalDateTime endDate);
+
 	@Query(value = """
 			SELECT
 			    ea.assignment_id,
 			    ea.employee_id,
-			    emp.employee_name, 
+			    emp.employee_name,
 			    emp.site_id,
-			    site.site_name, 
+			    site.site_name,
 			    site.district,
 			    cem.customer_id,
 			    cust.district,
@@ -160,6 +160,7 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
 					    AND ea.status = 'Completed'
 					""", nativeQuery = true)
 	List<Object[]> getCompletedAssignmentsWithExpense();
+
 	boolean existsByContractEntityMapping_MappingIdAndEmployeeIdAndSiteIdAndStatusNotAndAssignmentStartDateLessThanEqualAndAssignmentEndDateGreaterThanEqual(
 			Integer mappingId, Integer employeeId, Integer siteId, String status, LocalDateTime endDate,
 			LocalDateTime startDate);
