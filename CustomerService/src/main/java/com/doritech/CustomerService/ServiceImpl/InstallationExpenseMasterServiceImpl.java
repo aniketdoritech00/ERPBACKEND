@@ -17,6 +17,7 @@ import com.doritech.CustomerService.Entity.ResponseEntity;
 import com.doritech.CustomerService.Repository.EmployeeAssignmentRepository;
 import com.doritech.CustomerService.Repository.InstallationExpenseMasterRepository;
 import com.doritech.CustomerService.Request.InstallationExpenseMasterRequest;
+import com.doritech.CustomerService.Service.DistanceService;
 import com.doritech.CustomerService.Service.InstallationExpenseMasterService;
 
 @Service
@@ -24,6 +25,9 @@ public class InstallationExpenseMasterServiceImpl implements InstallationExpense
 
 	@Autowired
 	private InstallationExpenseMasterRepository repository;
+	
+	@Autowired
+	private DistanceService distanceService;
 
 	@Autowired
 	private EmployeeAssignmentRepository employeeAssignmentRepository;
@@ -76,136 +80,144 @@ public class InstallationExpenseMasterServiceImpl implements InstallationExpense
 	@Override
 	public ResponseEntity getCompletedAssignmentsExpense() {
 
-		List<Object[]> result = employeeAssignmentRepository.getCompletedAssignmentsWithExpense();
-		List<Map<String, Object>> responseList = new ArrayList<>();
+	    List<Object[]> result = employeeAssignmentRepository.getCompletedAssignmentsWithExpense();
+	    List<Map<String, Object>> responseList = new ArrayList<>();
 
-		Map<String, Double> distanceMap = new HashMap<>();
-		distanceMap.put("Noida-Ghaziabad", 25.0);
-		distanceMap.put("Ghaziabad-Noida", 25.0);
+	    for (Object[] row : result) {
 
-		for (Object[] row : result) {
+	        Map<String, Object> map = new HashMap<>();
 
-			Map<String, Object> map = new HashMap<>();
+	        // ================= BASIC IDS =================
+	        Integer assignmentId = ((Number) row[0]).intValue();
+	        Integer employeeId = ((Number) row[1]).intValue();
 
-			// ================= BASIC IDS =================
-			Integer assignmentId = ((Number) row[0]).intValue();
-			Integer employeeId = ((Number) row[1]).intValue();
+	        // ================= EMPLOYEE =================
+	        String employeeName = (String) row[2];
 
-			// ================= EMPLOYEE =================
-			String employeeName = (String) row[2];
+	        // ================= SITE =================
+	        Integer siteId = ((Number) row[3]).intValue();
+	        String siteName = (String) row[4];
+	        String employeeDistrict = (String) row[5];
 
-			// ================= SITE =================
-			Integer siteId = ((Number) row[3]).intValue();
-			String siteName = (String) row[4];
-			String employeeDistrict = (String) row[5];
+	        // ================= CUSTOMER =================
+	        Integer customerId = ((Number) row[6]).intValue();
+	        String customerDistrict = (String) row[7];
 
-			// ================= CUSTOMER =================
-			Integer customerId = ((Number) row[6]).intValue();
-			String customerDistrict = (String) row[7];
+	        // ================= VISIT =================
+	        String visitType = (String) row[8];
 
-			// ================= VISIT =================
-			String visitType = (String) row[8];
+	        // ================= RATE MASTER =================
+	        BigDecimal localFixedRate = (BigDecimal) row[9];
+	        BigDecimal intercityPerKm = (BigDecimal) row[10];
+	        BigDecimal pvcPerMeter = (BigDecimal) row[11];
+	        BigDecimal bandPerNo = (BigDecimal) row[12];
+	        BigDecimal externalHelper = (BigDecimal) row[13];
+	        BigDecimal stayAmount = (BigDecimal) row[14];
 
-			// ================= RATE MASTER =================
-			BigDecimal localFixedRate = (BigDecimal) row[9];
-			BigDecimal intercityPerKm = (BigDecimal) row[10];
-			BigDecimal pvcPerMeter = (BigDecimal) row[11];
-			BigDecimal bandPerNo = (BigDecimal) row[12];
-			BigDecimal externalHelper = (BigDecimal) row[13];
-			BigDecimal stayAmount = (BigDecimal) row[14];
+	        // ================= INSTALLATION =================
+	        Integer pvcPipe = row[15] != null ? ((Number) row[15]).intValue() : 0;
+	        Integer pvcBend = row[16] != null ? ((Number) row[16]).intValue() : 0;
 
-			// ================= INSTALLATION =================
-			Integer pvcPipe = row[15] != null ? ((Number) row[15]).intValue() : 0;
-			Integer pvcBend = row[16] != null ? ((Number) row[16]).intValue() : 0;
+	        Integer helperId = row[17] != null ? ((Number) row[17]).intValue() : null;
 
-			Integer helperId = row[17] != null ? ((Number) row[17]).intValue() : null;
+	        // ================= DATES =================
+	        java.sql.Timestamp visitTs = (java.sql.Timestamp) row[18];
+	        java.sql.Timestamp modifiedTs = (java.sql.Timestamp) row[19];
 
-			// ================= DATES =================
-			java.sql.Timestamp visitTs = (java.sql.Timestamp) row[18];
-			java.sql.Timestamp modifiedTs = (java.sql.Timestamp) row[19];
+	        LocalDateTime visitDate = visitTs != null ? visitTs.toLocalDateTime() : null;
+	        LocalDateTime modifiedOn = modifiedTs != null ? modifiedTs.toLocalDateTime() : null;
 
-			LocalDateTime visitDate = visitTs != null ? visitTs.toLocalDateTime() : null;
-			LocalDateTime modifiedOn = modifiedTs != null ? modifiedTs.toLocalDateTime() : null;
+	        // ================= TRAVEL COST =================
+	        double travelCost = 0;
 
-			// ================= TRAVEL COST =================
-			double travelCost = 0;
+	        if ("LO".equalsIgnoreCase(visitType)) {
 
-			if ("LO".equalsIgnoreCase(visitType)) {
-				if (localFixedRate != null) {
-					travelCost = localFixedRate.doubleValue();
-				}
-			} else if ("IC".equalsIgnoreCase(visitType)) {
-				String key = employeeDistrict + "-" + customerDistrict;
-				double distance = distanceMap.getOrDefault(key, 0.0);
+	            if (localFixedRate != null) {
+	                travelCost = localFixedRate.doubleValue();
+	            }
 
-				if (intercityPerKm != null) {
-					travelCost = distance * intercityPerKm.doubleValue();
-				}
-			}
+	        } else if ("IC".equalsIgnoreCase(visitType)) {
 
-			// ================= HELPER COST =================
-			double helperCost = 0;
-			if (helperId != null && helperId > 0 && externalHelper != null) {
-				helperCost = externalHelper.doubleValue();
-			}
+	            String origin = employeeDistrict;
+	            String destination = customerDistrict;
 
-			// ================= BAND COST =================
-			double bandCost = 0;
-			if (bandPerNo != null) {
-				bandCost = pvcBend * bandPerNo.doubleValue();
-			}
+	            double distance = distanceService.getDistanceInKm(origin, destination);
 
-			// ================= PVC COST =================
-			double pvcCost = 0;
-			if (pvcPerMeter != null) {
-				pvcCost = pvcPipe * pvcPerMeter.doubleValue();
-			}
+	            // fallback if API fails
+	            if (distance == 0) {
+	                distance = 20; // optional default fallback
+	            }
 
-			// ================= RETURN COST =================
-			double returnCost = travelCost;
+	            if (intercityPerKm != null) {
+	                travelCost = distance * intercityPerKm.doubleValue();
+	            }
+	        }
 
-			// ================= STAY COST =================
-			double stayCost = 0;
+	        // ================= HELPER COST =================
+	        double helperCost = 0;
+	        if (helperId != null && helperId > 0 && externalHelper != null) {
+	            helperCost = externalHelper.doubleValue();
+	        }
 
-			if (visitDate != null && modifiedOn != null && stayAmount != null) {
+	        // ================= BAND COST =================
+	        double bandCost = 0;
+	        if (bandPerNo != null) {
+	            bandCost = pvcBend * bandPerNo.doubleValue();
+	        }
 
-				long days = java.time.temporal.ChronoUnit.DAYS.between(visitDate.toLocalDate(),
-						modifiedOn.toLocalDate());
+	        // ================= PVC COST =================
+	        double pvcCost = 0;
+	        if (pvcPerMeter != null) {
+	            pvcCost = pvcPipe * pvcPerMeter.doubleValue();
+	        }
 
-				if (days > 0) {
-					stayCost = days * stayAmount.doubleValue();
-				}
-			}
+	        // ================= RETURN COST =================
+	        double returnCost = travelCost;
 
-			// ================= TOTAL EXPENSE =================
-			double totalExpense = travelCost + helperCost + bandCost + pvcCost + returnCost + stayCost;
+	        // ================= STAY COST =================
+	        double stayCost = 0;
 
-			// ================= RESPONSE MAP =================
-			map.put("assignmentId", assignmentId);
-			map.put("employeeId", employeeId);
-			map.put("employeeName", employeeName);
+	        if (visitDate != null && modifiedOn != null && stayAmount != null) {
 
-			map.put("siteId", siteId);
-			map.put("siteName", siteName);
-			map.put("employeeDistrict", employeeDistrict);
+	            long days = java.time.temporal.ChronoUnit.DAYS.between(
+	                    visitDate.toLocalDate(),
+	                    modifiedOn.toLocalDate()
+	            );
 
-			map.put("customerId", customerId);
-			map.put("customerDistrict", customerDistrict);
+	            if (days > 0) {
+	                stayCost = days * stayAmount.doubleValue();
+	            }
+	        }
 
-			map.put("visitType", visitType);
+	        // ================= TOTAL EXPENSE =================
+	        double totalExpense = travelCost + helperCost + bandCost + pvcCost + returnCost + stayCost;
 
-			map.put("travelCost", travelCost);
-			map.put("helperCost", helperCost);
-			map.put("bandCost", bandCost);
-			map.put("pvcCost", pvcCost);
-			map.put("returnCost", returnCost);
-			map.put("stayCost", stayCost);
+	        // ================= RESPONSE MAP =================
+	        map.put("assignmentId", assignmentId);
+	        map.put("employeeId", employeeId);
+	        map.put("employeeName", employeeName);
 
-			map.put("totalExpense", totalExpense);
+	        map.put("siteId", siteId);
+	        map.put("siteName", siteName);
+	        map.put("employeeDistrict", employeeDistrict);
 
-			responseList.add(map);
-		}
+	        map.put("customerId", customerId);
+	        map.put("customerDistrict", customerDistrict);
 
-		return new ResponseEntity("Expense calculated successfully", 200, responseList);
+	        map.put("visitType", visitType);
+
+	        map.put("travelCost", travelCost);
+	        map.put("helperCost", helperCost);
+	        map.put("bandCost", bandCost);
+	        map.put("pvcCost", pvcCost);
+	        map.put("returnCost", returnCost);
+	        map.put("stayCost", stayCost);
+
+	        map.put("totalExpense", totalExpense);
+
+	        responseList.add(map);
+	    }
+
+	    return new ResponseEntity("Expense calculated successfully", 200, responseList);
 	}
 }
