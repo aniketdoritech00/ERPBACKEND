@@ -16,38 +16,38 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
-@Entity
-@Table(name = "customer_master")
-public class CustomerMasterEntity {
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "customer_id")
-	private Integer customerId;
-
-	@Column(name = "customer_name", nullable = false, length = 255)
-	private String customerName;
-
-	@Column(name = "customer_code", nullable = false, unique = true, length = 50)
-	private String customerCode;
-
-	@Column(name = "org_id", nullable = false)
-	private Integer orgId;
-
-	@Column(name = "comp_id", nullable = false)
-	private Integer compId;
-
-	@Column(name = "ifsc", length = 50)
-	private String ifsc;
-
-	@Column(name = "address", length = 500)
-	private String address;
-
-	@Column(name = "city", length = 100)
-	private String city;
-
-	@Column(name = "district", length = 100)
-	private String district;
+	@Entity
+	@Table(name = "customer_master")
+	public class CustomerMasterEntity {
+	
+		@Id
+		@GeneratedValue(strategy = GenerationType.IDENTITY)
+		@Column(name = "customer_id")
+		private Integer customerId;
+	
+		@Column(name = "customer_name", nullable = false, length = 255)
+		private String customerName;
+	
+		@Column(name = "customer_code", nullable = false, unique = true, length = 50)
+		private String customerCode;
+	
+		@Column(name = "org_id", nullable = false)
+		private Integer orgId;
+	
+		@Column(name = "comp_id", nullable = false)
+		private Integer compId;
+	
+		@Column(name = "ifsc", length = 50)
+		private String ifsc;
+	
+		@Column(name = "address", length = 500)
+		private String address;
+	
+		@Column(name = "city", length = 100)
+		private String city;
+	
+		@Column(name = "district", length = 100)
+		private String district;
 
 	@Column(name = "state", length = 100)
 	private String state;

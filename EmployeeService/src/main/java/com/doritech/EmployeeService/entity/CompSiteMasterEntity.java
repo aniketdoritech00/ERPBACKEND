@@ -56,6 +56,7 @@ public class CompSiteMasterEntity {
 
 	@Column(name = "city", length = 100)
 	private String city;
+
 	@Column(name = "district", length = 100)
 	private String district;
 
