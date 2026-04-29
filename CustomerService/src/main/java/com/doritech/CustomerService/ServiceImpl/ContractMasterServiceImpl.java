@@ -883,7 +883,6 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		List<Map<String, Object>> payloadList = new ArrayList<>();
 		Set<String> messages = new LinkedHashSet<>();
-        Set<String> messages = new LinkedHashSet<>();
 		
 		for (ContractInstallationRequest req : requestList) {
 

@@ -29,6 +29,8 @@ public interface EmployeeMasterRepository extends JpaRepository<EmployeeMaster, 
 
 	List<EmployeeMaster> findBySite_SiteIdAndDesignationAndIsActive(Integer siteId, String string, String string2);
 
+	List<EmployeeMaster> findByDesignationAndIsActive(String fa, String active);
+
 	Optional<EmployeeMaster> findByEmployeeCodeIgnoreCase(String employeeCode);
 
 	@Query("SELECT e.employeeCode FROM EmployeeMaster e WHERE e.employeeCode IN :codes")
