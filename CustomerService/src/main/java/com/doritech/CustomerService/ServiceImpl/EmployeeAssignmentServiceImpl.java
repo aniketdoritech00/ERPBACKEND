@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.doritech.CustomerService.Entity.ContractEntityMapping;
+import com.doritech.CustomerService.Entity.ContractInstallationDetails;
 import com.doritech.CustomerService.Entity.ContractItemMapping;
 import com.doritech.CustomerService.Entity.CustomerMasterEntity;
 import com.doritech.CustomerService.Entity.EmployeeAssignmentEntity;
@@ -269,9 +270,13 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 					return categoryToParamMap.get(category);
 				}).filter(Objects::nonNull).distinct().toList();
 
-				response.setSalesOrderNo(contractInstallationDetailsRepository
-						.findByContractContractId(contractEntityMapping.getContract().getContractId()).get()
-						.getSalesOrderNumber());
+				Optional<ContractInstallationDetails> contractInstallationDetailsOptional = contractInstallationDetailsRepository
+						.findByContractContractId(contractEntityMapping.getContract().getContractId());
+
+				if(contractInstallationDetailsOptional.isPresent()){
+				response.setSalesOrderNo(contractInstallationDetailsOptional
+						.map(ContractInstallationDetails::getSalesOrderNumber).orElse(null));
+				}
 
 				response.setProductName(productTypes);
 
@@ -489,57 +494,56 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 
 	@Override
 	@Transactional
-	public List<EmployeeAssignmentResponse> saveEmployeeAssignments(@Valid List<EmployeeTaskAssignmentRequest> requests) {
+	public List<EmployeeAssignmentResponse> saveEmployeeAssignments(
+			@Valid List<EmployeeTaskAssignmentRequest> requests) {
 
-	    List<EmployeeAssignmentResponse> responses = new ArrayList<>();
+		List<EmployeeAssignmentResponse> responses = new ArrayList<>();
 
-	    for (EmployeeTaskAssignmentRequest request : requests) {
+		for (EmployeeTaskAssignmentRequest request : requests) {
 
-	        ContractEntityMapping contractEntityMapping = contractEntityMappingRepository
-	                .findById(request.getMappingId())
-	                .orElseThrow(() -> new ResourceNotFoundException(
-	                        "Contract not found with ID: " + request.getMappingId()));
+			ContractEntityMapping contractEntityMapping = contractEntityMappingRepository
+					.findById(request.getMappingId())
+					.orElseThrow(() -> new ResourceNotFoundException(
+							"Contract not found with ID: " + request.getMappingId()));
 
-	        boolean isDuplicate = repository
-	                .existsByContractEntityMapping_MappingIdAndEmployeeIdAndSiteIdAndStatusNotAndAssignmentStartDateLessThanEqualAndAssignmentEndDateGreaterThanEqual(
-	                        request.getMappingId(),
-	                        request.getEmployeeId(),
-	                        request.getSiteId(),
-	                        "Cancelled",
-	                        request.getAssignmentEndDate(),
-	                        request.getAssignmentStartDate()
-	                );
+			boolean isDuplicate = repository
+					.existsByContractEntityMapping_MappingIdAndEmployeeIdAndSiteIdAndStatusNotAndAssignmentStartDateLessThanEqualAndAssignmentEndDateGreaterThanEqual(
+							request.getMappingId(),
+							request.getEmployeeId(),
+							request.getSiteId(),
+							"Cancelled",
+							request.getAssignmentEndDate(),
+							request.getAssignmentStartDate());
 
-	        if (isDuplicate) {
-	            throw new BadRequestException(
-	                    "EmployeeId " + request.getEmployeeId() +
-	                    " already assigned for MappingId " + request.getMappingId() +
-	                    " at SiteId " + request.getSiteId() +
-	                    " in given date range"
-	            );
-	        }
+			if (isDuplicate) {
+				throw new BadRequestException(
+						"EmployeeId " + request.getEmployeeId() +
+								" already assigned for MappingId " + request.getMappingId() +
+								" at SiteId " + request.getSiteId() +
+								" in given date range");
+			}
 
-	        EmployeeAssignmentEntity entity = new EmployeeAssignmentEntity();
+			EmployeeAssignmentEntity entity = new EmployeeAssignmentEntity();
 
-	        if ("IN".equals(contractEntityMapping.getContract().getAmcType())) {
-	            entity.setHelperId(request.getHelperId());
-	        }
+			if ("IN".equals(contractEntityMapping.getContract().getAmcType())) {
+				entity.setHelperId(request.getHelperId());
+			}
 
-	        entity.setContractEntityMapping(contractEntityMapping);
-	        entity.setEmployeeId(request.getEmployeeId());
-	        entity.setHelperId(request.getHelperId());
-	        entity.setSiteId(request.getSiteId());
-	        entity.setAssignmentStartDate(request.getAssignmentStartDate());
-	        entity.setAssignmentEndDate(request.getAssignmentEndDate());
-	        entity.setVisitType(request.getVisitType());
-	        entity.setVerifyStatus("Pending");
-	        entity.setStatus("Pending");
-	        entity.setCreatedBy(request.getCreatedBy());
+			entity.setContractEntityMapping(contractEntityMapping);
+			entity.setEmployeeId(request.getEmployeeId());
+			entity.setHelperId(request.getHelperId());
+			entity.setSiteId(request.getSiteId());
+			entity.setAssignmentStartDate(request.getAssignmentStartDate());
+			entity.setAssignmentEndDate(request.getAssignmentEndDate());
+			entity.setVisitType(request.getVisitType());
+			entity.setVerifyStatus("Pending");
+			entity.setStatus("Pending");
+			entity.setCreatedBy(request.getCreatedBy());
 
-	        EmployeeAssignmentEntity saved = repository.save(entity);
-	        responses.add(mapToResponse(saved));
-	    }
+			EmployeeAssignmentEntity saved = repository.save(entity);
+			responses.add(mapToResponse(saved));
+		}
 
-	    return responses;
+		return responses;
 	}
 }
