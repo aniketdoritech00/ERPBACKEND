@@ -10,11 +10,16 @@ import com.doritech.EmployeeService.entity.EmployeeAttendance;
 
 @Repository
 public interface EmployeeAttendanceRepo extends JpaRepository<EmployeeAttendance, Integer> {
-	List<EmployeeAttendance> findByCheckInTimeBetween(LocalDateTime start, LocalDateTime end);
 
-	EmployeeAttendance findByEmployee_EmployeeIdAndCheckInTimeBetweenAndCheckOutTimeIsNull(Integer employeeId,
-			LocalDateTime start, LocalDateTime end);
+    List<EmployeeAttendance> findByCheckInTimeBetween(
+            LocalDateTime start, LocalDateTime end);
 
-	List<EmployeeAttendance> findByEmployee_EmployeeIdAndCheckInTimeBetween(Integer employeeId, LocalDateTime start,
-			LocalDateTime end);
+    EmployeeAttendance findByEmployee_EmployeeIdAndCheckInTimeBetweenAndCheckOutTimeIsNull(
+            Integer employeeId, LocalDateTime start, LocalDateTime end);
+
+    List<EmployeeAttendance> findByEmployee_EmployeeIdAndCheckInTimeBetween(
+            Integer employeeId, LocalDateTime start, LocalDateTime end);
+
+    List<EmployeeAttendance> findByEmployee_Site_SiteIdAndCheckInTimeBetween(
+            Integer siteId, LocalDateTime start, LocalDateTime end);
 }

@@ -12,9 +12,7 @@ public interface EmployeeAttendanceService {
 
 	ResponseEntity markCheckOut(@Valid AttendanceCheckOutRequest request);
 
-	ResponseEntity getAllEmployeeAttendanceRecord(String month);
-
-	ResponseEntity getEmployeeAttendanceRecord(String month, Integer userId);
+	ResponseEntity getAttendanceRecord(String month, Integer userId, Integer siteId);
 
 
 

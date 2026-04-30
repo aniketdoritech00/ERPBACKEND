@@ -18,7 +18,7 @@ import com.doritech.EmployeeService.service.EmployeeAttendanceService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/employee/employee-attendance")
+@RequestMapping("/employee/api/employee-attendance")
 public class EmployeeAttendanceController {
 
 	@Autowired
@@ -38,15 +38,12 @@ public class EmployeeAttendanceController {
 		return attendanceService.markCheckOut(request);
 	}
 
-	@GetMapping("/getAllEmployeeAttendanceRecord")
-	public ResponseEntity getAllEmployeeAttendanceRecord(@RequestParam(required = false) String month) {
-		return attendanceService.getAllEmployeeAttendanceRecord(month);
-	}
-
-	@GetMapping("/getEmployeeAttendanceRecord")
-	public ResponseEntity getEmployeeAttendanceRecord(@RequestParam(required = false) String month,
-			@RequestHeader("X-User-Id") Integer userId) {
-		return attendanceService.getEmployeeAttendanceRecord(month, userId);
+	@GetMapping("/getAttendanceRecord")
+	public ResponseEntity getAttendanceRecord(
+	        @RequestParam(required = false) String month,
+	        @RequestHeader(value = "X-User-Id", required = false) Integer userId,
+	        @RequestParam(required = false) Integer siteId) {
+	    return attendanceService.getAttendanceRecord(month, userId, siteId);
 	}
 
 }
