@@ -207,8 +207,8 @@ public class ParamServiceImpl implements ParamService {
 		repository.deleteByCode(code);
 	}
 
+	@Override
 	public ResponseEntity generateCode(String type) {
-
 		ResponseEntity response = new ResponseEntity();
 
 		try {

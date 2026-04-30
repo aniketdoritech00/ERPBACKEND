@@ -2,6 +2,7 @@ package com.doritech.CustomerService.FeignClient;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.doritech.CustomerService.Entity.ResponseEntity;
@@ -11,5 +12,8 @@ public interface ParamFeignClient {
 	@GetMapping("/employee/api/param/getParamByCodeAndSerial")
 	ResponseEntity getParamByCodeAndSerial(@RequestParam("code") String code,
 			@RequestParam("serial") String serial);
+
+	@PutMapping("/employee/api/param/update-code")
+	ResponseEntity updateCode(@RequestParam("code") String code);
 
 }

@@ -136,7 +136,7 @@ public class CustomerServiceImpl implements CustomerService {
 		customer.setOrgId(request.getOrgId());
 		customer.setCompId(request.getCompId());
 		customer.setAddress(request.getAddress());
-    customer.setIfsc(request.getIfsc());
+		customer.setIfsc(request.getIfsc());
 		customer.setCity(request.getCity());
 		customer.setDistrict(request.getDistrict());
 		customer.setState(request.getState());
@@ -147,6 +147,11 @@ public class CustomerServiceImpl implements CustomerService {
 		customer.setIsActive(request.getIsActive() == null ? "Y" : request.getIsActive());
 
 		CustomerMasterEntity savedCustomer = customerRepo.save(customer);
+
+		// Only call on CREATE (when customerId is null)
+		if (request.getCustomerId() == null) {
+			validationService.validateAndUpdateCodeValue(customer.getCustomerCode());
+		}
 
 		logger.info("Customer processed successfully with id {}", savedCustomer.getCustomerId());
 
@@ -186,7 +191,7 @@ public class CustomerServiceImpl implements CustomerService {
 		customer.setGstin(request.getGstin());
 		customer.setModifiedBy(request.getModifiedBy());
 		customer.setIsActive(request.getIsActive());
-    customer.setIfsc(request.getIfsc());
+		customer.setIfsc(request.getIfsc());
 
 		CustomerMasterEntity updated = customerRepo.save(customer);
 
@@ -236,7 +241,7 @@ public class CustomerServiceImpl implements CustomerService {
 			res.setCountry(row.getCountry());
 			res.setPostalCode(row.getPostalCode());
 			res.setGstin(row.getGstin());
-      res.setIfsc(row.getIfsc());
+			res.setIfsc(row.getIfsc());
 			res.setParentId(row.getParentId());
 			res.setHierarchyLevelId(row.getHierarchyLevelId());
 			res.setIsActive(row.getIsActive());
@@ -322,7 +327,7 @@ public class CustomerServiceImpl implements CustomerService {
 				d.setDistrict(row.getDistrict());
 				d.setState(row.getState());
 				d.setCountry(row.getCountry());
-        d.setIfsc(row.getIfsc());
+				d.setIfsc(row.getIfsc());
 				d.setPostalCode(row.getPostalCode());
 				d.setGstin(row.getGstin());
 				d.setParentId(row.getParentId());
@@ -577,7 +582,7 @@ public class CustomerServiceImpl implements CustomerService {
 			res.setAddress(row.getAddress());
 			res.setCity(row.getCity());
 			res.setDistrict(row.getDistrict());
-      res.setIfsc(row.getIfsc());
+			res.setIfsc(row.getIfsc());
 			res.setState(row.getState());
 			res.setCountry(row.getCountry());
 			res.setPostalCode(row.getPostalCode());
@@ -662,8 +667,6 @@ public class CustomerServiceImpl implements CustomerService {
 		response.setPayload(customer);
 		return response;
 	}
-
-
 
 	@Override
 	@Transactional(readOnly = true)
