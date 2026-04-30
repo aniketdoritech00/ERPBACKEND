@@ -118,15 +118,65 @@ public class EmployeeAttendanceServiceImpl implements EmployeeAttendanceService 
 	}
 
 	@Override
-	public ResponseEntity getAllEmployeeAttendanceRecord(String month) {
+	public ResponseEntity getAttendanceRecord(String month, Integer userId, Integer siteId) {
 
-		YearMonth yearMonth = (month != null) ? YearMonth.parse(month) : YearMonth.now();
+		YearMonth yearMonth;
+		try {
+			yearMonth = (month != null) ? YearMonth.parse(month) : YearMonth.now();
+		} catch (Exception e) {
+			logger.error("Invalid month format={}", month);
+			return new ResponseEntity("Invalid month format. Use yyyy-MM", 400, null);
+		}
 
 		LocalDateTime start = yearMonth.atDay(1).atStartOfDay();
 		LocalDateTime end = yearMonth.atEndOfMonth().atTime(23, 59, 59);
 
-		List<AttendanceResponse> responseList = attendanceRepository.findByCheckInTimeBetween(start, end).stream()
-				.map(this::mapToResponse).collect(Collectors.toList());
+		List<EmployeeAttendance> attendanceList;
+
+		if (userId != null) {
+
+			UserMaster userMaster = userMasterRepository.findById(userId).orElse(null);
+			if (userMaster == null) {
+				logger.error("User not found for id={}", userId);
+				return new ResponseEntity("User not found", 404, null);
+			}
+
+			Integer employeeId = userMaster.getSourceId();
+			if (employeeId == null) {
+				logger.error("Source employee not linked for userId={}", userId);
+				return new ResponseEntity("Employee not linked to this user", 404, null);
+			}
+
+			boolean employeeExists = employeeRepository.existsById(employeeId);
+			if (!employeeExists) {
+				logger.error("Employee not found for id={}", employeeId);
+				return new ResponseEntity("Employee not found", 404, null);
+			}
+
+			attendanceList = attendanceRepository.findByEmployee_EmployeeIdAndCheckInTimeBetween(employeeId, start,
+					end);
+
+		} else if (siteId != null) {
+
+			attendanceList = attendanceRepository.findByEmployee_Site_SiteIdAndCheckInTimeBetween(siteId, start, end);
+
+			if (attendanceList.isEmpty()) {
+				logger.warn("No attendance found for siteId={}", siteId);
+				return new ResponseEntity("No attendance found for this site", 404, null);
+			}
+
+		} else {
+			attendanceList = attendanceRepository.findByCheckInTimeBetween(start, end);
+		}
+
+		if (attendanceList.isEmpty()) {
+			return new ResponseEntity("No attendance record found for " + yearMonth, 200, null);
+		}
+
+		List<AttendanceResponse> responseList = attendanceList.stream().map(this::mapToResponse)
+				.collect(Collectors.toList());
+
+		logger.info("Attendance fetched successfully count={} for yearMonth={}", responseList.size(), yearMonth);
 
 		return new ResponseEntity("Attendance fetched successfully for " + yearMonth, 200, responseList);
 	}
@@ -145,29 +195,5 @@ public class EmployeeAttendanceServiceImpl implements EmployeeAttendanceService 
 		response.setCreatedBy(attendance.getCreatedBy());
 		response.setCreatedOn(attendance.getCreatedOn());
 		return response;
-	}
-	
-	@Override
-	public ResponseEntity getEmployeeAttendanceRecord(String month, Integer userId) {
-
-	    UserMaster userMaster = userMasterRepository.findById(userId).orElseThrow(() -> {
-	        logger.error("User not found for id={}", userId);
-	        return new EmployeeNotFoundException("User not found");
-	    });
-
-	    Integer employeeId = userMaster.getSourceId();
-
-	    YearMonth yearMonth = (month != null) ? YearMonth.parse(month) : YearMonth.now();
-
-	    LocalDateTime start = yearMonth.atDay(1).atStartOfDay();
-	    LocalDateTime end = yearMonth.atEndOfMonth().atTime(23, 59, 59);
-
-	    List<AttendanceResponse> responseList = attendanceRepository
-	            .findByEmployee_EmployeeIdAndCheckInTimeBetween(employeeId, start, end)
-	            .stream()
-	            .map(this::mapToResponse)
-	            .collect(Collectors.toList());
-
-	    return new ResponseEntity("Attendance fetched successfully for " + yearMonth, 200, responseList);
 	}
 }
