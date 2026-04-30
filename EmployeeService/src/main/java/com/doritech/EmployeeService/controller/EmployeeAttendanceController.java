@@ -18,7 +18,7 @@ import com.doritech.EmployeeService.service.EmployeeAttendanceService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/employee/employee-attendance")
+@RequestMapping("/employee/api/employee-attendance")
 public class EmployeeAttendanceController {
 
 	@Autowired
