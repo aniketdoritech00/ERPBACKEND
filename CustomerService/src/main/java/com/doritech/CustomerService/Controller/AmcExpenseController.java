@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,9 +25,9 @@ public class AmcExpenseController {
 	private AmcExpenseService amcExpenseService;
 
 	@GetMapping("/getAllAssignmentExpense")
-	public ResponseEntity getExpense(@RequestParam(required = false) Integer employeeId,
-			@RequestParam(required = false) Integer siteId, @RequestParam(required = false) String startDate,
-			@RequestParam(required = false) String endDate) {
+	public ResponseEntity getExpense(@RequestHeader("X-User-Id") String userId,
+			@RequestParam(required = false) Integer employeeId, @RequestParam(required = false) Integer siteId,
+			@RequestParam(required = false) String startDate, @RequestParam(required = false) String endDate) {
 
 		LocalDateTime start = null;
 		LocalDateTime end = null;
@@ -49,7 +50,9 @@ public class AmcExpenseController {
 	}
 
 	@PostMapping("/saveOrUpdate")
-	public ResponseEntity saveOrUpdate(@RequestBody AmcExpenseRequest request) {
+	public ResponseEntity saveOrUpdate(@RequestHeader("X-User-Id") String userId,
+			@RequestBody AmcExpenseRequest request) {
+
 		return amcExpenseService.saveOrUpdateAmcExpense(request);
 	}
 }

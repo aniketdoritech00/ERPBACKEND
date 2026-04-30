@@ -34,7 +34,6 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
 
 	Page<EmployeeAssignmentEntity> findByStatus(String status, Pageable pageable);
 
-	Page<EmployeeAssignmentEntity> findByEmployeeIdAndStatus(Integer employeeId, String status, Pageable pageable);
 //	@Query(value = """
 //			SELECT DISTINCT
 //			    ea.assignment_id,
