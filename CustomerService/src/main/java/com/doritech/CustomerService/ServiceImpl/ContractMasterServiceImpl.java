@@ -195,6 +195,8 @@ public class ContractMasterServiceImpl implements ContractMasterService {
 
 		contractRepository.save(contract);
 
+		validationService.validateAndUpdateCodeValue(request.getContractNo());
+
 		logger.info("Contract created successfully with id {}", contract.getContractId());
 
 		return new ResponseEntity("Contract created successfully", 200, ContractMapper.toResponse(contract));
