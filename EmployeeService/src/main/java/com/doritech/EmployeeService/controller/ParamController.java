@@ -95,7 +95,8 @@ public class ParamController {
 	}
 
 	@GetMapping("/getAllParams")
-	public ResponseEntity getAllParams(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, HttpServletRequest request) {
+	public ResponseEntity getAllParams(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, HttpServletRequest request) {
 
 		System.out.println("Request URI: " + request.getRequestURI());
 
@@ -156,7 +157,6 @@ public class ParamController {
 		return new ResponseEntity("Deleted Successfully", HttpStatus.OK.value(), response);
 	}
 
-
 	@DeleteMapping("/deleteParamByCode/{code}")
 	public ResponseEntity deleteByCode(@PathVariable String code, @RequestHeader("X-User-Id") String userId,
 			HttpServletRequest request) {
@@ -173,5 +173,15 @@ public class ParamController {
 		response.setPath(request.getRequestURI());
 
 		return new ResponseEntity("Deleted Successfully", HttpStatus.OK.value(), response);
+	}
+
+	@GetMapping("/generate-code")
+	public ResponseEntity generateCode(@RequestParam String type) {
+		return service.generateCode(type);
+	}
+	
+	@PutMapping("/update-code")
+	public ResponseEntity updateCode(@RequestParam String code) {
+		return service.updateCodeValue(code);
 	}
 }

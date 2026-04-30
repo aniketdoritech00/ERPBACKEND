@@ -2,6 +2,7 @@ package com.doritech.EmployeeService.service;
 
 import java.util.List;
 
+import com.doritech.EmployeeService.entity.ResponseEntity;
 import com.doritech.EmployeeService.request.ParamRequestDTO;
 import com.doritech.EmployeeService.response.PageResponse;
 import com.doritech.EmployeeService.response.ParamResponseDTO;
@@ -9,6 +10,7 @@ import com.doritech.EmployeeService.response.ParamResponseDTO;
 public interface ParamService {
 
 	ParamResponseDTO save(ParamRequestDTO dto);
+
 	List<ParamResponseDTO> saveAllParamRecords(List<ParamRequestDTO> dtos);
 
 	ParamResponseDTO update(Integer id, ParamRequestDTO dto);
@@ -26,4 +28,8 @@ public interface ParamService {
 	void deleteById(Integer id);
 
 	void deleteByCode(String code);
+
+	ResponseEntity generateCode(String type);
+
+	ResponseEntity updateCodeValue(String code);
 }

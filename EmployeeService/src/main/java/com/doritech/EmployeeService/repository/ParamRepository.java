@@ -26,4 +26,8 @@ public interface ParamRepository extends JpaRepository<ParamEntity, Integer> {
 
 	boolean existsByCode(String code);
 
+	Optional<ParamEntity> findTopByCodeIgnoreCaseAndSerialIgnoreCaseOrderBySerialNoDesc(String code, String serial,String desp3);
+
+	Optional<ParamEntity> findByDesp1IgnoreCase(String prefix);
+
 }
