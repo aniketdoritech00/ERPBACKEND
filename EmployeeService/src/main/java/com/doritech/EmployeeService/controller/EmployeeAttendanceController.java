@@ -1,7 +1,6 @@
 package com.doritech.EmployeeService.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,7 +18,6 @@ import com.doritech.EmployeeService.service.EmployeeAttendanceService;
 import jakarta.validation.Valid;
 
 @RestController
-@CrossOrigin(allowedHeaders = "*")
 @RequestMapping("/employee/employee-attendance")
 public class EmployeeAttendanceController {
 
@@ -44,14 +42,11 @@ public class EmployeeAttendanceController {
 	public ResponseEntity getAllEmployeeAttendanceRecord(@RequestParam(required = false) String month) {
 		return attendanceService.getAllEmployeeAttendanceRecord(month);
 	}
-	
-	
+
 	@GetMapping("/getEmployeeAttendanceRecord")
-	public ResponseEntity getEmployeeAttendanceRecord(
-	        @RequestParam(required = false) String month,
-	        @RequestHeader("X-User-Id") Integer userId) {
-	    return attendanceService.getEmployeeAttendanceRecord(month, userId);
+	public ResponseEntity getEmployeeAttendanceRecord(@RequestParam(required = false) String month,
+			@RequestHeader("X-User-Id") Integer userId) {
+		return attendanceService.getEmployeeAttendanceRecord(month, userId);
 	}
-	
-	
+
 }
