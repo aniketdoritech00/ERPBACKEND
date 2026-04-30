@@ -162,7 +162,7 @@ public class EmployeeAssignmentServiceImpl implements EmployeeAssignmentService 
 			entity.setVisitType(contractEntityMapping.getContract().getContractType());
 			entity.setVerifyStatus("Pending");
 			entity.setVerifyOn(null);
-			entity.setStatus("Pending");
+			entity.setStatus("Scheduled");
 			entity.setRemark("NA");
 			entity.setCreatedBy(request.getCreatedBy());
 
