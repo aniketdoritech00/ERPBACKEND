@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,7 +29,6 @@ import com.doritech.EmployeeService.entity.RoleMenuFunctionality;
 import com.doritech.EmployeeService.exception.ResourceNotFoundException;
 import com.doritech.EmployeeService.repository.MenuFunctionalityRepository;
 import com.doritech.EmployeeService.repository.MenuMasterRepository;
-import com.doritech.EmployeeService.repository.ParamRepository;
 import com.doritech.EmployeeService.repository.RoleMasterRepository;
 import com.doritech.EmployeeService.repository.RoleMenuAccessRepository;
 import com.doritech.EmployeeService.repository.RoleMenuFunctionalityRepository;
@@ -53,8 +53,6 @@ public class RoleMenuAccessServiceImpl implements RoleMenuAccessService {
 	private MenuMasterRepository menuMasterRepository;
 	@Autowired
 	private RoleMenuFunctionalityRepository roleMenuFunctionalityRepository;
-	@Autowired
-	private ParamRepository paramRepository;
 
 	@Autowired
 	private MenuFunctionalityRepository menuFunctionalityRepository;
@@ -321,10 +319,8 @@ public class RoleMenuAccessServiceImpl implements RoleMenuAccessService {
 		RoleMaster role = roleMasterRepository.findById(roleId)
 				.orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + roleId));
 
-		// fetch all menus
 		List<MenuMaster> allMenus = menuMasterRepository.findAll();
 
-		// fetch role access
 		List<RoleMenuAccess> accessList = roleMenuAccessRepository.findByRoleMaster_RoleId(roleId);
 
 		Map<Integer, RoleMenuAccess> accessMap = accessList.stream()
@@ -337,8 +333,10 @@ public class RoleMenuAccessServiceImpl implements RoleMenuAccessService {
 			RoleMenuAccessResponse response = new RoleMenuAccessResponse();
 
 			response.setMenuId(menu.getMenuId());
+			response.setPath(menu.getPath());
 			response.setMenuName(menu.getMenuName());
 			response.setParentMenuId(menu.getParentMenuId());
+			response.setSequence(menu.getSequence());
 			byte[] imageBytes = menu.getIconImage();
 
 			if (imageBytes != null) {
@@ -408,6 +406,13 @@ public class RoleMenuAccessServiceImpl implements RoleMenuAccessService {
 					parent.getChildMenus().add(menu);
 				}
 			}
+		}
+
+		parentMenus.sort(Comparator.comparingInt(m -> (m.getSequence() != null ? m.getSequence() : Integer.MAX_VALUE)));
+
+		for (RoleMenuAccessResponse menu : parentMenus) {
+			menu.getChildMenus().sort(
+					Comparator.comparingInt(m -> (m.getSequence() != null ? m.getSequence() : Integer.MAX_VALUE)));
 		}
 
 		logger.info("Sidebar menu generated successfully for roleId {}", roleId);
