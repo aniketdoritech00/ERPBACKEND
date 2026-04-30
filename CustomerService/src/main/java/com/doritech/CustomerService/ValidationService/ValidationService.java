@@ -703,6 +703,7 @@ public class ValidationService {
 					"Unable to verify item from Item Service");
 		}
 	}
+
 	public List<CompSiteResponse> getAllSites() {
 		try {
 			logger.info("Calling Employee Service to fetch all sites...");
@@ -742,6 +743,38 @@ public class ValidationService {
 		} catch (Exception ex) {
 			logger.error("Error fetching sites from Employee Service", ex);
 			throw new ExternalServiceException("Unable to fetch sites");
+		}
+	}
+
+	public ResponseEntity validateAndUpdateCodeValue(String code) {
+
+		if (code == null) {
+			logger.error("Code cannot be null");
+			throw new BadRequestException("Code cannot be null");
+		}
+
+		try {
+			ResponseEntity response = paramFeignClient.updateCode(code);
+
+			if (response == null || response.getPayload() == null) {
+				logger.error("Code not found");
+				throw new ResourceNotFoundException("Code not found");
+			}
+
+			logger.info("Code updated successfully");
+			return response;
+
+		} catch (BadRequestException | ResourceNotFoundException ex) {
+			logger.warn(
+					"Validation error in validateAndGetSite for code {}: {}",
+					code, ex.getMessage());
+			throw ex;
+		} catch (Exception ex) {
+			logger.error(
+					"Error while calling Site Service for {} code {}: {}",
+					code, ex.getMessage(), ex);
+			throw new ExternalServiceException(
+					"Unable to verify " + code + " code from Site Service");
 		}
 	}
 }
