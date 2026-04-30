@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 "menuId",
 "menuName",
 "parentMenuId",
+"path",
+"sequence",
 "isActive",
 "createdBy",
 "createdOn",
@@ -32,7 +34,8 @@ public class RoleMenuAccessResponse {
     private Integer parentMenuId;
 
     private String isActive;
-
+	private String path;
+	private Integer sequence;
     private LocalDateTime createdOn;
     private LocalDateTime modifiedOn;
 
@@ -153,6 +156,22 @@ public class RoleMenuAccessResponse {
 
 	public void setChildMenus(List<RoleMenuAccessResponse> childMenus) {
 		this.childMenus = childMenus;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+	public Integer getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(Integer sequence) {
+		this.sequence = sequence;
 	}
 
 }
